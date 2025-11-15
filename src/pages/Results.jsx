@@ -1215,7 +1215,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                                 </span>
                                 <span 
                                   onClick={() => handleClickStashedComboProduct(index, pallIndex)}
-                                  style={{cursor: 'pointer'}}
+                                  style={{cursor: 'pointer', fontSize: '0.75rem', color: '#666'}}
                                 >
                                   ({skvettpall.stackHeight}r)
                                 </span>
@@ -1308,7 +1308,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                               </span>
                               <span 
                                 onClick={() => handleClickStashedSkvettpall(index)}
-                                style={{cursor: 'pointer'}}
+                                style={{cursor: 'pointer', fontSize: '0.75rem', color: '#666'}}
                               >
                                 ({item.skvettpall.stackHeight}r)
                               </span>
@@ -1391,7 +1391,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                         <strong>{skvettpall.boxCount}</strong>
                       </span>
                       <span style={{display: 'flex', alignItems: 'center', gap: '0.25rem'}}>
-                        <span>({skvettpall.stackHeight}r)</span>
+                        <span style={{fontSize: '0.75rem', color: '#666'}}>({skvettpall.stackHeight}r)</span>
                         <button 
                           className="icon-btn delete small" 
                           onClick={() => handleDeleteSkvettpallFromNewCombo(index)}
@@ -1703,7 +1703,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                                 <span style={{display: 'flex', alignItems: 'center', gap: '0.25rem'}}>
                                   <span 
                                     onClick={() => handleClickComboProduct(comboIndex, pallIndex)}
-                                    style={{cursor: 'pointer'}}
+                                    style={{cursor: 'pointer', fontSize: '0.75rem', color: '#666'}}
                                   >
                                     ({skvettpall.stackHeight}r)
                                   </span>
