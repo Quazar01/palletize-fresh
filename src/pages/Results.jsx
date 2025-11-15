@@ -1718,7 +1718,8 @@ function Results({ orderData, results, onBack, onEdit }) {
                                 style={{
                                   fontSize: '0.8rem', 
                                   padding: '0.3rem 0.6rem',
-                                  background: '#95c5c5',
+                                  background: '#6c757d',
+                                  color: 'white',
                                   cursor: 'default'
                                 }}
                                 title="Skvättpall"

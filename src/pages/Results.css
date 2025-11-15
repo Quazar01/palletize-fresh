@@ -244,8 +244,8 @@
 
 .pallet-box-badge {
   display: inline-block;
-  background: #5ba0a0;
-  color: white;
+  background: #f8f9fa;
+  color: #495057;
   padding: 0.4rem 0.8rem;
   border-radius: 6px;
   font-weight: 600;
@@ -253,6 +253,7 @@
   min-width: 40px;
   text-align: center;
   position: relative;
+  border: 1px solid #dee2e6;
 }
 
 .pallet-box-badge:hover .delete-box-btn {
