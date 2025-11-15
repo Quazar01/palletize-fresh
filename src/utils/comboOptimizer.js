@@ -22,11 +22,12 @@ import { COMBO_PALLET } from './constants';
 /**
  * Check if a combo pallet is valid (within height constraints)
  * @param {Array} skvettpalls - Array of skvettpalls in the combo
+ * @param {number} marginPercent - Height margin as percentage (default 1%)
  * @returns {boolean}
  */
-const isValidComboPallet = (skvettpalls) => {
+const isValidComboPallet = (skvettpalls, marginPercent = COMBO_PALLET.HEIGHT_MARGIN * 100) => {
   const totalHeight = skvettpalls.reduce((sum, pall) => sum + pall.heightInRedUnits, 0);
-  const maxAllowedHeight = COMBO_PALLET.MAX_HEIGHT_RED_UNITS * (1 + COMBO_PALLET.HEIGHT_MARGIN);
+  const maxAllowedHeight = COMBO_PALLET.MAX_HEIGHT_RED_UNITS * (1 + marginPercent / 100);
   return totalHeight <= maxAllowedHeight;
 };
 
@@ -42,10 +43,11 @@ const getComboPalletHeight = (skvettpalls) => {
 /**
  * Calculate remaining space in a combo pallet
  * @param {Array} skvettpalls - Current skvettpalls in combo
+ * @param {number} marginPercent - Height margin as percentage (default 1%)
  * @returns {number} - Remaining space in red box units
  */
-const getRemainingSpace = (skvettpalls) => {
-  const maxAllowedHeight = COMBO_PALLET.MAX_HEIGHT_RED_UNITS * (1 + COMBO_PALLET.HEIGHT_MARGIN);
+const getRemainingSpace = (skvettpalls, marginPercent = COMBO_PALLET.HEIGHT_MARGIN * 100) => {
+  const maxAllowedHeight = COMBO_PALLET.MAX_HEIGHT_RED_UNITS * (1 + marginPercent / 100);
   const currentHeight = getComboPalletHeight(skvettpalls);
   return maxAllowedHeight - currentHeight;
 };
@@ -54,9 +56,10 @@ const getRemainingSpace = (skvettpalls) => {
  * Best-Fit Decreasing algorithm for bin packing
  * Places each item in the bin where it fits best (minimum remaining space)
  * @param {Array} skvettpalls - Array of skvettpalls to combine
+ * @param {number} marginPercent - Height margin as percentage (default 1%)
  * @returns {Array} - Array of combo pallets
  */
-const bestFitDecreasing = (skvettpalls) => {
+const bestFitDecreasing = (skvettpalls, marginPercent = COMBO_PALLET.HEIGHT_MARGIN * 100) => {
   if (skvettpalls.length === 0) {
     return [];
   }
@@ -74,8 +77,8 @@ const bestFitDecreasing = (skvettpalls) => {
     for (let i = 0; i < comboPallets.length; i++) {
       const testCombo = [...comboPallets[i].skvettpalls, skvettpall];
       
-      if (isValidComboPallet(testCombo)) {
-        const remainingSpace = getRemainingSpace(testCombo);
+      if (isValidComboPallet(testCombo, marginPercent)) {
+        const remainingSpace = getRemainingSpace(testCombo, marginPercent);
         
         // Choose bin with minimum remaining space (tightest fit)
         if (remainingSpace < minRemainingSpace) {
@@ -105,9 +108,10 @@ const bestFitDecreasing = (skvettpalls) => {
 /**
  * First-Fit Decreasing algorithm (original greedy approach)
  * @param {Array} skvettpalls - Array of skvettpalls to combine
+ * @param {number} marginPercent - Height margin as percentage (default 1%)
  * @returns {Array} - Array of combo pallets
  */
-export const optimizeComboPallets = (skvettpalls) => {
+export const optimizeComboPallets = (skvettpalls, marginPercent = COMBO_PALLET.HEIGHT_MARGIN * 100) => {
   if (skvettpalls.length === 0) {
     return [];
   }
@@ -131,7 +135,7 @@ export const optimizeComboPallets = (skvettpalls) => {
 
       const testCombo = [...currentCombo, sortedSkvettpalls[j]];
       
-      if (isValidComboPallet(testCombo)) {
+      if (isValidComboPallet(testCombo, marginPercent)) {
         currentCombo.push(sortedSkvettpalls[j]);
         used[j] = true;
       }
@@ -151,31 +155,32 @@ export const optimizeComboPallets = (skvettpalls) => {
  * Advanced optimization using multiple strategies and choosing the best
  * Combines Best-Fit Decreasing with Branch and Bound for optimal results
  * @param {Array} skvettpalls - Array of skvettpalls to combine
+ * @param {number} marginPercent - Height margin as percentage (default 1%)
  * @param {number} maxIterations - Maximum iterations to prevent timeout
  * @returns {Array} - Array of combo pallets
  */
-export const optimizeComboPalletsAdvanced = (skvettpalls, maxIterations = 5000) => {
+export const optimizeComboPalletsAdvanced = (skvettpalls, marginPercent = COMBO_PALLET.HEIGHT_MARGIN * 100, maxIterations = 5000) => {
   if (skvettpalls.length === 0) {
     return [];
   }
 
   // For small instances, use exhaustive Branch and Bound
   if (skvettpalls.length <= 8) {
-    return branchAndBoundExhaustive(skvettpalls, maxIterations);
+    return branchAndBoundExhaustive(skvettpalls, marginPercent, maxIterations);
   }
 
   // For larger instances, try multiple heuristics and choose best
-  const bfdSolution = bestFitDecreasing(skvettpalls);
-  const ffdSolution = optimizeComboPallets(skvettpalls);
+  const bfdSolution = bestFitDecreasing(skvettpalls, marginPercent);
+  const ffdSolution = optimizeComboPallets(skvettpalls, marginPercent);
   
   // Try different sorting strategies
   const sortedByHeightAsc = [...skvettpalls].sort((a, b) => a.heightInRedUnits - b.heightInRedUnits);
-  const bfdAscSolution = bestFitDecreasing(sortedByHeightAsc);
+  const bfdAscSolution = bestFitDecreasing(sortedByHeightAsc, marginPercent);
   
   // For medium instances, also try limited Branch and Bound
   let bnbSolution = null;
   if (skvettpalls.length <= 15) {
-    bnbSolution = branchAndBoundLimited(skvettpalls, Math.min(maxIterations, 2000));
+    bnbSolution = branchAndBoundLimited(skvettpalls, marginPercent, Math.min(maxIterations, 2000));
   }
 
   // Choose the solution with minimum number of combo pallets
@@ -189,15 +194,16 @@ export const optimizeComboPalletsAdvanced = (skvettpalls, maxIterations = 5000) 
 /**
  * Branch and Bound with exhaustive search for small instances
  * @param {Array} skvettpalls - Array of skvettpalls to combine
+ * @param {number} marginPercent - Height margin as percentage
  * @param {number} maxIterations - Maximum iterations
  * @returns {Array} - Array of combo pallets
  */
-const branchAndBoundExhaustive = (skvettpalls, maxIterations) => {
+const branchAndBoundExhaustive = (skvettpalls, marginPercent, maxIterations) => {
   let bestSolution = null;
   let bestParcelCount = Infinity;
   let iterations = 0;
 
-  const maxAllowedHeight = COMBO_PALLET.MAX_HEIGHT_RED_UNITS * (1 + COMBO_PALLET.HEIGHT_MARGIN);
+  const maxAllowedHeight = COMBO_PALLET.MAX_HEIGHT_RED_UNITS * (1 + marginPercent / 100);
 
   const solve = (remaining, currentSolution) => {
     iterations++;
@@ -236,7 +242,7 @@ const branchAndBoundExhaustive = (skvettpalls, maxIterations) => {
     for (const {index} of combosWithSpace) {
       const testCombo = [...currentSolution[index].skvettpalls, current];
       
-      if (isValidComboPallet(testCombo)) {
+      if (isValidComboPallet(testCombo, marginPercent)) {
         const newSolution = [...currentSolution];
         newSolution[index] = {
           skvettpalls: testCombo,
@@ -262,7 +268,7 @@ const branchAndBoundExhaustive = (skvettpalls, maxIterations) => {
   };
 
   // Start with a best-fit decreasing solution as initial bound
-  bestSolution = bestFitDecreasing(skvettpalls);
+  bestSolution = bestFitDecreasing(skvettpalls, marginPercent);
   bestParcelCount = bestSolution.length;
 
   // Sort by height descending for better branching
@@ -277,15 +283,16 @@ const branchAndBoundExhaustive = (skvettpalls, maxIterations) => {
  * Limited Branch and Bound for medium-sized instances
  * Uses aggressive pruning to handle larger problem sizes
  * @param {Array} skvettpalls - Array of skvettpalls to combine
+ * @param {number} marginPercent - Height margin as percentage
  * @param {number} maxIterations - Maximum iterations
  * @returns {Array} - Array of combo pallets
  */
-const branchAndBoundLimited = (skvettpalls, maxIterations) => {
-  let bestSolution = bestFitDecreasing(skvettpalls);
+const branchAndBoundLimited = (skvettpalls, marginPercent, maxIterations) => {
+  let bestSolution = bestFitDecreasing(skvettpalls, marginPercent);
   let bestParcelCount = bestSolution.length;
   let iterations = 0;
 
-  const maxAllowedHeight = COMBO_PALLET.MAX_HEIGHT_RED_UNITS * (1 + COMBO_PALLET.HEIGHT_MARGIN);
+  const maxAllowedHeight = COMBO_PALLET.MAX_HEIGHT_RED_UNITS * (1 + marginPercent / 100);
 
   const solve = (remaining, currentSolution, depth) => {
     iterations++;
@@ -323,7 +330,7 @@ const branchAndBoundLimited = (skvettpalls, maxIterations) => {
     for (const {index} of combosWithSpace) {
       const testCombo = [...currentSolution[index].skvettpalls, current];
       
-      if (isValidComboPallet(testCombo)) {
+      if (isValidComboPallet(testCombo, marginPercent)) {
         const newSolution = [...currentSolution];
         newSolution[index] = {
           skvettpalls: testCombo,
@@ -412,14 +419,15 @@ export const convertMixPallToSkvettpall = (mixPallList) => {
  * Tries to combine mix pall with skvettpalls to minimize total parcels
  * @param {Array} skvettpalls - Array of skvettpalls to combine
  * @param {Array} mixPallList - Items in mix pall
+ * @param {number} marginPercent - Height margin as percentage (default 1%)
  * @param {number} maxIterations - Maximum iterations
  * @returns {Object} - { comboPallets, mixPallCombined }
  */
-export const optimizeComboPalletsWithMixPall = (skvettpalls, mixPallList, maxIterations = 5000) => {
+export const optimizeComboPalletsWithMixPall = (skvettpalls, mixPallList, marginPercent = COMBO_PALLET.HEIGHT_MARGIN * 100, maxIterations = 5000) => {
   // If no mix pall, use regular optimization
   if (!mixPallList || mixPallList.length === 0) {
     return {
-      comboPallets: optimizeComboPalletsAdvanced(skvettpalls, maxIterations),
+      comboPallets: optimizeComboPalletsAdvanced(skvettpalls, marginPercent, maxIterations),
       mixPallCombined: false,
       standaloneMixPall: null,
     };
@@ -430,7 +438,7 @@ export const optimizeComboPalletsWithMixPall = (skvettpalls, mixPallList, maxIte
 
   if (!mixPallAsSkvettpall) {
     return {
-      comboPallets: optimizeComboPalletsAdvanced(skvettpalls, maxIterations),
+      comboPallets: optimizeComboPalletsAdvanced(skvettpalls, marginPercent, maxIterations),
       mixPallCombined: false,
       standaloneMixPall: null,
     };
@@ -452,10 +460,10 @@ export const optimizeComboPalletsWithMixPall = (skvettpalls, mixPallList, maxIte
 
   // Try optimization WITH mix pall included
   const allItemsIncludingMix = [...skvettpalls, mixPallAsSkvettpall];
-  const comboWithMix = optimizeComboPalletsAdvanced(allItemsIncludingMix, maxIterations);
+  const comboWithMix = optimizeComboPalletsAdvanced(allItemsIncludingMix, marginPercent, maxIterations);
 
   // Try optimization WITHOUT mix pall
-  const comboWithoutMix = optimizeComboPalletsAdvanced(skvettpalls, maxIterations);
+  const comboWithoutMix = optimizeComboPalletsAdvanced(skvettpalls, marginPercent, maxIterations);
 
   // Compare: combo with mix pall vs combo without + standalone mix pall
   const totalWithMix = comboWithMix.length;

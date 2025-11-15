@@ -818,4 +818,34 @@
   .combo-pallet-item div[style*="fontWeight: 600"] {
     text-align: left !important;
   }
+  
+  /* Highlighted Mix Pall (Blandpall) styling */
+  .mix-pall-item {
+    background: #ffeb3b !important;
+    border: 2px solid #333 !important;
+    border-left: 2px solid #333 !important;
+    padding: 3mm !important;
+    margin-bottom: 2mm !important;
+    margin-top: 2mm !important;
+    position: relative;
+  }
+  
+  .mix-pall-item .combo-header::before {
+    content: 'Blandpall';
+    display: block;
+    font-size: 16pt;
+    font-weight: 700;
+    color: #d32f2f;
+    text-align: center;
+    margin-bottom: 2mm;
+  }
+  
+  .mix-pall-item .combo-title {
+    display: none;
+  }
+  
+  .mix-pall-item .combo-product-line {
+    background: #ffeb3b !important;
+    font-weight: 600;
+  }
 }

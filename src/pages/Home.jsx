@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import './Home.css';
 import { parseExcelFile, validateExcelFile } from '../utils/excelParser';
 import { processOrder, processOrderHelsingborg } from '../utils/palletCalculations';
-import { optimizeComboPalletsWithMixPall, calculateTotalParcels } from '../utils/comboOptimizer';
+import { optimizeComboPalletsAdvanced, optimizeComboPalletsWithMixPall, calculateTotalParcels } from '../utils/comboOptimizer';
 import { calculateTruckSlots } from '../utils/truckSlotCalculations';
 import Results from './Results';
 
@@ -11,6 +11,7 @@ function Home() {
   const [datum, setDatum] = useState('');
   const [ordersnummer, setOrdersnummer] = useState('');
   const [selectedOption, setSelectedOption] = useState('combo');
+  const [heightMargin, setHeightMargin] = useState(0); // Margin in percent (default 0%)
   const [selectedFile, setSelectedFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -76,7 +77,8 @@ function Home() {
         // Try to optimize with mix pall included
         const optimizationResult = optimizeComboPalletsWithMixPall(
           processed.skvettpallsList,
-          processed.mixPallList
+          processed.mixPallList,
+          heightMargin
         );
         
         comboPallets = optimizationResult.comboPallets;
@@ -126,6 +128,9 @@ function Home() {
           totalHeight: skvettpall.heightInRedUnits,
           palletCount: 1,
         }));
+        
+        // Sort Full Pall list by antal pallar (number of pallets) descending
+        fullPalletsList.sort((a, b) => b.fullPallets - a.fullPallets);
       } else if (selectedOption === 'helsingborg') {
         // Helsingborg mode: same as Enkel, each skvettpall is its own parcel
         comboPallets = processed.skvettpallsList.map(skvettpall => ({
@@ -133,6 +138,9 @@ function Home() {
           totalHeight: skvettpall.heightInRedUnits,
           palletCount: 1,
         }));
+        
+        // Sort Full Pall list by antal pallar (number of pallets) descending
+        fullPalletsList.sort((a, b) => b.fullPallets - a.fullPallets);
       } else {
         // Other modes: each skvettpall is its own parcel
         comboPallets = processed.skvettpallsList.map(skvettpall => ({
@@ -194,9 +202,10 @@ function Home() {
 
   return (
     <div className="home-container">
-      <h1 className="title">Plocklista Generator</h1>
-      
-      <div className="input-fields">
+      <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <h1 className="title">Plocklista Generator</h1>
+        
+        <div className="input-fields">
         <input
           type="text"
           className="text-field"
@@ -286,6 +295,44 @@ function Home() {
       >
         {loading ? 'Bearbetar...' : 'Ladda Upp'}
       </button>
+      </div>
+
+      <div className="margin-input-container" style={{
+        position: 'absolute',
+        bottom: '2rem',
+        right: '2rem',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '0.5rem',
+        fontSize: '0.85rem'
+      }}>
+        <label htmlFor="heightMargin" style={{
+          color: '#fff',
+          fontWeight: '500'
+        }}>
+          Max Höjd Marginal:
+        </label>
+        <input
+          id="heightMargin"
+          type="number"
+          min="0"
+          max="20"
+          step="0.5"
+          value={heightMargin}
+          onChange={(e) => setHeightMargin(parseFloat(e.target.value) || 0)}
+          style={{
+            width: '60px',
+            padding: '0.4rem',
+            border: '2px solid #5ba0a0',
+            borderRadius: '4px',
+            fontSize: '0.85rem',
+            textAlign: 'center'
+          }}
+        />
+        <span style={{
+          color: '#fff'
+        }}>%</span>
+      </div>
     </div>
   );
 }

@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import './Results.css';
+import { getBoxType } from '../utils/constants';
+import { getProductBoxType, productExists } from '../utils/productMapping';
 
 function Results({ orderData, results, onBack, onEdit }) {
   const [fullPallets, setFullPallets] = useState(results.fullPalletsList);
@@ -172,6 +174,25 @@ function Results({ orderData, results, onBack, onEdit }) {
     setEditingComboProduct(null);
   };
 
+  const handleEditComboProduct = (comboIndex, productIndex, newBoxCount) => {
+    const boxCount = parseInt(newBoxCount) || 0;
+    if (boxCount <= 0) return;
+
+    const newComboPallets = [...comboPallets];
+    const combo = newComboPallets[comboIndex];
+    const product = combo.skvettpalls[productIndex];
+    
+    // Update box count and recalculate stack height
+    product.boxCount = boxCount;
+    product.stackHeight = Math.ceil(boxCount / product.boxConfig.boxesPerRow);
+    product.heightInRedUnits = 1 + (product.stackHeight * product.boxConfig.heightInRedBoxUnits);
+    
+    // Recalculate combo total height
+    combo.totalHeight = combo.skvettpalls.reduce((sum, pall) => sum + pall.heightInRedUnits, 0);
+    
+    setComboPallets(newComboPallets);
+  };
+
   const handleDeleteMixPallProduct = (index) => {
     const newMixPall = mixPall.filter((_, i) => i !== index);
     setMixPall(newMixPall);
@@ -208,6 +229,16 @@ function Results({ orderData, results, onBack, onEdit }) {
 
   const handleCancelMixPallEdit = () => {
     setEditingMixPallProduct(null);
+  };
+
+  const handleEditMixPallProduct = (index, field, value) => {
+    const newMixPall = [...mixPall];
+    if (field === 'artikelnummer') {
+      newMixPall[index].artikelnummer = parseInt(value) || newMixPall[index].artikelnummer;
+    } else if (field === 'boxCount') {
+      newMixPall[index].boxCount = parseInt(value) || 0;
+    }
+    setMixPall(newMixPall);
   };
 
   const handleAddMixPallProduct = () => {
@@ -275,19 +306,42 @@ function Results({ orderData, results, onBack, onEdit }) {
     const artikelnummer = parseInt(newComboProduct.artikelnummer);
     const boxCount = parseInt(newComboProduct.boxCount);
 
-    if (!artikelnummer || !boxCount || boxCount <= 0) return;
+    // Validate input
+    if (!artikelnummer || !boxCount || boxCount <= 0) {
+      alert('Vänligen ange ett giltigt artikelnummer och antal lådor.');
+      return;
+    }
+
+    // Check if product exists
+    if (!productExists(artikelnummer)) {
+      alert(`Artikelnummer ${artikelnummer} finns inte i produktdatabasen.`);
+      return;
+    }
+
+    // Get the box type for this artikelnummer
+    const boxTypeName = getProductBoxType(artikelnummer);
+    const boxConfig = getBoxType(boxTypeName);
+
+    if (!boxConfig) {
+      alert(`Kunde inte hitta boxkonfiguration för artikelnummer ${artikelnummer}.`);
+      return;
+    }
+
+    // Calculate stack height and height in red units properly
+    const stackHeight = Math.ceil(boxCount / boxConfig.boxesPerRow);
+    const heightInRedUnits = 1 + (stackHeight * boxConfig.heightInRedBoxUnits);
 
     // Create a new skvettpall
     const newSkvettpall = {
       artikelnummer,
       boxCount,
-      boxType: 'red', // Default to red
+      boxType: boxTypeName,
       boxConfig: { 
-        boxesPerRow: 8,
-        heightInRedBoxUnits: 0.170588 // Default red box height ratio
+        boxesPerRow: boxConfig.boxesPerRow,
+        heightInRedBoxUnits: boxConfig.heightInRedBoxUnits
       },
-      stackHeight: Math.ceil(boxCount / 8), // Assuming 8 boxes per row by default
-      heightInRedUnits: 1 + (Math.ceil(boxCount / 8) * 0.170588)
+      stackHeight,
+      heightInRedUnits
     };
 
     setNewComboSkvettpalls([...newComboSkvettpalls, newSkvettpall]);
@@ -322,6 +376,10 @@ function Results({ orderData, results, onBack, onEdit }) {
     setIsAddingCombo(false);
     setNewComboProduct({ artikelnummer: '', boxCount: '' });
     setNewComboSkvettpalls([]);
+  };
+
+  const getBoxTypeClass = (boxType) => {
+    return `box-type-badge box-type-${boxType}`;
   };
 
   // Drag and Drop handlers
@@ -498,7 +556,7 @@ function Results({ orderData, results, onBack, onEdit }) {
   const totalMixPallCount = mixPall.length > 0 ? 1 : 0;
   const totalParcels = totalFullPalletCount + totalComboPalletCount + totalMixPallCount;
   
-  // Calculate total boxes (l�dor) from current state
+  // Calculate total boxes (lådor) from current state
   const totalBoxesFromFullPallets = fullPallets.reduce((sum, p) => sum + p.totalBoxes, 0);
   const totalBoxesFromComboPallets = comboPallets.reduce((sum, combo) => {
     return sum + combo.skvettpalls.reduce((s, pall) => s + pall.boxCount, 0);
@@ -541,7 +599,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                 </div>
               )}
               <div className="info-item print-only">
-                <span className="info-label">L�dor</span>
+                <span className="info-label">Lådor</span>
                 <span className="info-value">{totalBoxes}</span>
               </div>
               <div className="info-item print-only">
@@ -562,20 +620,20 @@ function Results({ orderData, results, onBack, onEdit }) {
 
             <div className="summary-stats">
               <div className="stat-card">
-                <div className="stat-label"><span className="stat-icon">?? </span>L�dor</div>
+                <div className="stat-label"><span className="stat-icon">📦 </span>Lådor</div>
                 <div className="stat-value">{totalBoxes}</div>
               </div>
               <div className="stat-card">
-                <div className="stat-label"><span className="stat-icon">?? </span>SRS Pall</div>
+                <div className="stat-label"><span className="stat-icon">🏭 </span>SRS Pall</div>
                 <div className="stat-value">{totalEUPallets}</div>
               </div>
               <div className="stat-card">
-                <div className="stat-label"><span className="stat-icon">?? </span>Kolli</div>
+                <div className="stat-label"><span className="stat-icon">📋 </span>Kolli</div>
                 <div className="stat-value">{totalParcels}</div>
               </div>
               {(palletMode === 'enkel' || palletMode === 'helsingborg') && results.truckSlots !== null && (
                 <div className="stat-card">
-                  <div className="stat-label"><span className="stat-icon">?? </span>Platser</div>
+                  <div className="stat-label"><span className="stat-icon">🚛 </span>Platser</div>
                   <div className="stat-value">{results.truckSlots}</div>
                 </div>
               )}
@@ -586,10 +644,10 @@ function Results({ orderData, results, onBack, onEdit }) {
         {/* Bottom Action Buttons within header */}
         <div className="header-action-buttons">
           <button className="btn btn-secondary" onClick={onBack}>
-            ? Tillbaka
+            ← Tillbaka
           </button>
           <button className="btn btn-primary" onClick={handlePrint}>
-            ??? Skriv ut
+            🖨️ Skriv ut
           </button>
         </div>
       </div>
@@ -625,7 +683,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                     <div className="combo-header">
                       <span className="combo-title">Stashed Pall #{index + 1}</span>
                       <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
-                        <span className="combo-height">
+                        <span className="combo-height" title="Pallets höjd i röda backar">
                           {(item.combo.totalHeight - 1).toFixed(2)} h
                         </span>
                         <button 
@@ -634,7 +692,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                           title="Flytta tillbaka"
                           style={{fontSize: '0.7rem', padding: '0.25rem 0.5rem'}}
                         >
-                          ? Tillbaka
+                          ↩ Tillbaka
                         </button>
                         <button 
                           className="icon-btn delete" 
@@ -642,7 +700,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                           title="Ta bort"
                           style={{fontSize: '0.9rem', padding: '0.25rem'}}
                         >
-                          ???
+                          🗑️
                         </button>
                       </div>
                     </div>
@@ -680,7 +738,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                                     title="Spara"
                                     style={{fontSize: '1rem'}}
                                   >
-                                    ?
+                                    ✓
                                   </button>
                                   <button 
                                     className="icon-btn cancel" 
@@ -688,7 +746,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                                     title="Avbryt"
                                     style={{fontSize: '1rem'}}
                                   >
-                                    ?
+                                    ✕
                                   </button>
                                 </div>
                               </>
@@ -731,7 +789,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                             title="Flytta tillbaka"
                             style={{fontSize: '0.7rem', padding: '0.25rem 0.5rem'}}
                           >
-                            ? Tillbaka
+                            ↩ Tillbaka
                           </button>
                           <button 
                             className="icon-btn delete" 
@@ -739,7 +797,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                             title="Ta bort"
                             style={{fontSize: '0.9rem', padding: '0.25rem'}}
                           >
-                            ???
+                            🗑️
                           </button>
                         </div>
                       </div>
@@ -773,7 +831,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                                   title="Spara"
                                   style={{fontSize: '1rem'}}
                                 >
-                                  ?
+                                  ✓
                                 </button>
                                 <button 
                                   className="icon-btn cancel" 
@@ -781,7 +839,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                                   title="Avbryt"
                                   style={{fontSize: '1rem'}}
                                 >
-                                  ?
+                                  ✕
                                 </button>
                               </div>
                             </>
@@ -822,7 +880,7 @@ function Results({ orderData, results, onBack, onEdit }) {
               <span className="section-count">{comboPallets.length + (mixPall.length > 0 ? 1 : 0)} pallar</span>
             </div>
             <button className="btn btn-primary" onClick={handleAddCombo} style={{padding: '0.5rem 1rem', fontSize: '0.85rem', width: '100%'}}>
-              + L�gg till Combo
+              + Lägg till Combo
             </button>
           </div>
           
@@ -833,7 +891,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                   <span className="combo-title">Ny Combo Pall</span>
                   <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
                     {newComboSkvettpalls.length > 0 && (
-                      <span className="combo-height">
+                      <span className="combo-height" title="Pallets höjd i röda backar">
                         {(newComboSkvettpalls.reduce((sum, p) => sum + p.heightInRedUnits, 0) - 1).toFixed(2)} h
                       </span>
                     )}
@@ -851,7 +909,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                       title="Avbryt"
                       style={{fontSize: '0.9rem', padding: '0.25rem'}}
                     >
-                      ?
+                      ✕
                     </button>
                   </div>
                 </div>
@@ -872,7 +930,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                           title="Ta bort"
                           style={{fontSize: '0.8rem', padding: '0.2rem'}}
                         >
-                          �
+                          ×
                         </button>
                       </span>
                     </div>
@@ -887,6 +945,11 @@ function Results({ orderData, results, onBack, onEdit }) {
                         className="edit-input"
                         value={newComboProduct.artikelnummer}
                         onChange={(e) => setNewComboProduct({...newComboProduct, artikelnummer: e.target.value})}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            handleAddSkvettpallToNewCombo();
+                          }
+                        }}
                         placeholder="Art.nr"
                         style={{width: '80px', padding: '0.3rem'}}
                       />
@@ -897,13 +960,18 @@ function Results({ orderData, results, onBack, onEdit }) {
                         className="edit-input"
                         value={newComboProduct.boxCount}
                         onChange={(e) => setNewComboProduct({...newComboProduct, boxCount: e.target.value})}
-                        placeholder="L�dor"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            handleAddSkvettpallToNewCombo();
+                          }
+                        }}
+                        placeholder="Lådor"
                         style={{width: '60px', padding: '0.3rem'}}
                       />
                       <button 
                         className="icon-btn save" 
                         onClick={handleAddSkvettpallToNewCombo}
-                        title="L�gg till skvettpall"
+                        title="Lägg till skvettpall"
                         style={{fontSize: '1rem'}}
                       >
                         +
@@ -943,17 +1011,17 @@ function Results({ orderData, results, onBack, onEdit }) {
                     >
                       <span className="combo-title">Pall #{displayIndex + 1}</span>
                       <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
-                        <span className="combo-height">
+                        <span className="combo-height" title="Pallets höjd i röda backar">
                           {(combo.totalHeight - 1).toFixed(2)} h
                         </span>
                         <button 
                           className="icon-btn" 
                           onClick={() => handleAddSkvettpallToCombo(comboIndex)}
                           onMouseDown={(e) => e.stopPropagation()}
-                          title="L�gg till skvettpall"
+                          title="Lägg till skvettpall"
                           style={{fontSize: '0.9rem', padding: '0.25rem'}}
                         >
-                          ?
+                          ➕
                         </button>
                         <button 
                           className="icon-btn delete" 
@@ -962,7 +1030,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                           title="Radera"
                           style={{fontSize: '0.9rem', padding: '0.25rem'}}
                         >
-                          ???
+                          🗑️
                         </button>
                       </div>
                     </div>
@@ -1051,7 +1119,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                                     title="Spara"
                                     style={{fontSize: '1rem'}}
                                   >
-                                    ?
+                                    ✓
                                   </button>
                                   <button 
                                     className="icon-btn cancel" 
@@ -1059,7 +1127,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                                     title="Avbryt"
                                     style={{fontSize: '1rem'}}
                                   >
-                                    ?
+                                    ✕
                                   </button>
                                 </div>
                               </>
@@ -1085,7 +1153,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                                     title="Ta bort"
                                     style={{fontSize: '0.8rem', padding: '0.2rem'}}
                                   >
-                                    �
+                                    ×
                                   </button>
                                 </span>
                               </>
@@ -1127,7 +1195,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                             title="Spara"
                             style={{fontSize: '1rem'}}
                           >
-                            ?
+                            ✓
                           </button>
                           <button 
                             className="icon-btn cancel" 
@@ -1135,7 +1203,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                             title="Avbryt"
                             style={{fontSize: '1rem'}}
                           >
-                            ?
+                            ✕
                           </button>
                         </div>
                       )}
@@ -1151,7 +1219,7 @@ function Results({ orderData, results, onBack, onEdit }) {
 
             {/* Mix Pall as item within Combo Pallets column */}
             {mixPall.length > 0 && (
-              <div className="combo-pallet-item" style={{marginTop: '1rem'}}>
+              <div className="combo-pallet-item mix-pall-item" style={{marginTop: '1rem'}}>
                 <div className="combo-header">
                   <span className="combo-title">Mix Pall</span>
                   <button 
@@ -1159,7 +1227,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                     onClick={handleAddMixPallProduct} 
                     style={{padding: '0.35rem 0.75rem', fontSize: '0.8rem'}}
                   >
-                    + L�gg till
+                    + Lägg till
                   </button>
                 </div>
                 
@@ -1196,7 +1264,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                                 title="Spara"
                                 style={{fontSize: '1rem'}}
                               >
-                                ?
+                                ✓
                               </button>
                               <button 
                                 className="icon-btn cancel" 
@@ -1204,7 +1272,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                                 title="Avbryt"
                                 style={{fontSize: '1rem'}}
                               >
-                                ?
+                                ✕
                               </button>
                             </div>
                           </>
@@ -1224,7 +1292,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                                 title="Ta bort"
                                 style={{fontSize: '0.8rem', padding: '0.2rem'}}
                               >
-                                �
+                                ×
                               </button>
                             </span>
                           </>
@@ -1244,7 +1312,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                   onClick={handleAddMixPallProduct} 
                   style={{padding: '0.5rem 1rem', fontSize: '0.85rem'}}
                 >
-                  + L�gg till Mix Pall
+                  + Lägg till Mix Pall
                 </button>
               </div>
             )}
@@ -1259,7 +1327,7 @@ function Results({ orderData, results, onBack, onEdit }) {
               <span className="section-count">{totalFullPalletCount} pallar</span>
             </div>
             <button className="btn btn-primary" onClick={handleAddNew} style={{padding: '0.5rem 1rem', fontSize: '0.85rem', width: '100%'}}>
-              + L�gg till
+              + Lägg till
             </button>
           </div>
           
@@ -1270,8 +1338,8 @@ function Results({ orderData, results, onBack, onEdit }) {
                   <tr>
                     <th>Art.nr</th>
                     <th>Antal Pallar</th>
-                    <th>L�dor</th>
-                    <th className="edit-actions-header">??</th>
+                    <th>Lådor</th>
+                    <th className="edit-actions-header">⚙️</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1300,10 +1368,10 @@ function Results({ orderData, results, onBack, onEdit }) {
                               className="edit-input small"
                               value={editingPallet.boxesPerPallet}
                               onChange={(e) => setEditingPallet({...editingPallet, boxesPerPallet: e.target.value})}
-                              placeholder="L�dor"
+                              placeholder="Lådor"
                               style={{width: '50px'}}
                             />
-                            <span>�</span>
+                            <span>×</span>
                             <input
                               type="number"
                               className="edit-input small"
@@ -1324,9 +1392,9 @@ function Results({ orderData, results, onBack, onEdit }) {
                                   background: '#95c5c5',
                                   cursor: 'default'
                                 }}
-                                title="Skv�ttpall"
+                                title="Skvättpall"
                               >
-                                Skv�ttpall
+                                Skvättpall
                               </span>
                             ) : (
                               Array.from({ length: pallet.fullPallets }, (_, i) => (
@@ -1345,7 +1413,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                                     }}
                                     title="Ta bort denna pall"
                                   >
-                                    �
+                                    ×
                                   </button>
                                 </span>
                               ))
@@ -1360,16 +1428,16 @@ function Results({ orderData, results, onBack, onEdit }) {
                         {editingPalletIndex === index ? (
                           <div style={{display: 'flex', gap: '0.25rem', alignItems: 'center'}}>
                             <button className="icon-btn save" onClick={handleSaveEdit} title="Spara" style={{fontSize: '1.2rem'}}>
-                              ?
+                              ✓
                             </button>
                             <button className="icon-btn cancel" onClick={handleCancelEdit} title="Avbryt" style={{fontSize: '1.2rem'}}>
-                              ?
+                              ✕
                             </button>
                           </div>
                         ) : (
                           <div style={{display: 'flex', gap: '0.25rem', alignItems: 'center'}}>
                             <button className="icon-btn edit" onClick={() => handleEditPallet(index)} title="Redigera" style={{fontSize: '1rem'}}>
-                              ??
+                              🔧
                             </button>
                             <button 
                               className="icon-btn delete" 
@@ -1377,7 +1445,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                               title="Radera"
                               style={{fontSize: '1rem'}}
                             >
-                              ???
+                              🗑️
                             </button>
                           </div>
                         )}
@@ -1404,10 +1472,10 @@ function Results({ orderData, results, onBack, onEdit }) {
                             className="edit-input small"
                             value={newPallet.boxesPerPallet}
                             onChange={(e) => setNewPallet({...newPallet, boxesPerPallet: e.target.value})}
-                            placeholder="L�dor"
+                            placeholder="Lådor"
                             style={{width: '50px'}}
                           />
-                          <span>�</span>
+                          <span>×</span>
                           <input
                             type="number"
                             className="edit-input small"
@@ -1423,10 +1491,10 @@ function Results({ orderData, results, onBack, onEdit }) {
                       </td>
                       <td className="edit-actions">
                         <button className="icon-btn save" onClick={handleSaveNew} title="Spara" style={{fontSize: '1.2rem'}}>
-                          ?
+                          ✓
                         </button>
                         <button className="icon-btn cancel" onClick={handleCancelNew} title="Avbryt" style={{fontSize: '1.2rem'}}>
-                          ?
+                          ✕
                         </button>
                       </td>
                     </tr>
