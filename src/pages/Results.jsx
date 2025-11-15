@@ -1334,6 +1334,7 @@ function Results({ orderData, results, onBack, onEdit }) {
               <span className="section-count">{comboPallets.length + (mixPall.length > 0 ? 1 : 0)} pallar</span>
             </div>
             <button 
+              className="add-button"
               onClick={handleAddCombo} 
               style={{
                 background: '#5ba0a0', 
@@ -1894,6 +1895,7 @@ function Results({ orderData, results, onBack, onEdit }) {
               <span className="section-count">{totalFullPalletCount} pallar</span>
             </div>
             <button 
+              className="add-button"
               onClick={handleAddNew} 
               style={{
                 background: '#5ba0a0', 
