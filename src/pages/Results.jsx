@@ -160,17 +160,38 @@ function Results({ orderData, results, onBack, onEdit }) {
     const parsedArtikelnummer = parseInt(artikelnummer);
     const parsedBoxCount = parseInt(boxCount);
 
-    if (parsedBoxCount <= 0) return;
+    // Validate input
+    if (!parsedArtikelnummer || parsedBoxCount <= 0) {
+      alert('Vänligen ange ett giltigt artikelnummer och antal lådor.');
+      return;
+    }
+
+    // Check if product exists
+    if (!productExists(parsedArtikelnummer)) {
+      alert(`Artikelnummer ${parsedArtikelnummer} finns inte i produktdatabasen.`);
+      return;
+    }
+
+    // Get product box type
+    const boxTypeName = getProductBoxType(parsedArtikelnummer);
+    if (!boxTypeName) {
+      alert(`Kunde inte hitta produktinformation för artikelnummer ${parsedArtikelnummer}.`);
+      return;
+    }
+
+    const boxTypeData = getBoxType(boxTypeName);
 
     const newComboPallets = [...comboPallets];
     const combo = newComboPallets[comboIndex];
     const product = combo.skvettpalls[productIndex];
     
-    // Update artikelnummer and box count
-    product.artikelnummer = parsedArtikelnummer || product.artikelnummer;
+    // Update product data
+    product.artikelnummer = parsedArtikelnummer;
     product.boxCount = parsedBoxCount;
-    product.stackHeight = Math.ceil(parsedBoxCount / product.boxConfig.boxesPerRow);
-    product.heightInRedUnits = 1 + (product.stackHeight * product.boxConfig.heightInRedBoxUnits);
+    product.boxType = boxTypeName;
+    product.boxConfig = boxTypeData;
+    product.stackHeight = Math.ceil(parsedBoxCount / boxTypeData.boxesPerRow);
+    product.heightInRedUnits = 1 + (product.stackHeight * boxTypeData.heightInRedBoxUnits);
     
     // Recalculate combo total height
     combo.totalHeight = combo.skvettpalls.reduce((sum, pall) => sum + pall.heightInRedUnits, 0);
@@ -273,7 +294,24 @@ function Results({ orderData, results, onBack, onEdit }) {
     const parsedArtikelnummer = parseInt(artikelnummer);
     const parsedBoxCount = parseInt(boxCount);
 
-    if (parsedBoxCount <= 0) return;
+    // Validate input
+    if (isNaN(parsedArtikelnummer) || parsedBoxCount <= 0) {
+      alert('Ange ett giltigt artikelnummer och antal lådor.');
+      return;
+    }
+
+    // Check if product exists
+    if (!productExists(parsedArtikelnummer)) {
+      alert(`Produkten med artikelnummer ${parsedArtikelnummer} finns inte i databasen.`);
+      return;
+    }
+
+    // Get the correct box type for this product
+    const boxType = getProductBoxType(parsedArtikelnummer);
+    if (!boxType) {
+      alert(`Kunde inte hitta lådtyp för artikelnummer ${parsedArtikelnummer}.`);
+      return;
+    }
 
     const newComboPallets = [...comboPallets];
     const combo = newComboPallets[comboIndex];
@@ -282,8 +320,9 @@ function Results({ orderData, results, onBack, onEdit }) {
     if (mixPallIndex !== -1) {
       newComboPallets[comboIndex].skvettpalls[mixPallIndex].mixPallItems[mixItemIndex] = {
         ...newComboPallets[comboIndex].skvettpalls[mixPallIndex].mixPallItems[mixItemIndex],
-        artikelnummer: parsedArtikelnummer || newComboPallets[comboIndex].skvettpalls[mixPallIndex].mixPallItems[mixItemIndex].artikelnummer,
-        boxCount: parsedBoxCount
+        artikelnummer: parsedArtikelnummer,
+        boxCount: parsedBoxCount,
+        boxType: boxType
       };
       
       setComboPallets(newComboPallets);
@@ -396,7 +435,24 @@ function Results({ orderData, results, onBack, onEdit }) {
     const parsedArtikelnummer = parseInt(artikelnummer);
     const parsedBoxCount = parseInt(boxCount);
 
-    if (parsedBoxCount <= 0) return;
+    // Validate input
+    if (isNaN(parsedArtikelnummer) || parsedBoxCount <= 0) {
+      alert('Ange ett giltigt artikelnummer och antal lådor.');
+      return;
+    }
+
+    // Check if product exists
+    if (!productExists(parsedArtikelnummer)) {
+      alert(`Produkten med artikelnummer ${parsedArtikelnummer} finns inte i databasen.`);
+      return;
+    }
+
+    // Get the correct box type for this product
+    const boxType = getProductBoxType(parsedArtikelnummer);
+    if (!boxType) {
+      alert(`Kunde inte hitta lådtyp för artikelnummer ${parsedArtikelnummer}.`);
+      return;
+    }
 
     const newStash = { ...stash };
     const item = newStash.comboPallets[comboIndex];
@@ -405,8 +461,9 @@ function Results({ orderData, results, onBack, onEdit }) {
     if (mixPallIndex !== -1) {
       newStash.comboPallets[comboIndex].combo.skvettpalls[mixPallIndex].mixPallItems[mixItemIndex] = {
         ...newStash.comboPallets[comboIndex].combo.skvettpalls[mixPallIndex].mixPallItems[mixItemIndex],
-        artikelnummer: parsedArtikelnummer || newStash.comboPallets[comboIndex].combo.skvettpalls[mixPallIndex].mixPallItems[mixItemIndex].artikelnummer,
-        boxCount: parsedBoxCount
+        artikelnummer: parsedArtikelnummer,
+        boxCount: parsedBoxCount,
+        boxType: boxType
       };
       
       setStash(newStash);
@@ -455,19 +512,35 @@ function Results({ orderData, results, onBack, onEdit }) {
     const artikelnummer = parseInt(newSkvettpallForCombo.artikelnummer);
     const boxCount = parseInt(newSkvettpallForCombo.boxCount);
 
-    if (!artikelnummer || !boxCount || boxCount <= 0) return;
+    // Validate input
+    if (!artikelnummer || !boxCount || boxCount <= 0) {
+      alert('Vänligen ange ett giltigt artikelnummer och antal lådor.');
+      return;
+    }
+
+    // Check if product exists
+    if (!productExists(artikelnummer)) {
+      alert(`Artikelnummer ${artikelnummer} finns inte i produktdatabasen.`);
+      return;
+    }
+
+    // Get product box type
+    const boxTypeName = getProductBoxType(artikelnummer);
+    if (!boxTypeName) {
+      alert(`Kunde inte hitta produktinformation för artikelnummer ${artikelnummer}.`);
+      return;
+    }
+
+    const boxTypeData = getBoxType(boxTypeName);
 
     // Create a new skvettpall
     const newSkvettpall = {
       artikelnummer,
       boxCount,
-      boxType: 'red', // Default to red
-      boxConfig: { 
-        boxesPerRow: 8,
-        heightInRedBoxUnits: 1 // Default red box height
-      },
-      stackHeight: Math.ceil(boxCount / 8), // Assuming 8 boxes per row by default
-      heightInRedUnits: 1 + (Math.ceil(boxCount / 8) * 1) // 1 pallet + stack height
+      boxType: boxTypeName,
+      boxConfig: boxTypeData,
+      stackHeight: Math.ceil(boxCount / boxTypeData.boxesPerRow),
+      heightInRedUnits: 1 + (Math.ceil(boxCount / boxTypeData.boxesPerRow) * boxTypeData.heightInRedBoxUnits)
     };
 
     // Add skvettpall to the combo
@@ -680,19 +753,41 @@ function Results({ orderData, results, onBack, onEdit }) {
     const parsedArtikelnummer = parseInt(artikelnummer);
     const parsedBoxCount = parseInt(boxCount);
 
-    if (parsedBoxCount <= 0) return;
+    // Validate input
+    if (isNaN(parsedArtikelnummer) || parsedBoxCount <= 0) {
+      alert('Ange ett giltigt artikelnummer och antal lådor.');
+      return;
+    }
+
+    // Check if product exists
+    if (!productExists(parsedArtikelnummer)) {
+      alert(`Produkten med artikelnummer ${parsedArtikelnummer} finns inte i databasen.`);
+      return;
+    }
+
+    // Get the correct box type for this product
+    const boxType = getProductBoxType(parsedArtikelnummer);
+    if (!boxType) {
+      alert(`Kunde inte hitta lådtyp för artikelnummer ${parsedArtikelnummer}.`);
+      return;
+    }
 
     const newStash = { ...stash };
     const combo = newStash.comboPallets[comboIndex].combo;
     const product = combo.skvettpalls[productIndex];
 
-    // Update the product
-    product.artikelnummer = parsedArtikelnummer || product.artikelnummer;
+    // Get the box configuration for the new box type
+    const boxConfig = getBoxType(boxType);
+
+    // Update the product with correct box configuration
+    product.artikelnummer = parsedArtikelnummer;
     product.boxCount = parsedBoxCount;
+    product.boxType = boxType;
+    product.boxConfig = boxConfig;
     
-    // Recalculate stack height and height in red units
-    product.stackHeight = Math.ceil(parsedBoxCount / product.boxConfig.boxesPerRow);
-    product.heightInRedUnits = 1 + (product.stackHeight * product.boxConfig.heightInRedBoxUnits);
+    // Recalculate stack height and height in red units with correct box configuration
+    product.stackHeight = Math.ceil(parsedBoxCount / boxConfig.boxesPerRow);
+    product.heightInRedUnits = 1 + (product.stackHeight * boxConfig.heightInRedBoxUnits);
     
     // Recalculate combo total height
     combo.totalHeight = combo.skvettpalls.reduce((sum, pall) => sum + pall.heightInRedUnits, 0);
@@ -722,18 +817,40 @@ function Results({ orderData, results, onBack, onEdit }) {
     const parsedArtikelnummer = parseInt(artikelnummer);
     const parsedBoxCount = parseInt(boxCount);
 
-    if (parsedBoxCount <= 0) return;
+    // Validate input
+    if (isNaN(parsedArtikelnummer) || parsedBoxCount <= 0) {
+      alert('Ange ett giltigt artikelnummer och antal lådor.');
+      return;
+    }
+
+    // Check if product exists
+    if (!productExists(parsedArtikelnummer)) {
+      alert(`Produkten med artikelnummer ${parsedArtikelnummer} finns inte i databasen.`);
+      return;
+    }
+
+    // Get the correct box type for this product
+    const boxType = getProductBoxType(parsedArtikelnummer);
+    if (!boxType) {
+      alert(`Kunde inte hitta lådtyp för artikelnummer ${parsedArtikelnummer}.`);
+      return;
+    }
 
     const newStash = { ...stash };
     const product = newStash.skvettpalls[index].skvettpall;
 
-    // Update the product
-    product.artikelnummer = parsedArtikelnummer || product.artikelnummer;
+    // Get the box configuration for the new box type
+    const boxConfig = getBoxType(boxType);
+
+    // Update the product with correct box configuration
+    product.artikelnummer = parsedArtikelnummer;
     product.boxCount = parsedBoxCount;
+    product.boxType = boxType;
+    product.boxConfig = boxConfig;
     
-    // Recalculate stack height and height in red units
-    product.stackHeight = Math.ceil(parsedBoxCount / product.boxConfig.boxesPerRow);
-    product.heightInRedUnits = 1 + (product.stackHeight * product.boxConfig.heightInRedBoxUnits);
+    // Recalculate stack height and height in red units with correct box configuration
+    product.stackHeight = Math.ceil(parsedBoxCount / boxConfig.boxesPerRow);
+    product.heightInRedUnits = 1 + (product.stackHeight * boxConfig.heightInRedBoxUnits);
     
     setStash(newStash);
     setEditingStashedSkvettpall(null);
@@ -964,7 +1081,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                                     +
                                   </button>
                                 </div>
-                                {skvettpall.mixPallItems && skvettpall.mixPallItems.map((mixItem, mixIdx) => {
+                                {skvettpall.mixPallItems && [...skvettpall.mixPallItems].sort((a, b) => b.boxCount - a.boxCount).map((mixItem, mixIdx) => {
                                   const isMixItemEditing = editingComboMixPallProduct?.comboIndex === index && editingComboMixPallProduct?.mixItemIndex === mixIdx && editingComboMixPallProduct?.isStashed;
                                   
                                   return (
@@ -1437,7 +1554,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                                     +
                                   </button>
                                 </div>
-                                {skvettpall.mixPallItems && skvettpall.mixPallItems.map((mixItem, mixIdx) => {
+                                {skvettpall.mixPallItems && [...skvettpall.mixPallItems].sort((a, b) => b.boxCount - a.boxCount).map((mixItem, mixIdx) => {
                                   const isMixItemEditing = editingComboMixPallProduct?.comboIndex === comboIndex && editingComboMixPallProduct?.mixItemIndex === mixIdx;
                                   
                                   return (
@@ -1670,7 +1787,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                 </div>
                 
                 <div className="combo-products">
-                  {mixPall.map((item, index) => {
+                  {[...mixPall].sort((a, b) => b.boxCount - a.boxCount).map((item, index) => {
                     const isEditing = editingMixPallProduct?.index === index;
                     
                     return (

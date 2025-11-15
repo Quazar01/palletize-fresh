@@ -90,6 +90,11 @@ function Home() {
         } else if (optimizationResult.standaloneMixPall) {
           // Mix pall stays separate but as a combo pallet representation
           hasMixPall = true;
+          // Keep the original mix pall list from processing
+          mixPallList = processed.mixPallList;
+        } else {
+          // No mix pall at all or it wasn't processed
+          mixPallList = processed.mixPallList;
         }
         
         // Move single-skvettpall combos that meet criteria to Full Pall list
