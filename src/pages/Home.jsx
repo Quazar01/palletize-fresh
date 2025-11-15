@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import './Home.css';
 import { parseExcelFile, validateExcelFile } from '../utils/excelParser';
 import { processOrder, processOrderHelsingborg } from '../utils/palletCalculations';
-import { optimizeComboPalletsAdvanced, optimizeComboPalletsWithMixPall, calculateTotalParcels } from '../utils/comboOptimizer';
+import { optimizeComboPalletsWithMixPall, calculateTotalParcels } from '../utils/comboOptimizer';
 import { calculateTruckSlots } from '../utils/truckSlotCalculations';
 import Results from './Results';
 
