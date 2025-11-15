@@ -5,6 +5,7 @@ function Results({ orderData, results, onBack, onEdit }) {
   const [fullPallets, setFullPallets] = useState(results.fullPalletsList);
   const [comboPallets, setComboPallets] = useState(results.comboPallets);
   const [mixPall, setMixPall] = useState(results.mixPallList);
+  const palletMode = results.palletMode || 'combo'; // Get the pallet mode
   const [editingPallet, setEditingPallet] = useState(null);
   const [editingPalletIndex, setEditingPalletIndex] = useState(null);
   const [isAddingNew, setIsAddingNew] = useState(false);
@@ -777,7 +778,7 @@ function Results({ orderData, results, onBack, onEdit }) {
         <div className="pallets-section">
           <div className="section-header">
             <div className="section-header-top">
-              <h2 className="section-title">Combo Pallar</h2>
+              <h2 className="section-title">{palletMode === 'enkel' ? 'Enkel' : 'Combo'}</h2>
               <span className="section-count">{comboPallets.length + (mixPall.length > 0 ? 1 : 0)} pallar</span>
             </div>
             <button className="btn btn-primary" onClick={handleAddCombo} style={{padding: '0.5rem 1rem', fontSize: '0.85rem', width: '100%'}}>
@@ -1048,7 +1049,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                 ))}
               </>
             ) : (
-              <div className="no-data">Inga combo pallar</div>
+              <div className="no-data">{palletMode === 'enkel' ? 'Inga enkel' : 'Inga combo'}</div>
             )}
 
             {/* Mix Pall as item within Combo Pallets column */}
@@ -1157,7 +1158,7 @@ function Results({ orderData, results, onBack, onEdit }) {
         <div className="pallets-section">
           <div className="section-header">
             <div className="section-header-top">
-              <h2 className="section-title">Fulla Pallar</h2>
+              <h2 className="section-title">Full Pall</h2>
               <span className="section-count">{totalFullPalletCount} pallar</span>
             </div>
             <button className="btn btn-primary" onClick={handleAddNew} style={{padding: '0.5rem 1rem', fontSize: '0.85rem', width: '100%'}}>
@@ -1217,26 +1218,41 @@ function Results({ orderData, results, onBack, onEdit }) {
                           </div>
                         ) : (
                           <div className="pallet-boxes">
-                            {Array.from({ length: pallet.fullPallets }, (_, i) => (
+                            {pallet.isSingleSkvettpall ? (
                               <span 
-                                key={i} 
                                 className="pallet-box-badge"
-                                onClick={() => handleEditPallet(index)}
-                                style={{cursor: 'pointer', position: 'relative', fontSize: '0.8rem', padding: '0.3rem 0.6rem'}}
+                                style={{
+                                  fontSize: '0.8rem', 
+                                  padding: '0.3rem 0.6rem',
+                                  background: '#95c5c5',
+                                  cursor: 'default'
+                                }}
+                                title="Skvettpall"
                               >
-                                {pallet.boxesPerPallet}
-                                <button
-                                  className="delete-box-btn"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleDeletePalletBox(index, i);
-                                  }}
-                                  title="Ta bort denna pall"
-                                >
-                                  ×
-                                </button>
+                                Skvettpall
                               </span>
-                            ))}
+                            ) : (
+                              Array.from({ length: pallet.fullPallets }, (_, i) => (
+                                <span 
+                                  key={i} 
+                                  className="pallet-box-badge"
+                                  onClick={() => handleEditPallet(index)}
+                                  style={{cursor: 'pointer', position: 'relative', fontSize: '0.8rem', padding: '0.3rem 0.6rem'}}
+                                >
+                                  {pallet.boxesPerPallet}
+                                  <button
+                                    className="delete-box-btn"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDeletePalletBox(index, i);
+                                    }}
+                                    title="Ta bort denna pall"
+                                  >
+                                    ×
+                                  </button>
+                                </span>
+                              ))
+                            )}
                           </div>
                         )}
                       </td>
@@ -1321,7 +1337,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                 </tbody>
               </table>
             ) : (
-              <div className="no-data">Inga fulla pallar</div>
+              <div className="no-data">Inga full pall</div>
             )}
           </div>
         </div>

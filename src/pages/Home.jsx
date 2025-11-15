@@ -67,6 +67,7 @@ function Home() {
       let comboPallets = [];
       let mixPallList = processed.mixPallList;
       let hasMixPall = processed.mixPallList.length > 0;
+      let fullPalletsList = [...processed.fullPalletsList];
       
       if (selectedOption === 'combo') {
         // Try to optimize with mix pall included
@@ -85,8 +86,45 @@ function Home() {
           // Mix pall stays separate but as a combo pallet representation
           hasMixPall = true;
         }
+        
+        // Move single-skvettpall combos to Full Pall list
+        const singleSkvettpallCombos = [];
+        comboPallets = comboPallets.filter(combo => {
+          if (combo.skvettpalls.length === 1 && !combo.skvettpalls[0].isMixPall) {
+            singleSkvettpallCombos.push(combo.skvettpalls[0]);
+            return false;
+          }
+          return true;
+        });
+        
+        // Add single skvettpalls to full pallets list
+        singleSkvettpallCombos.forEach(skvettpall => {
+          fullPalletsList.push({
+            artikelnummer: skvettpall.artikelnummer,
+            fullPallets: 1,
+            boxType: skvettpall.boxType,
+            boxesPerPallet: skvettpall.boxCount,
+            totalBoxes: skvettpall.boxCount,
+            isSingleSkvettpall: true, // Mark as single skvettpall
+          });
+        });
+        
+        // Sort Full Pall list: regular full pallets first (by box count), then single skvettpalls
+        fullPalletsList.sort((a, b) => {
+          if (a.isSingleSkvettpall && !b.isSingleSkvettpall) return 1;
+          if (!a.isSingleSkvettpall && b.isSingleSkvettpall) return -1;
+          // Within same type, sort by total boxes (descending)
+          return b.totalBoxes - a.totalBoxes;
+        });
+      } else if (selectedOption === 'enkel') {
+        // Enkel Pall mode: each skvettpall is its own parcel, no combining
+        comboPallets = processed.skvettpallsList.map(skvettpall => ({
+          skvettpalls: [skvettpall],
+          totalHeight: skvettpall.heightInRedUnits,
+          palletCount: 1,
+        }));
       } else {
-        // If not combo mode, each skvettpall is its own parcel
+        // Other modes: each skvettpall is its own parcel
         comboPallets = processed.skvettpallsList.map(skvettpall => ({
           skvettpalls: [skvettpall],
           totalHeight: skvettpall.heightInRedUnits,
@@ -95,15 +133,17 @@ function Home() {
       }
 
       // Calculate total parcels
-      const totalFullPallets = processed.fullPalletsList.reduce((sum, p) => sum + p.fullPallets, 0);
+      const totalFullPallets = fullPalletsList.reduce((sum, p) => sum + p.fullPallets, 0);
       const totalParcels = calculateTotalParcels(totalFullPallets, comboPallets, hasMixPall);
 
       // Update results
       const finalResults = {
         ...processed,
+        fullPalletsList, // Use the updated full pallets list
         comboPallets,
         mixPallList,
         totalParcels,
+        palletMode: selectedOption, // Pass the selected mode
       };
 
       setResults(finalResults);
@@ -172,7 +212,7 @@ function Home() {
             checked={selectedOption === 'combo'}
             onChange={(e) => setSelectedOption(e.target.value)}
           />
-          <span>Combo Pallets</span>
+          <span>Combo</span>
         </label>
         <label className="radio-option">
           <input
@@ -182,7 +222,7 @@ function Home() {
             checked={selectedOption === 'enkel'}
             onChange={(e) => setSelectedOption(e.target.value)}
           />
-          <span>Enkel Pall</span>
+          <span>Enkel</span>
         </label>
         <label className="radio-option">
           <input
