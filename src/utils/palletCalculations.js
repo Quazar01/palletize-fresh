@@ -87,6 +87,7 @@ export const processOrder = (orderData) => {
   const fullPalletsList = [];
   const skvettpallsList = [];
   const mixPallList = [];
+  const unknownProducts = []; // Track unknown products
   let totalEUPallets = 0;
   let totalBoxes = 0;
   let totalParcels = 0;
@@ -96,6 +97,10 @@ export const processOrder = (orderData) => {
     
     if (!result) {
       console.warn(`Skipping unknown product: ${item.artikelnummer}`);
+      unknownProducts.push({
+        artikelnummer: item.artikelnummer,
+        boxCount: item.beställdaDFP
+      });
       return;
     }
 
@@ -144,6 +149,7 @@ export const processOrder = (orderData) => {
     fullPalletsList,
     skvettpallsList,
     mixPallList,
+    unknownProducts,
     totalEUPallets,
     totalBoxes,
     totalParcels, // Will be updated after combo optimization
@@ -159,6 +165,7 @@ export const processOrderHelsingborg = (orderData) => {
   const fullPalletsList = [];
   const skvettpallsList = [];
   const mixPallList = [];
+  const unknownProducts = []; // Track unknown products
   let totalEUPallets = 0;
   let totalBoxes = 0;
   let totalParcels = 0;
@@ -168,6 +175,10 @@ export const processOrderHelsingborg = (orderData) => {
     
     if (!result) {
       console.warn(`Skipping unknown product: ${item.artikelnummer}`);
+      unknownProducts.push({
+        artikelnummer: item.artikelnummer,
+        boxCount: item.beställdaDFP
+      });
       return;
     }
 
@@ -219,5 +230,6 @@ export const processOrderHelsingborg = (orderData) => {
     totalEUPallets,
     totalBoxes,
     totalParcels, // Will be updated after combo optimization
+    unknownProducts,
   };
 };

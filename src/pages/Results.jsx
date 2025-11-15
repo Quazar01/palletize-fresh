@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import './Results.css';
 import { getBoxType } from '../utils/constants';
 import { getProductBoxType, productExists } from '../utils/productMapping';
@@ -14,6 +14,7 @@ function Results({ orderData, results, onBack, onEdit }) {
   const [newPallet, setNewPallet] = useState({ artikelnummer: '', boxesPerPallet: '', count: 1 });
   const [editingComboProduct, setEditingComboProduct] = useState(null); // { comboIndex, productIndex, artikelnummer, boxCount }
   const [editingMixPallProduct, setEditingMixPallProduct] = useState(null); // { index, artikelnummer, boxCount }
+  const [editingComboMixPallProduct, setEditingComboMixPallProduct] = useState(null); // { comboIndex, mixItemIndex, artikelnummer, boxCount }
   const [isAddingCombo, setIsAddingCombo] = useState(false);
   const [newComboProduct, setNewComboProduct] = useState({ artikelnummer: '', boxCount: '' });
   const [newComboSkvettpalls, setNewComboSkvettpalls] = useState([]); // Array of skvettpalls being built for new combo
@@ -23,6 +24,14 @@ function Results({ orderData, results, onBack, onEdit }) {
   const [draggedItem, setDraggedItem] = useState(null); // Track what's being dragged
   const [editingStashedComboProduct, setEditingStashedComboProduct] = useState(null); // { comboIndex, productIndex, artikelnummer, boxCount }
   const [editingStashedSkvettpall, setEditingStashedSkvettpall] = useState(null); // { index, artikelnummer, boxCount }
+  const [showUnknownBanner, setShowUnknownBanner] = useState(false); // Show banner for unknown products
+
+  // Show banner if there are unknown products
+  useEffect(() => {
+    if (results.unknownProducts && results.unknownProducts.length > 0) {
+      setShowUnknownBanner(true);
+    }
+  }, [results.unknownProducts]);
 
   const handlePrint = () => {
     window.print();
@@ -239,6 +248,190 @@ function Results({ orderData, results, onBack, onEdit }) {
       newMixPall[index].boxCount = parseInt(value) || 0;
     }
     setMixPall(newMixPall);
+  };
+
+  // Handlers for editing Mix pall items within combo pallets
+  const handleClickComboMixPallProduct = (comboIndex, mixItemIndex) => {
+    // Find the combo and get the mix pall item
+    const combo = comboPallets[comboIndex];
+    const mixPallSkvettpall = combo.skvettpalls.find(s => s.isMixPall);
+    if (mixPallSkvettpall && mixPallSkvettpall.mixPallItems) {
+      const mixItem = mixPallSkvettpall.mixPallItems[mixItemIndex];
+      setEditingComboMixPallProduct({
+        comboIndex,
+        mixItemIndex,
+        artikelnummer: mixItem.artikelnummer,
+        boxCount: mixItem.boxCount
+      });
+    }
+  };
+
+  const handleSaveComboMixPallProduct = () => {
+    if (!editingComboMixPallProduct) return;
+
+    const { comboIndex, mixItemIndex, artikelnummer, boxCount } = editingComboMixPallProduct;
+    const parsedArtikelnummer = parseInt(artikelnummer);
+    const parsedBoxCount = parseInt(boxCount);
+
+    if (parsedBoxCount <= 0) return;
+
+    const newComboPallets = [...comboPallets];
+    const combo = newComboPallets[comboIndex];
+    const mixPallIndex = combo.skvettpalls.findIndex(s => s.isMixPall);
+    
+    if (mixPallIndex !== -1) {
+      newComboPallets[comboIndex].skvettpalls[mixPallIndex].mixPallItems[mixItemIndex] = {
+        ...newComboPallets[comboIndex].skvettpalls[mixPallIndex].mixPallItems[mixItemIndex],
+        artikelnummer: parsedArtikelnummer || newComboPallets[comboIndex].skvettpalls[mixPallIndex].mixPallItems[mixItemIndex].artikelnummer,
+        boxCount: parsedBoxCount
+      };
+      
+      setComboPallets(newComboPallets);
+    }
+    
+    setEditingComboMixPallProduct(null);
+  };
+
+  const handleCancelComboMixPallEdit = () => {
+    setEditingComboMixPallProduct(null);
+  };
+
+  const handleDeleteComboMixPallProduct = (comboIndex, mixItemIndex) => {
+    const newComboPallets = [...comboPallets];
+    const combo = newComboPallets[comboIndex];
+    const mixPallIndex = combo.skvettpalls.findIndex(s => s.isMixPall);
+    
+    if (mixPallIndex !== -1) {
+      newComboPallets[comboIndex].skvettpalls[mixPallIndex].mixPallItems = 
+        newComboPallets[comboIndex].skvettpalls[mixPallIndex].mixPallItems.filter((_, i) => i !== mixItemIndex);
+      
+      // If no items left in mix pall, remove the entire mix pall skvettpall
+      if (newComboPallets[comboIndex].skvettpalls[mixPallIndex].mixPallItems.length === 0) {
+        newComboPallets[comboIndex].skvettpalls = 
+          newComboPallets[comboIndex].skvettpalls.filter((_, i) => i !== mixPallIndex);
+      }
+      
+      setComboPallets(newComboPallets);
+    }
+  };
+
+  // Handler to add a new product to Mix pall within a combo
+  const handleAddProductToComboMixPall = (comboIndex) => {
+    const newComboPallets = [...comboPallets];
+    const combo = newComboPallets[comboIndex];
+    const mixPallIndex = combo.skvettpalls.findIndex(s => s.isMixPall);
+    
+    if (mixPallIndex !== -1) {
+      // Add a new empty product to the mix pall
+      const newProduct = {
+        artikelnummer: 0,
+        boxCount: 1,
+        boxType: 'red',
+        boxConfig: { boxesPerRow: 8 }
+      };
+      
+      newComboPallets[comboIndex].skvettpalls[mixPallIndex].mixPallItems.push(newProduct);
+      setComboPallets(newComboPallets);
+      
+      // Automatically start editing the new product
+      const newIndex = newComboPallets[comboIndex].skvettpalls[mixPallIndex].mixPallItems.length - 1;
+      setEditingComboMixPallProduct({
+        comboIndex,
+        mixItemIndex: newIndex,
+        artikelnummer: 0,
+        boxCount: 1
+      });
+    }
+  };
+
+  // Handlers for editing Mix pall items within stashed combo pallets
+  const handleClickStashedComboMixPallProduct = (comboIndex, mixItemIndex) => {
+    const item = stash.comboPallets[comboIndex];
+    const mixPallSkvettpall = item.combo.skvettpalls.find(s => s.isMixPall);
+    if (mixPallSkvettpall && mixPallSkvettpall.mixPallItems) {
+      const mixItem = mixPallSkvettpall.mixPallItems[mixItemIndex];
+      setEditingComboMixPallProduct({
+        comboIndex,
+        mixItemIndex,
+        artikelnummer: mixItem.artikelnummer,
+        boxCount: mixItem.boxCount,
+        isStashed: true
+      });
+    }
+  };
+
+  const handleAddProductToStashedComboMixPall = (comboIndex) => {
+    const newStash = { ...stash };
+    const item = newStash.comboPallets[comboIndex];
+    const mixPallIndex = item.combo.skvettpalls.findIndex(s => s.isMixPall);
+    
+    if (mixPallIndex !== -1) {
+      // Add a new empty product to the mix pall
+      const newProduct = {
+        artikelnummer: 0,
+        boxCount: 1,
+        boxType: 'red',
+        boxConfig: { boxesPerRow: 8 }
+      };
+      
+      newStash.comboPallets[comboIndex].combo.skvettpalls[mixPallIndex].mixPallItems.push(newProduct);
+      setStash(newStash);
+      
+      // Automatically start editing the new product
+      const newIndex = newStash.comboPallets[comboIndex].combo.skvettpalls[mixPallIndex].mixPallItems.length - 1;
+      setEditingComboMixPallProduct({
+        comboIndex,
+        mixItemIndex: newIndex,
+        artikelnummer: 0,
+        boxCount: 1,
+        isStashed: true
+      });
+    }
+  };
+
+  const handleSaveStashedComboMixPallProduct = () => {
+    if (!editingComboMixPallProduct || !editingComboMixPallProduct.isStashed) return;
+
+    const { comboIndex, mixItemIndex, artikelnummer, boxCount } = editingComboMixPallProduct;
+    const parsedArtikelnummer = parseInt(artikelnummer);
+    const parsedBoxCount = parseInt(boxCount);
+
+    if (parsedBoxCount <= 0) return;
+
+    const newStash = { ...stash };
+    const item = newStash.comboPallets[comboIndex];
+    const mixPallIndex = item.combo.skvettpalls.findIndex(s => s.isMixPall);
+    
+    if (mixPallIndex !== -1) {
+      newStash.comboPallets[comboIndex].combo.skvettpalls[mixPallIndex].mixPallItems[mixItemIndex] = {
+        ...newStash.comboPallets[comboIndex].combo.skvettpalls[mixPallIndex].mixPallItems[mixItemIndex],
+        artikelnummer: parsedArtikelnummer || newStash.comboPallets[comboIndex].combo.skvettpalls[mixPallIndex].mixPallItems[mixItemIndex].artikelnummer,
+        boxCount: parsedBoxCount
+      };
+      
+      setStash(newStash);
+    }
+    
+    setEditingComboMixPallProduct(null);
+  };
+
+  const handleDeleteStashedComboMixPallProduct = (comboIndex, mixItemIndex) => {
+    const newStash = { ...stash };
+    const item = newStash.comboPallets[comboIndex];
+    const mixPallIndex = item.combo.skvettpalls.findIndex(s => s.isMixPall);
+    
+    if (mixPallIndex !== -1) {
+      newStash.comboPallets[comboIndex].combo.skvettpalls[mixPallIndex].mixPallItems = 
+        newStash.comboPallets[comboIndex].combo.skvettpalls[mixPallIndex].mixPallItems.filter((_, i) => i !== mixItemIndex);
+      
+      // If no items left in mix pall, remove the entire mix pall skvettpall
+      if (newStash.comboPallets[comboIndex].combo.skvettpalls[mixPallIndex].mixPallItems.length === 0) {
+        newStash.comboPallets[comboIndex].combo.skvettpalls = 
+          newStash.comboPallets[comboIndex].combo.skvettpalls.filter((_, i) => i !== mixPallIndex);
+      }
+      
+      setStash(newStash);
+    }
   };
 
   const handleAddMixPallProduct = () => {
@@ -620,20 +813,20 @@ function Results({ orderData, results, onBack, onEdit }) {
 
             <div className="summary-stats">
               <div className="stat-card">
-                <div className="stat-label"><span className="stat-icon">📦 </span>Lådor</div>
+                <div className="stat-label">Lådor</div>
                 <div className="stat-value">{totalBoxes}</div>
               </div>
               <div className="stat-card">
-                <div className="stat-label"><span className="stat-icon">🏭 </span>SRS Pall</div>
+                <div className="stat-label">SRS Pall</div>
                 <div className="stat-value">{totalEUPallets}</div>
               </div>
               <div className="stat-card">
-                <div className="stat-label"><span className="stat-icon">📋 </span>Kolli</div>
+                <div className="stat-label">Kolli</div>
                 <div className="stat-value">{totalParcels}</div>
               </div>
               {(palletMode === 'enkel' || palletMode === 'helsingborg') && results.truckSlots !== null && (
                 <div className="stat-card">
-                  <div className="stat-label"><span className="stat-icon">🚛 </span>Platser</div>
+                  <div className="stat-label">Platser</div>
                   <div className="stat-value">{results.truckSlots}</div>
                 </div>
               )}
@@ -665,6 +858,34 @@ function Results({ orderData, results, onBack, onEdit }) {
             </div>
           </div>
           
+          {/* Unknown Products Banner */}
+          {showUnknownBanner && results.unknownProducts && results.unknownProducts.length > 0 && (
+            <div className="unknown-products-banner">
+              <div className="banner-header">
+                <span className="banner-icon">⚠️</span>
+                <span className="banner-title">Okända produkter upptäcktes</span>
+                <button 
+                  className="banner-close" 
+                  onClick={() => setShowUnknownBanner(false)}
+                  title="Stäng"
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="banner-content">
+                <p>Följande produkter finns inte i databasen:</p>
+                <ul>
+                  {results.unknownProducts.map((product, index) => (
+                    <li key={index}>
+                      <strong>Artikelnummer:</strong> {product.artikelnummer} 
+                      <span className="product-count"> ({product.boxCount} DFP)</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+          
           <div 
             className={`section-content stash-drop-zone ${stash.comboPallets.length === 0 && stash.skvettpalls.length === 0 ? 'stash-empty' : ''}`}
             onDragOver={handleDragOver}
@@ -683,8 +904,8 @@ function Results({ orderData, results, onBack, onEdit }) {
                     <div className="combo-header">
                       <span className="combo-title">Stashed Pall #{index + 1}</span>
                       <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
-                        <span className="combo-height" title="Pallets höjd i röda backar">
-                          {(item.combo.totalHeight - 1).toFixed(2)} h
+                        <span className="combo-height" title="Höjden i röda backar enhet">
+                          {(item.combo.totalHeight - 1).toFixed(2)}
                         </span>
                         <button 
                           className="btn btn-primary" 
@@ -708,10 +929,126 @@ function Results({ orderData, results, onBack, onEdit }) {
                     <div className="combo-products">
                       {item.combo.skvettpalls.map((skvettpall, pallIndex) => {
                         const isEditing = editingStashedComboProduct?.comboIndex === index && editingStashedComboProduct?.productIndex === pallIndex;
+                        const isMixPall = skvettpall.isMixPall;
                         
                         return (
                           <div key={pallIndex} className={`combo-product-line ${isEditing ? 'editing' : ''}`} style={{fontSize: '0.85rem', padding: '0.4rem'}}>
-                            {isEditing ? (
+                            {isMixPall ? (
+                              // Display mix pall items
+                              <div style={{width: '100%'}}>
+                                <div style={{
+                                  marginBottom: '0.5rem', 
+                                  fontWeight: 600, 
+                                  color: '#5ba0a0', 
+                                  textAlign: 'left', 
+                                  fontSize: '0.8rem',
+                                  display: 'flex',
+                                  justifyContent: 'space-between',
+                                  alignItems: 'center'
+                                }}>
+                                  <span>Mix</span>
+                                  <button 
+                                    className="icon-btn" 
+                                    onClick={() => handleAddProductToStashedComboMixPall(index)}
+                                    style={{
+                                      fontSize: '0.9rem', 
+                                      padding: '0.15rem 0.35rem',
+                                      background: '#5ba0a0',
+                                      color: 'white',
+                                      border: 'none',
+                                      borderRadius: '4px',
+                                      cursor: 'pointer'
+                                    }}
+                                    title="Lägg till produkt"
+                                  >
+                                    +
+                                  </button>
+                                </div>
+                                {skvettpall.mixPallItems && skvettpall.mixPallItems.map((mixItem, mixIdx) => {
+                                  const isMixItemEditing = editingComboMixPallProduct?.comboIndex === index && editingComboMixPallProduct?.mixItemIndex === mixIdx && editingComboMixPallProduct?.isStashed;
+                                  
+                                  return (
+                                    <div key={mixIdx} className={`combo-product-line ${isMixItemEditing ? 'editing' : ''}`} style={{
+                                      fontSize: '0.75rem',
+                                      padding: '0.25rem 0.5rem',
+                                      marginBottom: '0.25rem',
+                                      background: '#f8f9fa',
+                                      borderRadius: '4px',
+                                      display: 'flex',
+                                      justifyContent: 'space-between',
+                                      alignItems: 'center'
+                                    }}>
+                                      {isMixItemEditing ? (
+                                        <>
+                                          <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
+                                            <input
+                                              type="number"
+                                              className="edit-input"
+                                              value={editingComboMixPallProduct.artikelnummer}
+                                              onChange={(e) => setEditingComboMixPallProduct({...editingComboMixPallProduct, artikelnummer: e.target.value})}
+                                              placeholder="Art.nr"
+                                              style={{width: '70px', padding: '0.25rem', fontSize: '0.75rem'}}
+                                            />
+                                            <input
+                                              type="number"
+                                              className="edit-input"
+                                              value={editingComboMixPallProduct.boxCount}
+                                              onChange={(e) => setEditingComboMixPallProduct({...editingComboMixPallProduct, boxCount: e.target.value})}
+                                              placeholder="Antal"
+                                              style={{width: '50px', padding: '0.25rem', fontSize: '0.75rem'}}
+                                            />
+                                          </div>
+                                          <div style={{display: 'flex', alignItems: 'center', gap: '0.25rem'}}>
+                                            <button 
+                                              className="icon-btn save" 
+                                              onClick={handleSaveStashedComboMixPallProduct}
+                                              title="Spara"
+                                              style={{fontSize: '0.8rem', padding: '0.2rem'}}
+                                            >
+                                              ✓
+                                            </button>
+                                            <button 
+                                              className="icon-btn cancel" 
+                                              onClick={handleCancelComboMixPallEdit}
+                                              title="Avbryt"
+                                              style={{fontSize: '0.8rem', padding: '0.2rem'}}
+                                            >
+                                              ✕
+                                            </button>
+                                          </div>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <span 
+                                            onClick={() => handleClickStashedComboMixPallProduct(index, mixIdx)}
+                                            style={{
+                                              cursor: 'pointer',
+                                              flex: 1,
+                                              padding: '0.25rem',
+                                              borderRadius: '4px',
+                                              transition: 'background 0.2s'
+                                            }}
+                                            onMouseEnter={(e) => e.currentTarget.style.background = '#e0e0e0'}
+                                            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                                            title="Klicka för att redigera"
+                                          >
+                                            <strong>{mixItem.artikelnummer}:</strong> {mixItem.boxCount}
+                                          </span>
+                                          <button 
+                                            className="icon-btn delete small" 
+                                            onClick={() => handleDeleteStashedComboMixPallProduct(index, mixIdx)}
+                                            title="Ta bort"
+                                            style={{fontSize: '0.7rem', padding: '0.15rem'}}
+                                          >
+                                            ×
+                                          </button>
+                                        </>
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            ) : isEditing ? (
                               <>
                                 <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
                                   <input
@@ -891,8 +1228,8 @@ function Results({ orderData, results, onBack, onEdit }) {
                   <span className="combo-title">Ny Combo Pall</span>
                   <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
                     {newComboSkvettpalls.length > 0 && (
-                      <span className="combo-height" title="Pallets höjd i röda backar">
-                        {(newComboSkvettpalls.reduce((sum, p) => sum + p.heightInRedUnits, 0) - 1).toFixed(2)} h
+                      <span className="combo-height" title="Höjden i röda backar enhet">
+                        {(newComboSkvettpalls.reduce((sum, p) => sum + p.heightInRedUnits, 0) - 1).toFixed(2)}
                       </span>
                     )}
                     <button 
@@ -1011,8 +1348,8 @@ function Results({ orderData, results, onBack, onEdit }) {
                     >
                       <span className="combo-title">Pall #{displayIndex + 1}</span>
                       <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
-                        <span className="combo-height" title="Pallets höjd i röda backar">
-                          {(combo.totalHeight - 1).toFixed(2)} h
+                        <span className="combo-height" title="Höjden i röda backar enhet">
+                          {(combo.totalHeight - 1).toFixed(2)}
                         </span>
                         <button 
                           className="icon-btn" 
@@ -1073,24 +1410,116 @@ function Results({ orderData, results, onBack, onEdit }) {
                             {isMixPall ? (
                               // Display mix pall items
                               <div style={{width: '100%'}}>
-                                <div style={{marginBottom: '0.5rem', fontWeight: 600, color: '#5ba0a0', textAlign: 'left'}}>
-                                  Mix
+                                <div style={{
+                                  marginBottom: '0.5rem', 
+                                  fontWeight: 600, 
+                                  color: '#5ba0a0', 
+                                  textAlign: 'left',
+                                  display: 'flex',
+                                  justifyContent: 'space-between',
+                                  alignItems: 'center'
+                                }}>
+                                  <span>Mix</span>
+                                  <button 
+                                    className="icon-btn" 
+                                    onClick={() => handleAddProductToComboMixPall(comboIndex)}
+                                    style={{
+                                      fontSize: '1rem', 
+                                      padding: '0.15rem 0.4rem',
+                                      background: '#5ba0a0',
+                                      color: 'white',
+                                      border: 'none',
+                                      borderRadius: '4px',
+                                      cursor: 'pointer'
+                                    }}
+                                    title="Lägg till produkt"
+                                  >
+                                    +
+                                  </button>
                                 </div>
-                                {skvettpall.mixPallItems && skvettpall.mixPallItems.map((mixItem, mixIdx) => (
-                                  <div key={mixIdx} style={{
-                                    fontSize: '0.8rem',
-                                    padding: '0.25rem 0.5rem',
-                                    marginBottom: '0.25rem',
-                                    background: '#f8f9fa',
-                                    borderRadius: '4px',
-                                    display: 'flex',
-                                    justifyContent: 'space-between'
-                                  }}>
-                                    <span>
-                                      <strong>{mixItem.artikelnummer}:</strong> {mixItem.boxCount}
-                                    </span>
-                                  </div>
-                                ))}
+                                {skvettpall.mixPallItems && skvettpall.mixPallItems.map((mixItem, mixIdx) => {
+                                  const isMixItemEditing = editingComboMixPallProduct?.comboIndex === comboIndex && editingComboMixPallProduct?.mixItemIndex === mixIdx;
+                                  
+                                  return (
+                                    <div key={mixIdx} className={`combo-product-line ${isMixItemEditing ? 'editing' : ''}`} style={{
+                                      fontSize: '0.8rem',
+                                      padding: '0.25rem 0.5rem',
+                                      marginBottom: '0.25rem',
+                                      background: '#f8f9fa',
+                                      borderRadius: '4px',
+                                      display: 'flex',
+                                      justifyContent: 'space-between',
+                                      alignItems: 'center'
+                                    }}>
+                                      {isMixItemEditing ? (
+                                        <>
+                                          <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
+                                            <input
+                                              type="number"
+                                              className="edit-input"
+                                              value={editingComboMixPallProduct.artikelnummer}
+                                              onChange={(e) => setEditingComboMixPallProduct({...editingComboMixPallProduct, artikelnummer: e.target.value})}
+                                              placeholder="Art.nr"
+                                              style={{width: '70px', padding: '0.25rem', fontSize: '0.8rem'}}
+                                            />
+                                            <input
+                                              type="number"
+                                              className="edit-input"
+                                              value={editingComboMixPallProduct.boxCount}
+                                              onChange={(e) => setEditingComboMixPallProduct({...editingComboMixPallProduct, boxCount: e.target.value})}
+                                              placeholder="Antal"
+                                              style={{width: '50px', padding: '0.25rem', fontSize: '0.8rem'}}
+                                            />
+                                          </div>
+                                          <div style={{display: 'flex', alignItems: 'center', gap: '0.25rem'}}>
+                                            <button 
+                                              className="icon-btn save" 
+                                              onClick={handleSaveComboMixPallProduct}
+                                              title="Spara"
+                                              style={{fontSize: '0.9rem', padding: '0.2rem'}}
+                                            >
+                                              ✓
+                                            </button>
+                                            <button 
+                                              className="icon-btn cancel" 
+                                              onClick={handleCancelComboMixPallEdit}
+                                              title="Avbryt"
+                                              style={{fontSize: '0.9rem', padding: '0.2rem'}}
+                                            >
+                                              ✕
+                                            </button>
+                                          </div>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <span 
+                                            onClick={() => handleClickComboMixPallProduct(comboIndex, mixIdx)}
+                                            style={{
+                                              cursor: 'pointer',
+                                              flex: 1,
+                                              padding: '0.25rem',
+                                              borderRadius: '4px',
+                                              transition: 'background 0.2s'
+                                            }}
+                                            onMouseEnter={(e) => e.currentTarget.style.background = '#e0e0e0'}
+                                            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                                            title="Klicka för att redigera"
+                                          >
+                                            <strong>{mixItem.artikelnummer}:</strong> {mixItem.boxCount}
+                                          </span>
+                                          <button 
+                                            className="icon-btn delete small" 
+                                            onClick={() => handleDeleteComboMixPallProduct(comboIndex, mixIdx)}
+                                            title="Ta bort"
+                                            style={{fontSize: '0.7rem', padding: '0.15rem'}}
+                                          >
+                                            ×
+                                          </button>
+                                        </>
+                                      )}
+                                    </div>
+                                  );
+                                })}
                               </div>
                             ) : isEditing ? (
                               <>
@@ -1214,106 +1643,6 @@ function Results({ orderData, results, onBack, onEdit }) {
             ) : (
               <div className="no-data">
                 {palletMode === 'enkel' || palletMode === 'helsingborg' ? 'Inga enkel' : 'Inga combo'}
-              </div>
-            )}
-
-            {/* Mix Pall as item within Combo Pallets column */}
-            {mixPall.length > 0 && (
-              <div className="combo-pallet-item mix-pall-item" style={{marginTop: '1rem'}}>
-                <div className="combo-header">
-                  <span className="combo-title">Mix Pall</span>
-                  <button 
-                    className="btn btn-primary" 
-                    onClick={handleAddMixPallProduct} 
-                    style={{padding: '0.35rem 0.75rem', fontSize: '0.8rem'}}
-                  >
-                    + Lägg till
-                  </button>
-                </div>
-                
-                <div className="combo-products">
-                  {mixPall.map((item, index) => {
-                    const isEditing = editingMixPallProduct?.index === index;
-                    
-                    return (
-                      <div key={index} className={`combo-product-line ${isEditing ? 'editing' : ''}`} style={{fontSize: '0.85rem', padding: '0.4rem'}}>
-                        {isEditing ? (
-                          <>
-                            <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
-                              <input
-                                type="number"
-                                className="edit-input"
-                                value={editingMixPallProduct.artikelnummer}
-                                onChange={(e) => setEditingMixPallProduct({...editingMixPallProduct, artikelnummer: e.target.value})}
-                                placeholder="Art.nr"
-                                style={{width: '80px', padding: '0.3rem'}}
-                              />
-                              <input
-                                type="number"
-                                className="edit-input"
-                                value={editingMixPallProduct.boxCount}
-                                onChange={(e) => setEditingMixPallProduct({...editingMixPallProduct, boxCount: e.target.value})}
-                                placeholder="Antal"
-                                style={{width: '60px', padding: '0.3rem'}}
-                              />
-                            </div>
-                            <div style={{display: 'flex', alignItems: 'center', gap: '0.25rem'}}>
-                              <button 
-                                className="icon-btn save" 
-                                onClick={handleSaveMixPallProduct}
-                                title="Spara"
-                                style={{fontSize: '1rem'}}
-                              >
-                                ✓
-                              </button>
-                              <button 
-                                className="icon-btn cancel" 
-                                onClick={handleCancelMixPallEdit}
-                                title="Avbryt"
-                                style={{fontSize: '1rem'}}
-                              >
-                                ✕
-                              </button>
-                            </div>
-                          </>
-                        ) : (
-                          <>
-                            <span 
-                              onClick={() => handleClickMixPallProduct(index)}
-                              style={{cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem'}}
-                            >
-                              <strong>{item.artikelnummer}:</strong>
-                              <strong>{item.boxCount}</strong>
-                            </span>
-                            <span style={{display: 'flex', alignItems: 'center', gap: '0.25rem'}}>
-                              <button 
-                                className="icon-btn delete small" 
-                                onClick={() => handleDeleteMixPallProduct(index)}
-                                title="Ta bort"
-                                style={{fontSize: '0.8rem', padding: '0.2rem'}}
-                              >
-                                ×
-                              </button>
-                            </span>
-                          </>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Show add button if Mix Pall is empty */}
-            {mixPall.length === 0 && (
-              <div style={{marginTop: '1rem', textAlign: 'center'}}>
-                <button 
-                  className="btn btn-primary" 
-                  onClick={handleAddMixPallProduct} 
-                  style={{padding: '0.5rem 1rem', fontSize: '0.85rem'}}
-                >
-                  + Lägg till Mix Pall
-                </button>
               </div>
             )}
           </div>

@@ -92,7 +92,8 @@ function Home() {
           hasMixPall = true;
         }
         
-        // Move single-skvettpall combos that are >= 75% of full pallet to Full Pall list
+        // Move single-skvettpall combos that meet criteria to Full Pall list
+        // Criteria: >= 75% of full pallet OR height >= 6 red box units
         const singleSkvettpallCombos = [];
         comboPallets = comboPallets.filter(combo => {
           if (combo.skvettpalls.length === 1 && !combo.skvettpalls[0].isMixPall) {
@@ -103,8 +104,11 @@ function Home() {
             const fullPalletBoxes = boxConfig.fullPalletBoxes || (boxConfig.boxesPerRow * boxConfig.fullPalletRows);
             const percentageOfFullPallet = (skvettpall.boxCount / fullPalletBoxes) * 100;
             
-            // If 75% or more of a full pallet, move to Full Pall list
-            if (percentageOfFullPallet >= 75) {
+            // Calculate height in red box units (excluding the pallet itself)
+            const heightWithoutPallet = skvettpall.heightInRedUnits - 1;
+            
+            // Move to Full Pall list if: 75% or more of full pallet OR height >= 6 red box units
+            if (percentageOfFullPallet >= 75 || heightWithoutPallet >= 6) {
               singleSkvettpallCombos.push(skvettpall);
               return false; // Remove from combo pallets
             }
@@ -114,7 +118,7 @@ function Home() {
           return true;
         });
         
-        // Add single skvettpalls (>= 75% of full pallet) to full pallets list
+        // Add single skvettpalls (meeting criteria) to full pallets list
         singleSkvettpallCombos.forEach(skvettpall => {
           fullPalletsList.push({
             artikelnummer: skvettpall.artikelnummer,

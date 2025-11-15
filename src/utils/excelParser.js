@@ -75,12 +75,14 @@ export const parseExcelFile = (file) => {
           const artNum = parseInt(artikelnummer, 10);
           const boxCount = parseInt(beställdaDFP, 10);
           
-          if (isNaN(artNum) || isNaN(boxCount) || boxCount <= 0) {
+          // Skip only if box count is invalid (but keep invalid artikelnummer for error reporting)
+          if (isNaN(boxCount) || boxCount <= 0) {
             continue;
           }
 
+          // If artikelnummer is invalid (NaN), keep the original value as string for error reporting
           orderData.push({
-            artikelnummer: artNum,
+            artikelnummer: isNaN(artNum) ? String(artikelnummer) : artNum,
             beställdaDFP: boxCount,
           });
         }
