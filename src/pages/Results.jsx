@@ -1333,8 +1333,22 @@ function Results({ orderData, results, onBack, onEdit }) {
               </h2>
               <span className="section-count">{comboPallets.length + (mixPall.length > 0 ? 1 : 0)} pallar</span>
             </div>
-            <button className="btn btn-primary" onClick={handleAddCombo} style={{padding: '0.5rem 1rem', fontSize: '0.85rem', width: '100%'}}>
-              + Lägg till Combo
+            <button 
+              onClick={handleAddCombo} 
+              style={{
+                background: '#5ba0a0', 
+                color: 'white', 
+                padding: '0.3rem 0.6rem', 
+                fontSize: '1.2rem', 
+                borderRadius: '4px', 
+                border: 'none', 
+                cursor: 'pointer', 
+                marginTop: '0.5rem',
+                alignSelf: 'flex-end'
+              }} 
+              title="Lägg till"
+            >
+              +
             </button>
           </div>
           
@@ -1879,8 +1893,22 @@ function Results({ orderData, results, onBack, onEdit }) {
               <h2 className="section-title">Full Pall</h2>
               <span className="section-count">{totalFullPalletCount} pallar</span>
             </div>
-            <button className="btn btn-primary" onClick={handleAddNew} style={{padding: '0.5rem 1rem', fontSize: '0.85rem', width: '100%'}}>
-              + Lägg till
+            <button 
+              onClick={handleAddNew} 
+              style={{
+                background: '#5ba0a0', 
+                color: 'white', 
+                padding: '0.3rem 0.6rem', 
+                fontSize: '1.2rem', 
+                borderRadius: '4px', 
+                border: 'none', 
+                cursor: 'pointer', 
+                marginTop: '0.5rem',
+                alignSelf: 'flex-end'
+              }} 
+              title="Lägg till"
+            >
+              +
             </button>
           </div>
           
@@ -1937,19 +1965,24 @@ function Results({ orderData, results, onBack, onEdit }) {
                         ) : (
                           <div className="pallet-boxes">
                             {pallet.isSingleSkvettpall ? (
-                              <span 
-                                className="pallet-box-badge"
-                                style={{
-                                  fontSize: '0.8rem', 
-                                  padding: '0.3rem 0.6rem',
-                                  background: '#6c757d',
-                                  color: 'white',
-                                  cursor: 'default'
-                                }}
-                                title="Skvättpall"
-                              >
-                                Skvättpall
-                              </span>
+                              <>
+                                <span 
+                                  className="pallet-box-badge"
+                                  style={{
+                                    fontSize: '0.8rem', 
+                                    padding: '0.3rem 0.6rem',
+                                    background: '#6c757d',
+                                    color: 'white',
+                                    cursor: 'default'
+                                  }}
+                                  title="Skvättpall"
+                                >
+                                  {pallet.boxesPerPallet}
+                                </span>
+                                <span style={{marginLeft: '0.5rem', fontSize: '0.75rem', color: '#666'}}>
+                                  ({Math.ceil(pallet.boxesPerPallet / 8)}r)
+                                </span>
+                              </>
                             ) : (
                               Array.from({ length: pallet.fullPallets }, (_, i) => (
                                 <span 
