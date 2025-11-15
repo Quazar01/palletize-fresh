@@ -1,3 +1,54 @@
+# Plocklista Generator (Palletize Fresh)
+
+A React-based pallet optimization system that helps organize product orders into optimal EU pallet configurations.
+
+## Features
+
+- **Excel Order Processing**: Upload Excel files containing product orders (Artikelnummer and Beställda DFP columns)
+- **Automatic Product-to-Box Mapping**: Maps products to their packaging boxes (red, green, black, blue, half-blue)
+- **Full Pallet Calculation**: Automatically calculates full pallets for each product
+- **Skvettpall Management**: Handles remaining boxes that don't form full pallets
+- **Mix Pall Creation**: Groups products with less than one row into a mix pallet
+- **Combo Pallet Optimization**: Uses Branch-and-Bound algorithm to combine skvettpalls optimally
+- **Editable Results**: Add, edit, or delete pallets in the results view
+- **Print Functionality**: Generate printable pallet lists
+
+## Box Specifications
+
+### Red Box
+- Area: 1/8 of pallet | Boxes per row: 8 | Full pallet: 8 rows = 64 boxes | Height: 136mm (reference unit)
+
+### Green Box
+- Area: 1/4 of pallet | Boxes per row: 4 | Full pallet: 7 rows = 28 boxes | Height: 155mm (8/7 red units)
+
+### Black Box
+- Area: 1/8 of pallet | Boxes per row: 8 | Full pallet: 6 rows = 48 boxes | Height: 181mm (8/6 red units)
+
+### Blue Box (Bygelläge 2)
+- Area: 1/8 of pallet | Boxes per row: 8 | Full pallet: 11 rows = 88 boxes | Height: 99mm (8/11 red units)
+
+### Half-Blue Box (Bygelläge 1)
+- Area: 1/8 of pallet | Boxes per row: 8 | Full pallet: 16 rows = 128 boxes | Height: 68mm (8/16 red units)
+
+## Usage
+
+1. Enter order information (Kund, Datum, Ordersnummer)
+2. Select pallet mode (Combo Pallets, Enkel Pall, Helsingborg)
+3. Upload Excel file with Artikelnummer and Beställda DFP columns
+4. View optimized results with full pallets, combo pallets, and mix pall
+5. Edit and print the final pallet list
+
+## Installation & Running
+
+```bash
+npm install
+npm start
+```
+
+Opens at [http://localhost:3000](http://localhost:3000)
+
+---
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
