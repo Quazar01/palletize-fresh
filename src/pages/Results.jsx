@@ -1352,7 +1352,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                           {(combo.totalHeight - 1).toFixed(2)}
                         </span>
                         <button 
-                          className="icon-btn" 
+                          className="icon-btn add" 
                           onClick={() => handleAddSkvettpallToCombo(comboIndex)}
                           onMouseDown={(e) => e.stopPropagation()}
                           title="Lägg till skvettpall"
@@ -1643,6 +1643,113 @@ function Results({ orderData, results, onBack, onEdit }) {
             ) : (
               <div className="no-data">
                 {palletMode === 'enkel' || palletMode === 'helsingborg' ? 'Inga enkel' : 'Inga combo'}
+              </div>
+            )}
+
+            {/* Mix Pall for Enkel and Helsingborg modes */}
+            {(palletMode === 'enkel' || palletMode === 'helsingborg') && mixPall.length > 0 && (
+              <div className="combo-pallet-item mix-pall-item" style={{marginTop: '1rem'}}>
+                <div className="combo-header">
+                  <span className="combo-title">Mix Pall</span>
+                  <button 
+                    className="icon-btn" 
+                    onClick={handleAddMixPallProduct} 
+                    style={{
+                      fontSize: '1rem', 
+                      padding: '0.15rem 0.4rem',
+                      background: '#5ba0a0',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer'
+                    }}
+                    title="Lägg till produkt"
+                  >
+                    +
+                  </button>
+                </div>
+                
+                <div className="combo-products">
+                  {mixPall.map((item, index) => {
+                    const isEditing = editingMixPallProduct?.index === index;
+                    
+                    return (
+                      <div key={index} className={`combo-product-line ${isEditing ? 'editing' : ''}`} style={{fontSize: '0.85rem', padding: '0.4rem'}}>
+                        {isEditing ? (
+                          <>
+                            <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
+                              <input
+                                type="number"
+                                className="edit-input"
+                                value={editingMixPallProduct.artikelnummer}
+                                onChange={(e) => setEditingMixPallProduct({...editingMixPallProduct, artikelnummer: e.target.value})}
+                                placeholder="Art.nr"
+                                style={{width: '80px', padding: '0.3rem'}}
+                              />
+                              <input
+                                type="number"
+                                className="edit-input"
+                                value={editingMixPallProduct.boxCount}
+                                onChange={(e) => setEditingMixPallProduct({...editingMixPallProduct, boxCount: e.target.value})}
+                                placeholder="Antal"
+                                style={{width: '60px', padding: '0.3rem'}}
+                              />
+                            </div>
+                            <div style={{display: 'flex', alignItems: 'center', gap: '0.25rem'}}>
+                              <button 
+                                className="icon-btn save" 
+                                onClick={handleSaveMixPallProduct}
+                                title="Spara"
+                                style={{fontSize: '1rem'}}
+                              >
+                                ✓
+                              </button>
+                              <button 
+                                className="icon-btn cancel" 
+                                onClick={handleCancelMixPallEdit}
+                                title="Avbryt"
+                                style={{fontSize: '1rem'}}
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <span 
+                              onClick={() => handleClickMixPallProduct(index)}
+                              style={{
+                                cursor: 'pointer', 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                gap: '0.5rem',
+                                padding: '0.25rem 0.5rem',
+                                borderRadius: '4px',
+                                transition: 'background 0.2s'
+                              }}
+                              onMouseEnter={(e) => e.currentTarget.style.background = '#f0f0f0'}
+                              onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                              title="Klicka för att redigera"
+                            >
+                              <strong>{item.artikelnummer}:</strong>
+                              <strong>{item.boxCount}</strong>
+                            </span>
+                            <span style={{display: 'flex', alignItems: 'center', gap: '0.25rem'}}>
+                              <button 
+                                className="icon-btn delete small" 
+                                onClick={() => handleDeleteMixPallProduct(index)}
+                                title="Ta bort"
+                                style={{fontSize: '0.8rem', padding: '0.2rem'}}
+                              >
+                                ×
+                              </button>
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             )}
           </div>

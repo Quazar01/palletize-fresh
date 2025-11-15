@@ -546,6 +546,14 @@
   color: #c0392b;
 }
 
+.icon-btn.add {
+  color: #5dade2 !important;
+}
+
+.icon-btn.add:hover {
+  color: #3498db !important;
+}
+
 .combo-pallet-item {
   background: #f8f9fa;
   padding: 0.75rem;
