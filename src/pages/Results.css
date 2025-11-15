@@ -178,8 +178,8 @@
 
 .section-content {
   flex: 1;
-  overflow-y: auto;
-  max-height: 600px;
+  overflow-y: visible;
+  max-height: none;
 }
 
 .section-content::-webkit-scrollbar {
@@ -539,23 +539,283 @@
   text-align: center;
 }
 
+.print-only {
+  display: none;
+}
+
 @media print {
+  /* Hide all interactive elements */
   .header-action-buttons,
   .edit-actions,
-  .icon-btn {
+  .icon-btn,
+  .btn,
+  .section-actions,
+  .delete-box-btn,
+  .stash-empty,
+  .summary-stats,
+  .edit-actions-header {
     display: none !important;
+  }
+  
+  /* Show print-only items */
+  .print-only {
+    display: flex !important;
+  }
+  
+  /* Hide title and stash section */
+  .results-header h1,
+  .pallets-grid > div:first-child {
+    display: none !important;
+  }
+  
+  /* Reset page layout */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    box-sizing: border-box;
+  }
+  
+  @page {
+    size: A4 portrait;
+    margin: 6mm;
+  }
+  
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: auto;
   }
   
   .results-container {
     background: white;
+    padding: 0;
+    margin: 0;
+    max-width: 100%;
+    height: auto;
   }
   
+  /* Ultra-compact header - just 1 line */
+  .results-header {
+    padding: 0;
+    margin-bottom: 2mm;
+    box-shadow: none;
+    border-bottom: 1px solid #333;
+    page-break-inside: avoid;
+    page-break-after: avoid;
+  }
+  
+  .header-layout {
+    display: block;
+  }
+  
+  .header-center {
+    display: block;
+  }
+  
+  .order-info {
+    display: flex;
+    gap: 5mm;
+    margin: 0;
+    padding: 1.5mm 0;
+    justify-content: space-between;
+    flex-wrap: nowrap;
+  }
+  
+  .info-item {
+    display: flex;
+    flex-direction: row;
+    align-items: baseline;
+    gap: 1mm;
+  }
+  
+  .info-item.print-only {
+    margin-left: auto;
+  }
+  
+  .info-item:nth-child(3) {
+    margin-right: auto;
+  }
+  
+  .info-label {
+    font-size: 7pt;
+    font-weight: 600;
+  }
+  
+  .info-label::after {
+    content: ':';
+  }
+  
+  .info-value {
+    font-size: 7pt;
+    font-weight: normal;
+  }
+  
+  /* Grid layout for content - side by side, no stash */
   .pallets-section {
     box-shadow: none;
+    padding: 0;
+    margin: 0;
     page-break-inside: avoid;
   }
   
   .pallets-grid {
-    grid-template-columns: 1fr;
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: 3mm;
+    page-break-inside: avoid;
+  }
+  
+  .pallets-grid > div {
+    page-break-inside: auto;
+  }
+  
+  .section-header {
+    margin-bottom: 1.5mm;
+    padding-bottom: 0.5mm;
+    border-bottom: 1px solid #333;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    page-break-after: avoid;
+  }
+  
+  .section-header-top {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .section-title {
+    font-size: 9pt;
+    font-weight: 700;
+    margin: 0;
+  }
+  
+  .section-count {
+    font-size: 8pt;
+    padding: 0;
+    background: none;
+    color: #333;
+    border-radius: 0;
+    font-weight: 600;
+  }
+  
+  .section-count::after {
+    content: '';
+  }
+  
+  .section-content {
+    max-height: none;
+    overflow: visible;
+  }
+  
+  /* Compact combo pallets */
+  .combo-pallet-item {
+    padding: 1mm;
+    margin-bottom: 1mm;
+    page-break-inside: avoid;
+    font-size: 6.5pt;
+    background: white !important;
+    border-left: 1.5px solid #333;
+    border-bottom: 0.5px solid #ddd;
+    padding-bottom: 1.5mm;
+  }
+  
+  .combo-header {
+    padding: 0.5mm 0;
+    margin-bottom: 0.5mm;
+    display: flex;
+    justify-content: space-between;
+  }
+  
+  .combo-title {
+    font-size: 7.5pt;
+    font-weight: 700;
+  }
+  
+  .combo-height {
+    font-size: 6.5pt;
+    display: none !important;
+  }
+  
+  .combo-products {
+    gap: 0.3mm;
+  }
+  
+  .combo-product-line {
+    padding: 0.5mm 0.5mm;
+    font-size: 6.5pt;
+    background: white !important;
+    border: none;
+    line-height: 1.2;
+  }
+  
+  /* Compact full pallet table */
+  .pallet-table {
+    font-size: 6.5pt;
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  .pallet-table th {
+    padding: 0.5mm 1mm;
+    font-size: 7pt;
+    background: white !important;
+    border-bottom: 1px solid #333;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+  
+  .pallet-table td {
+    padding: 0.5mm 1mm;
+    font-size: 6.5pt;
+    border-bottom: 0.3px solid #ddd;
+    line-height: 1.2;
+    vertical-align: top;
+  }
+  
+  .pallet-table tr {
+    page-break-inside: avoid;
+  }
+  
+  .pallet-box-badge {
+    padding: 0.3mm 1mm;
+    font-size: 6.5pt;
+    min-width: 15px;
+    background: white !important;
+    color: #333 !important;
+    border: 0.5px solid #333;
+    display: inline-block;
+    line-height: 1.2;
+  }
+  
+  .pallet-boxes {
+    gap: 0.5mm;
+    display: flex;
+    flex-wrap: wrap;
+  }
+  
+  .no-data {
+    font-size: 6.5pt;
+    padding: 1mm;
+  }
+  
+  /* Remove extra spacing and force single page */
+  .pallets-section > * {
+    margin: 0;
+  }
+  
+  /* Ensure content doesn't overflow */
+  .section-content {
+    font-size: 6.5pt;
+  }
+  
+  /* Reduce line heights everywhere */
+  * {
+    line-height: 1.2 !important;
+  }
+  
+  /* Mix pall text alignment */
+  .combo-pallet-item div[style*="fontWeight: 600"] {
+    text-align: left !important;
   }
 }

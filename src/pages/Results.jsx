@@ -573,24 +573,42 @@ function Results({ orderData, results, onBack, onEdit }) {
                   <span className="info-value">{orderData.ordersnummer}</span>
                 </div>
               )}
+              <div className="info-item print-only">
+                <span className="info-label">Lådor</span>
+                <span className="info-value">{totalBoxes}</span>
+              </div>
+              <div className="info-item print-only">
+                <span className="info-label">SRS Pall</span>
+                <span className="info-value">{totalEUPallets}</span>
+              </div>
+              <div className="info-item print-only">
+                <span className="info-label">Kolli</span>
+                <span className="info-value">{totalParcels}</span>
+              </div>
+              {(palletMode === 'enkel' || palletMode === 'helsingborg') && results.truckSlots !== null && (
+                <div className="info-item print-only">
+                  <span className="info-label">Platser</span>
+                  <span className="info-value">{results.truckSlots}</span>
+                </div>
+              )}
             </div>
 
             <div className="summary-stats">
               <div className="stat-card">
-                <div className="stat-label">📦 Lådor</div>
+                <div className="stat-label"><span className="stat-icon">📦 </span>Lådor</div>
                 <div className="stat-value">{totalBoxes}</div>
               </div>
               <div className="stat-card">
-                <div className="stat-label">🏭 SRS Pall</div>
+                <div className="stat-label"><span className="stat-icon">🏭 </span>SRS Pall</div>
                 <div className="stat-value">{totalEUPallets}</div>
               </div>
               <div className="stat-card">
-                <div className="stat-label">📋 Kolli</div>
+                <div className="stat-label"><span className="stat-icon">📋 </span>Kolli</div>
                 <div className="stat-value">{totalParcels}</div>
               </div>
               {(palletMode === 'enkel' || palletMode === 'helsingborg') && results.truckSlots !== null && (
                 <div className="stat-card">
-                  <div className="stat-label">🚛 Platser</div>
+                  <div className="stat-label"><span className="stat-icon">🚛 </span>Platser</div>
                   <div className="stat-value">{results.truckSlots}</div>
                 </div>
               )}
@@ -1020,7 +1038,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                             {isMixPall ? (
                               // Display mix pall items
                               <div style={{width: '100%'}}>
-                                <div style={{marginBottom: '0.5rem', fontWeight: 600, color: '#5ba0a0'}}>
+                                <div style={{marginBottom: '0.5rem', fontWeight: 600, color: '#5ba0a0', textAlign: 'left'}}>
                                   Mix
                                 </div>
                                 {skvettpall.mixPallItems && skvettpall.mixPallItems.map((mixItem, mixIdx) => (
@@ -1339,9 +1357,9 @@ function Results({ orderData, results, onBack, onEdit }) {
                                   background: '#95c5c5',
                                   cursor: 'default'
                                 }}
-                                title="Skvettpall"
+                                title="Skvättpall"
                               >
-                                Skvettpall
+                                Skvättpall
                               </span>
                             ) : (
                               Array.from({ length: pallet.fullPallets }, (_, i) => (
