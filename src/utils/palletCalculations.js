@@ -56,6 +56,17 @@ export const shouldGoToMixPall = (boxCount, boxConfig) => {
 };
 
 /**
+ * Check if skvettpall should go to mix-pall for Helsingborg mode (less than half a row)
+ * @param {number} boxCount - Number of boxes
+ * @param {Object} boxConfig - Box configuration
+ * @returns {boolean}
+ */
+export const shouldGoToMixPallHelsingborg = (boxCount, boxConfig) => {
+  const halfRow = boxConfig.boxesPerRow / 2;
+  return boxCount < halfRow;
+};
+
+/**
  * Calculate height of a skvettpall in red box units
  * @param {number} boxCount - Number of boxes
  * @param {Object} boxConfig - Box configuration
@@ -115,6 +126,78 @@ export const processOrder = (orderData) => {
         });
       } else {
         // Forms a skvettpall
+        const stackHeight = calculateStackHeight(result.remainingBoxes, result.boxConfig);
+        skvettpallsList.push({
+          artikelnummer: result.artikelnummer,
+          boxCount: result.remainingBoxes,
+          stackHeight,
+          boxType: result.boxType,
+          boxConfig: result.boxConfig,
+          heightInRedUnits: calculateSkvettpallHeight(result.remainingBoxes, result.boxConfig),
+        });
+        totalEUPallets += 1; // Each skvettpall uses one EU pallet
+      }
+    }
+  });
+
+  return {
+    fullPalletsList,
+    skvettpallsList,
+    mixPallList,
+    totalEUPallets,
+    totalBoxes,
+    totalParcels, // Will be updated after combo optimization
+  };
+};
+
+/**
+ * Process an order with Helsingborg rules
+ * @param {Array} orderData - Array of { artikelnummer, beställdaDFP }
+ * @returns {Object} - Processed order with full pallets, skvettpalls, and mix-pall
+ */
+export const processOrderHelsingborg = (orderData) => {
+  const fullPalletsList = [];
+  const skvettpallsList = [];
+  const mixPallList = [];
+  let totalEUPallets = 0;
+  let totalBoxes = 0;
+  let totalParcels = 0;
+
+  orderData.forEach(item => {
+    const result = calculatePallets(item.artikelnummer, item.beställdaDFP);
+    
+    if (!result) {
+      console.warn(`Skipping unknown product: ${item.artikelnummer}`);
+      return;
+    }
+
+    totalBoxes += result.totalBoxes;
+
+    // Add full pallets
+    if (result.fullPallets > 0) {
+      fullPalletsList.push({
+        artikelnummer: result.artikelnummer,
+        fullPallets: result.fullPallets,
+        boxType: result.boxType,
+        boxesPerPallet: result.boxConfig.fullPalletBoxes,
+        totalBoxes: result.fullPallets * result.boxConfig.fullPalletBoxes,
+      });
+      totalEUPallets += result.fullPallets;
+      totalParcels += result.fullPallets; // Each full pallet is a parcel
+    }
+
+    // Handle remaining boxes using Helsingborg rule (less than half a row goes to mix pall)
+    if (result.remainingBoxes > 0) {
+      if (shouldGoToMixPallHelsingborg(result.remainingBoxes, result.boxConfig)) {
+        // Less than half a row - goes to mix pall
+        mixPallList.push({
+          artikelnummer: result.artikelnummer,
+          boxCount: result.remainingBoxes,
+          boxType: result.boxType,
+          boxConfig: result.boxConfig,
+        });
+      } else {
+        // Half a row or more - forms a skvettpall
         const stackHeight = calculateStackHeight(result.remainingBoxes, result.boxConfig);
         skvettpallsList.push({
           artikelnummer: result.artikelnummer,

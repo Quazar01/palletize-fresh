@@ -15,6 +15,8 @@ function Results({ orderData, results, onBack, onEdit }) {
   const [isAddingCombo, setIsAddingCombo] = useState(false);
   const [newComboProduct, setNewComboProduct] = useState({ artikelnummer: '', boxCount: '' });
   const [newComboSkvettpalls, setNewComboSkvettpalls] = useState([]); // Array of skvettpalls being built for new combo
+  const [addingToComboIndex, setAddingToComboIndex] = useState(null); // Track which combo we're adding a skvettpall to
+  const [newSkvettpallForCombo, setNewSkvettpallForCombo] = useState({ artikelnummer: '', boxCount: '' }); // New skvettpall data
   const [stash, setStash] = useState({ comboPallets: [], skvettpalls: [] }); // Stash for holding items
   const [draggedItem, setDraggedItem] = useState(null); // Track what's being dragged
   const [editingStashedComboProduct, setEditingStashedComboProduct] = useState(null); // { comboIndex, productIndex, artikelnummer, boxCount }
@@ -245,6 +247,51 @@ function Results({ orderData, results, onBack, onEdit }) {
       boxConfig: { boxesPerRow: 8 }
     }];
     setMixPall(newMixPall);
+  };
+
+  const handleAddSkvettpallToCombo = (comboIndex) => {
+    setAddingToComboIndex(comboIndex);
+    setNewSkvettpallForCombo({ artikelnummer: '', boxCount: '' });
+  };
+
+  const handleSaveSkvettpallToCombo = () => {
+    if (addingToComboIndex === null) return;
+
+    const artikelnummer = parseInt(newSkvettpallForCombo.artikelnummer);
+    const boxCount = parseInt(newSkvettpallForCombo.boxCount);
+
+    if (!artikelnummer || !boxCount || boxCount <= 0) return;
+
+    // Create a new skvettpall
+    const newSkvettpall = {
+      artikelnummer,
+      boxCount,
+      boxType: 'red', // Default to red
+      boxConfig: { 
+        boxesPerRow: 8,
+        heightInRedBoxUnits: 1 // Default red box height
+      },
+      stackHeight: Math.ceil(boxCount / 8), // Assuming 8 boxes per row by default
+      heightInRedUnits: 1 + (Math.ceil(boxCount / 8) * 1) // 1 pallet + stack height
+    };
+
+    // Add skvettpall to the combo
+    const newComboPallets = [...comboPallets];
+    const combo = newComboPallets[addingToComboIndex];
+    combo.skvettpalls.push(newSkvettpall);
+    
+    // Recalculate combo height
+    combo.totalHeight = combo.skvettpalls.reduce((sum, s) => sum + (s.heightInRedUnits || 0), 0);
+    combo.palletCount = combo.skvettpalls.length;
+
+    setComboPallets(newComboPallets);
+    setAddingToComboIndex(null);
+    setNewSkvettpallForCombo({ artikelnummer: '', boxCount: '' });
+  };
+
+  const handleCancelAddSkvettpallToCombo = () => {
+    setAddingToComboIndex(null);
+    setNewSkvettpallForCombo({ artikelnummer: '', boxCount: '' });
   };
 
   const handleAddCombo = () => {
@@ -530,17 +577,23 @@ function Results({ orderData, results, onBack, onEdit }) {
 
             <div className="summary-stats">
               <div className="stat-card">
-                <div className="stat-label">Lådor</div>
+                <div className="stat-label">📦 Lådor</div>
                 <div className="stat-value">{totalBoxes}</div>
               </div>
               <div className="stat-card">
-                <div className="stat-label">SRS Pall</div>
+                <div className="stat-label">🏭 SRS Pall</div>
                 <div className="stat-value">{totalEUPallets}</div>
               </div>
               <div className="stat-card">
-                <div className="stat-label">Kolli</div>
+                <div className="stat-label">📋 Kolli</div>
                 <div className="stat-value">{totalParcels}</div>
               </div>
+              {(palletMode === 'enkel' || palletMode === 'helsingborg') && results.truckSlots !== null && (
+                <div className="stat-card">
+                  <div className="stat-label">🚛 Platser</div>
+                  <div className="stat-value">{results.truckSlots}</div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -778,7 +831,9 @@ function Results({ orderData, results, onBack, onEdit }) {
         <div className="pallets-section">
           <div className="section-header">
             <div className="section-header-top">
-              <h2 className="section-title">{palletMode === 'enkel' ? 'Enkel' : 'Combo'}</h2>
+              <h2 className="section-title">
+                {palletMode === 'enkel' ? 'Enkel' : palletMode === 'helsingborg' ? 'Enkel' : 'Combo'}
+              </h2>
               <span className="section-count">{comboPallets.length + (mixPall.length > 0 ? 1 : 0)} pallar</span>
             </div>
             <button className="btn btn-primary" onClick={handleAddCombo} style={{padding: '0.5rem 1rem', fontSize: '0.85rem', width: '100%'}}>
@@ -906,6 +961,15 @@ function Results({ orderData, results, onBack, onEdit }) {
                         <span className="combo-height">
                           {(combo.totalHeight - 1).toFixed(2)} h
                         </span>
+                        <button 
+                          className="icon-btn" 
+                          onClick={() => handleAddSkvettpallToCombo(comboIndex)}
+                          onMouseDown={(e) => e.stopPropagation()}
+                          title="Lägg till skvettpall"
+                          style={{fontSize: '0.9rem', padding: '0.25rem'}}
+                        >
+                          ➕
+                        </button>
                         <button 
                           className="icon-btn delete" 
                           onClick={() => handleDeleteComboPallet(comboIndex)}
@@ -1044,12 +1108,60 @@ function Results({ orderData, results, onBack, onEdit }) {
                           </div>
                         );
                       })}
+                      
+                      {/* Add skvettpall to existing combo */}
+                      {addingToComboIndex === comboIndex && (
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.5rem',
+                          padding: '0.5rem',
+                          background: '#f8f9fa',
+                          borderRadius: '4px',
+                          marginTop: '0.5rem'
+                        }}>
+                          <input
+                            type="number"
+                            className="edit-input"
+                            value={newSkvettpallForCombo.artikelnummer}
+                            onChange={(e) => setNewSkvettpallForCombo({...newSkvettpallForCombo, artikelnummer: e.target.value})}
+                            placeholder="Art.nr"
+                            style={{width: '80px', padding: '0.3rem', fontSize: '0.85rem'}}
+                          />
+                          <input
+                            type="number"
+                            className="edit-input"
+                            value={newSkvettpallForCombo.boxCount}
+                            onChange={(e) => setNewSkvettpallForCombo({...newSkvettpallForCombo, boxCount: e.target.value})}
+                            placeholder="Antal"
+                            style={{width: '60px', padding: '0.3rem', fontSize: '0.85rem'}}
+                          />
+                          <button 
+                            className="icon-btn save" 
+                            onClick={handleSaveSkvettpallToCombo}
+                            title="Spara"
+                            style={{fontSize: '1rem'}}
+                          >
+                            ✓
+                          </button>
+                          <button 
+                            className="icon-btn cancel" 
+                            onClick={handleCancelAddSkvettpallToCombo}
+                            title="Avbryt"
+                            style={{fontSize: '1rem'}}
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
               </>
             ) : (
-              <div className="no-data">{palletMode === 'enkel' ? 'Inga enkel' : 'Inga combo'}</div>
+              <div className="no-data">
+                {palletMode === 'enkel' || palletMode === 'helsingborg' ? 'Inga enkel' : 'Inga combo'}
+              </div>
             )}
 
             {/* Mix Pall as item within Combo Pallets column */}
@@ -1272,7 +1384,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                         ) : (
                           <div style={{display: 'flex', gap: '0.25rem', alignItems: 'center'}}>
                             <button className="icon-btn edit" onClick={() => handleEditPallet(index)} title="Redigera" style={{fontSize: '1rem'}}>
-                              ✏️
+                              🔧
                             </button>
                             <button 
                               className="icon-btn delete" 

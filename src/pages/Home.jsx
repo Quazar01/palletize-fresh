@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import './Home.css';
 import { parseExcelFile, validateExcelFile } from '../utils/excelParser';
-import { processOrder } from '../utils/palletCalculations';
+import { processOrder, processOrderHelsingborg } from '../utils/palletCalculations';
 import { optimizeComboPalletsAdvanced, optimizeComboPalletsWithMixPall, calculateTotalParcels } from '../utils/comboOptimizer';
+import { calculateTruckSlots } from '../utils/truckSlotCalculations';
 import Results from './Results';
 
 function Home() {
@@ -60,8 +61,10 @@ function Home() {
       // Parse Excel file
       const orderData = await parseExcelFile(selectedFile);
       
-      // Process order
-      const processed = processOrder(orderData);
+      // Process order based on selected mode
+      const processed = selectedOption === 'helsingborg' 
+        ? processOrderHelsingborg(orderData)
+        : processOrder(orderData);
       
       // Optimize combo pallets if option is selected
       let comboPallets = [];
@@ -123,6 +126,13 @@ function Home() {
           totalHeight: skvettpall.heightInRedUnits,
           palletCount: 1,
         }));
+      } else if (selectedOption === 'helsingborg') {
+        // Helsingborg mode: same as Enkel, each skvettpall is its own parcel
+        comboPallets = processed.skvettpallsList.map(skvettpall => ({
+          skvettpalls: [skvettpall],
+          totalHeight: skvettpall.heightInRedUnits,
+          palletCount: 1,
+        }));
       } else {
         // Other modes: each skvettpall is its own parcel
         comboPallets = processed.skvettpallsList.map(skvettpall => ({
@@ -136,6 +146,12 @@ function Home() {
       const totalFullPallets = fullPalletsList.reduce((sum, p) => sum + p.fullPallets, 0);
       const totalParcels = calculateTotalParcels(totalFullPallets, comboPallets, hasMixPall);
 
+      // Calculate truck slots for Enkel and Helsingborg modes
+      let truckSlots = null;
+      if (selectedOption === 'enkel' || selectedOption === 'helsingborg') {
+        truckSlots = calculateTruckSlots(fullPalletsList, processed.skvettpallsList, mixPallList);
+      }
+
       // Update results
       const finalResults = {
         ...processed,
@@ -143,6 +159,7 @@ function Home() {
         comboPallets,
         mixPallList,
         totalParcels,
+        truckSlots, // Add truck slots to results
         palletMode: selectedOption, // Pass the selected mode
       };
 

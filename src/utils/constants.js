@@ -76,6 +76,11 @@ export const COMBO_PALLET = {
   HEIGHT_MARGIN: 0.01, // 1% acceptable margin
 };
 
+// Truck slot constraints (for Enkel and Helsingborg modes)
+export const TRUCK_SLOT = {
+  MAX_HEIGHT_RED_UNITS: 18, // Two full pallets: 2 * (1 pallet + 8 red boxes) = 2 * 9 = 18
+};
+
 // Get box type configuration by name
 export const getBoxType = (typeName) => {
   const typeMap = {
