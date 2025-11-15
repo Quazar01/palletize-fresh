@@ -2,11 +2,13 @@
 import './Results.css';
 import { getBoxType } from '../utils/constants';
 import { getProductBoxType, productExists } from '../utils/productMapping';
+import { calculateTruckSlots } from '../utils/truckSlotCalculations';
 
 function Results({ orderData, results, onBack, onEdit }) {
   const [fullPallets, setFullPallets] = useState(results.fullPalletsList);
   const [comboPallets, setComboPallets] = useState(results.comboPallets);
   const [mixPall, setMixPall] = useState(results.mixPallList);
+  const [truckSlots, setTruckSlots] = useState(results.truckSlots);
   const palletMode = results.palletMode || 'combo'; // Get the pallet mode
   const [editingPallet, setEditingPallet] = useState(null);
   const [editingPalletIndex, setEditingPalletIndex] = useState(null);
@@ -32,6 +34,16 @@ function Results({ orderData, results, onBack, onEdit }) {
       setShowUnknownBanner(true);
     }
   }, [results.unknownProducts]);
+
+  // Recalculate truck slots when pallets change in Enkel or Helsingborg modes
+  useEffect(() => {
+    if (palletMode === 'enkel' || palletMode === 'helsingborg') {
+      // Extract skvettpalls from comboPallets (in these modes, each combo has one skvettpall)
+      const skvettpalls = comboPallets.map(combo => combo.skvettpalls[0]);
+      const newTruckSlots = calculateTruckSlots(fullPallets, skvettpalls, mixPall);
+      setTruckSlots(newTruckSlots);
+    }
+  }, [fullPallets, comboPallets, mixPall, palletMode]);
 
   const handlePrint = () => {
     window.print();
@@ -935,10 +947,10 @@ function Results({ orderData, results, onBack, onEdit }) {
                 <span className="info-label">Kolli</span>
                 <span className="info-value">{totalParcels}</span>
               </div>
-              {(palletMode === 'enkel' || palletMode === 'helsingborg') && results.truckSlots !== null && (
+              {(palletMode === 'enkel' || palletMode === 'helsingborg') && truckSlots !== null && (
                 <div className="info-item print-only">
                   <span className="info-label">Platser</span>
-                  <span className="info-value">{results.truckSlots}</span>
+                  <span className="info-value">{truckSlots}</span>
                 </div>
               )}
             </div>
@@ -956,10 +968,10 @@ function Results({ orderData, results, onBack, onEdit }) {
                 <div className="stat-label">Kolli</div>
                 <div className="stat-value">{totalParcels}</div>
               </div>
-              {(palletMode === 'enkel' || palletMode === 'helsingborg') && results.truckSlots !== null && (
+              {(palletMode === 'enkel' || palletMode === 'helsingborg') && truckSlots !== null && (
                 <div className="stat-card">
                   <div className="stat-label">Platser</div>
-                  <div className="stat-value">{results.truckSlots}</div>
+                  <div className="stat-value">{truckSlots}</div>
                 </div>
               )}
             </div>
