@@ -125,23 +125,39 @@ function Home() {
         
         // Add single skvettpalls (meeting criteria) to full pallets list
         singleSkvettpallCombos.forEach(skvettpall => {
-          fullPalletsList.push({
-            artikelnummer: skvettpall.artikelnummer,
-            fullPallets: 1,
-            boxType: skvettpall.boxType,
-            boxesPerPallet: skvettpall.boxCount,
-            totalBoxes: skvettpall.boxCount,
-            isSingleSkvettpall: true, // Mark as single skvettpall
-          });
+          // Check if this product already exists in the full pallets list
+          const existingPalletIndex = fullPalletsList.findIndex(
+            p => p.artikelnummer === skvettpall.artikelnummer && p.boxType === skvettpall.boxType
+          );
+
+          if (existingPalletIndex !== -1) {
+            // Product exists, add this skvettpall as an additional pallet
+            const existingPallet = fullPalletsList[existingPalletIndex];
+            existingPallet.fullPallets += 1;
+            existingPallet.totalBoxes += skvettpall.boxCount;
+            
+            // If the existing entry was not marked as having varied box counts, we need to track individual pallets
+            if (!existingPallet.palletBoxCounts) {
+              // Create array with existing full pallets
+              existingPallet.palletBoxCounts = Array(existingPallet.fullPallets - 1).fill(existingPallet.boxesPerPallet);
+            }
+            // Add the new skvettpall's box count
+            existingPallet.palletBoxCounts.push(skvettpall.boxCount);
+          } else {
+            // Product doesn't exist, add as new entry
+            fullPalletsList.push({
+              artikelnummer: skvettpall.artikelnummer,
+              fullPallets: 1,
+              boxType: skvettpall.boxType,
+              boxesPerPallet: skvettpall.boxCount,
+              totalBoxes: skvettpall.boxCount,
+              isSingleSkvettpall: true, // Mark as single skvettpall
+            });
+          }
         });
         
-        // Sort Full Pall list: regular full pallets first (by box count), then single skvettpalls
-        fullPalletsList.sort((a, b) => {
-          if (a.isSingleSkvettpall && !b.isSingleSkvettpall) return 1;
-          if (!a.isSingleSkvettpall && b.isSingleSkvettpall) return -1;
-          // Within same type, sort by total boxes (descending)
-          return b.totalBoxes - a.totalBoxes;
-        });
+        // Sort Full Pall list by antal pallar (number of pallets) descending
+        fullPalletsList.sort((a, b) => b.fullPallets - a.fullPallets);
       } else if (selectedOption === 'enkel') {
         // Enkel Pall mode: each skvettpall is its own parcel, no combining
         comboPallets = processed.skvettpallsList.map(skvettpall => ({

@@ -113,7 +113,22 @@ function Results({ orderData, results, onBack, onEdit }) {
     if (pallet.fullPallets > 1) {
       // Remove one pallet
       pallet.fullPallets -= 1;
-      pallet.totalBoxes = pallet.boxesPerPallet * pallet.fullPallets;
+      
+      // If using palletBoxCounts, remove the specific box count and update totalBoxes
+      if (pallet.palletBoxCounts) {
+        const removedBoxCount = pallet.palletBoxCounts[boxIndex];
+        pallet.palletBoxCounts = pallet.palletBoxCounts.filter((_, i) => i !== boxIndex);
+        pallet.totalBoxes -= removedBoxCount;
+        
+        // If only one pallet left, remove the palletBoxCounts array and just use boxesPerPallet
+        if (pallet.palletBoxCounts.length === 1) {
+          pallet.boxesPerPallet = pallet.palletBoxCounts[0];
+          delete pallet.palletBoxCounts;
+        }
+      } else {
+        pallet.totalBoxes = pallet.boxesPerPallet * pallet.fullPallets;
+      }
+      
       setFullPallets(newFullPallets);
     } else {
       // Remove entire row if it's the last pallet
@@ -1778,6 +1793,111 @@ function Results({ orderData, results, onBack, onEdit }) {
               </div>
             )}
 
+            {/* Mix Pall for Combo mode when standalone */}
+            {palletMode === 'combo' && mixPall.length > 0 && (
+              <div className="combo-pallet-item mix-pall-item" style={{marginTop: '1rem'}}>
+                <div className="combo-header">
+                  <span className="combo-title">Mix Pall</span>
+                  <button 
+                    className="icon-btn" 
+                    onClick={handleAddMixPallProduct} 
+                    style={{
+                      fontSize: '1rem', 
+                      padding: '0.15rem 0.4rem',
+                      background: '#5ba0a0',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer'
+                    }}
+                    title="Lägg till produkt"
+                  >
+                    +
+                  </button>
+                </div>
+                
+                <div className="combo-products">
+                  {[...mixPall].sort((a, b) => b.boxCount - a.boxCount).map((item, index) => {
+                    const isEditing = editingMixPallProduct?.index === index;
+                    
+                    return (
+                      <div key={index} className={`combo-product-line ${isEditing ? 'editing' : ''}`} style={{fontSize: '0.85rem', padding: '0.4rem'}}>
+                        {isEditing ? (
+                          <>
+                            <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
+                              <input
+                                type="number"
+                                className="edit-input"
+                                value={editingMixPallProduct.artikelnummer}
+                                onChange={(e) => setEditingMixPallProduct({...editingMixPallProduct, artikelnummer: e.target.value})}
+                                placeholder="Art.nr"
+                                style={{width: '80px', padding: '0.3rem'}}
+                              />
+                              <input
+                                type="number"
+                                className="edit-input"
+                                value={editingMixPallProduct.boxCount}
+                                onChange={(e) => setEditingMixPallProduct({...editingMixPallProduct, boxCount: e.target.value})}
+                                placeholder="Antal"
+                                style={{width: '60px', padding: '0.3rem'}}
+                              />
+                            </div>
+                            <div style={{display: 'flex', alignItems: 'center', gap: '0.25rem'}}>
+                              <button 
+                                className="icon-btn save" 
+                                onClick={handleSaveMixPallProduct}
+                                title="Spara"
+                                style={{fontSize: '1rem'}}
+                              >
+                                ✓
+                              </button>
+                              <button 
+                                className="icon-btn cancel" 
+                                onClick={handleCancelMixPallEdit}
+                                title="Avbryt"
+                                style={{fontSize: '1rem'}}
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <span 
+                              onClick={() => handleClickMixPallProduct(index)}
+                              style={{
+                                cursor: 'pointer', 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                gap: '0.5rem',
+                                padding: '0.25rem 0.5rem',
+                                borderRadius: '4px',
+                                transition: 'background 0.2s'
+                              }}
+                              onMouseEnter={(e) => e.currentTarget.style.background = '#f0f0f0'}
+                              onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                              title="Klicka för att redigera"
+                            >
+                              <strong>{item.artikelnummer}:</strong>
+                              <strong>{item.boxCount}</strong>
+                            </span>
+                            <button 
+                              className="icon-btn delete small" 
+                              onClick={() => handleDeleteMixPallProduct(index)}
+                              title="Ta bort"
+                              style={{fontSize: '0.8rem', padding: '0.2rem'}}
+                            >
+                              ✕
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {/* Mix Pall for Enkel and Helsingborg modes */}
             {(palletMode === 'enkel' || palletMode === 'helsingborg') && mixPall.length > 0 && (
               <div className="combo-pallet-item mix-pall-item" style={{marginTop: '1rem'}}>
@@ -1985,6 +2105,36 @@ function Results({ orderData, results, onBack, onEdit }) {
                                   ({Math.ceil(pallet.boxesPerPallet / 8)}r)
                                 </span>
                               </>
+                            ) : pallet.palletBoxCounts ? (
+                              // Display individual box counts for each pallet
+                              pallet.palletBoxCounts.map((boxCount, i) => (
+                                <span 
+                                  key={i} 
+                                  className="pallet-box-badge"
+                                  onClick={() => handleEditPallet(index)}
+                                  style={{
+                                    cursor: 'pointer', 
+                                    position: 'relative', 
+                                    fontSize: '0.8rem', 
+                                    padding: '0.3rem 0.6rem',
+                                    background: boxCount !== pallet.boxesPerPallet ? '#6c757d' : undefined,
+                                    color: boxCount !== pallet.boxesPerPallet ? 'white' : undefined
+                                  }}
+                                  title={boxCount !== pallet.boxesPerPallet ? 'Skvättpall' : undefined}
+                                >
+                                  {boxCount}
+                                  <button
+                                    className="delete-box-btn"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDeletePalletBox(index, i);
+                                    }}
+                                    title="Ta bort denna pall"
+                                  >
+                                    ×
+                                  </button>
+                                </span>
+                              ))
                             ) : (
                               Array.from({ length: pallet.fullPallets }, (_, i) => (
                                 <span 
