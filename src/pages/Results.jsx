@@ -1786,7 +1786,10 @@ function Results({ orderData, results, onBack, onEdit }) {
                       }}
                       title="Klicka för att markera/avmarkera alla skvettpalls"
                     >
-                      <span className="combo-title">#{combo.skvettpalls.length}</span>
+                      <span className="combo-title">
+                        <span className="screen-only">Pall #{displayIndex + 1}</span>
+                        <span className="print-only">#{combo.skvettpalls.length}</span>
+                      </span>
                       <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
                         <span className="combo-height" title="Höjden i röda backar enhet">
                           {(combo.totalHeight - 1).toFixed(2)}
@@ -2462,7 +2465,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                   <tr>
                     <th>Art.nr</th>
                     <th>Antal</th>
-                    <th>Lådor</th>
+                    <th>Total</th>
                     <th className="edit-actions-header">⚙️</th>
                   </tr>
                 </thead>
