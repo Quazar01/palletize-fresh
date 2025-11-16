@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './Home.css';
 import { parseExcelFile, validateExcelFile } from '../utils/excelParser';
 import { processOrder, processOrderHelsingborg } from '../utils/palletCalculations';
@@ -7,6 +8,7 @@ import { calculateTruckSlots } from '../utils/truckSlotCalculations';
 import Results from './Results';
 
 function Home() {
+  const navigate = useNavigate();
   const [kund, setKund] = useState('');
   const [datum, setDatum] = useState('');
   const [ordersnummer, setOrdersnummer] = useState('');
@@ -224,6 +226,15 @@ function Home() {
     setResults(null);
   };
 
+  const handleNavigateToProducts = () => {
+    const password = prompt('Ange lösenord för att komma åt produkthantering:');
+    if (password === 'GuldKyckling!') {
+      navigate('/products');
+    } else if (password !== null) {
+      alert('Fel lösenord!');
+    }
+  };
+
   if (showResults && results) {
     // Use today's date if no date was provided
     const displayDatum = datum || new Date().toISOString().split('T')[0];
@@ -333,6 +344,30 @@ function Home() {
         {loading ? 'Bearbetar...' : 'Ladda Upp'}
       </button>
       </div>
+
+      <button
+        className="products-nav-button"
+        onClick={handleNavigateToProducts}
+        style={{
+          position: 'absolute',
+          bottom: '2rem',
+          left: '2rem',
+          padding: '0.8rem 1.2rem',
+          backgroundColor: '#5ba0a0',
+          color: 'white',
+          border: 'none',
+          borderRadius: '4px',
+          cursor: 'pointer',
+          fontSize: '0.9rem',
+          fontWeight: '500',
+          transition: 'background-color 0.2s',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+        }}
+        onMouseEnter={(e) => e.target.style.backgroundColor = '#4a8787'}
+        onMouseLeave={(e) => e.target.style.backgroundColor = '#5ba0a0'}
+      >
+        📦 Hantera Produkter
+      </button>
 
       <div className="margin-input-container" style={{
         position: 'absolute',
