@@ -2461,7 +2461,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                 <thead>
                   <tr>
                     <th>Art.nr</th>
-                    <th>Antal Pallar</th>
+                    <th>Antal</th>
                     <th>Lådor</th>
                     <th className="edit-actions-header">⚙️</th>
                   </tr>
