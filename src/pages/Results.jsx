@@ -30,6 +30,51 @@ function Results({ orderData, results, onBack, onEdit }) {
   const [checkedPallets, setCheckedPallets] = useState({}); // Track checked pallets: { palletIndex: Set<boxIndex> }
   const [checkedComboSkvettpalls, setCheckedComboSkvettpalls] = useState({}); // Track checked skvettpalls: { comboIndex: Set<skvettpallIndex> }
   const [checkedMixPallItems, setCheckedMixPallItems] = useState({}); // Track checked mix pall items: { comboIndex: Set<mixItemArticleNumber> }
+  const [history, setHistory] = useState([]); // Track state history for undo
+  const [historyIndex, setHistoryIndex] = useState(-1); // Current position in history
+
+  // Save current state to history
+  const saveToHistory = () => {
+    const currentState = {
+      fullPallets: JSON.parse(JSON.stringify(fullPallets)),
+      comboPallets: JSON.parse(JSON.stringify(comboPallets)),
+      mixPall: JSON.parse(JSON.stringify(mixPall)),
+      stash: JSON.parse(JSON.stringify(stash))
+    };
+    
+    setHistory(prev => {
+      const newHistory = prev.slice(0, historyIndex + 1);
+      newHistory.push(currentState);
+      // Keep only last 50 states to avoid memory issues
+      if (newHistory.length > 50) {
+        newHistory.shift();
+        return newHistory;
+      }
+      return newHistory;
+    });
+    
+    setHistoryIndex(prev => Math.min(prev + 1, 49));
+  };
+
+  // Handle undo with Ctrl+Z
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        if (historyIndex > 0) {
+          const previousState = history[historyIndex - 1];
+          setFullPallets(JSON.parse(JSON.stringify(previousState.fullPallets)));
+          setComboPallets(JSON.parse(JSON.stringify(previousState.comboPallets)));
+          setMixPall(JSON.parse(JSON.stringify(previousState.mixPall)));
+          setStash(JSON.parse(JSON.stringify(previousState.stash)));
+          setHistoryIndex(prev => prev - 1);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [history, historyIndex]);
 
   // Show banner if there are unknown products
   useEffect(() => {
@@ -53,6 +98,7 @@ function Results({ orderData, results, onBack, onEdit }) {
   };
 
   const handleDeleteFullPallet = (index) => {
+    saveToHistory();
     const newFullPallets = fullPallets.filter((_, i) => i !== index);
     setFullPallets(newFullPallets);
   };
@@ -68,6 +114,7 @@ function Results({ orderData, results, onBack, onEdit }) {
 
   const handleSaveEdit = () => {
     if (editingPalletIndex !== null && editingPallet) {
+      saveToHistory();
       const newFullPallets = [...fullPallets];
       const boxesPerPallet = parseInt(editingPallet.boxesPerPallet) || 0;
       const palletCount = parseInt(editingPallet.palletCount) || 0;
@@ -229,6 +276,7 @@ function Results({ orderData, results, onBack, onEdit }) {
     const count = parseInt(newPallet.count) || 1;
 
     if (artikelnummer && boxesPerPallet && boxesPerPallet > 0 && count > 0) {
+      saveToHistory();
       const newFullPallets = [...fullPallets, {
         artikelnummer,
         boxesPerPallet,
@@ -249,6 +297,7 @@ function Results({ orderData, results, onBack, onEdit }) {
   };
 
   const handleDeletePalletBox = (palletIndex, boxIndex) => {
+    saveToHistory();
     const newFullPallets = [...fullPallets];
     const pallet = newFullPallets[palletIndex];
     
@@ -279,11 +328,13 @@ function Results({ orderData, results, onBack, onEdit }) {
   };
 
   const handleDeleteComboPallet = (index) => {
+    saveToHistory();
     const newComboPallets = comboPallets.filter((_, i) => i !== index);
     setComboPallets(newComboPallets);
   };
 
   const handleDeleteComboProduct = (comboIndex, productIndex) => {
+    saveToHistory();
     const newComboPallets = [...comboPallets];
     const combo = newComboPallets[comboIndex];
     
@@ -313,6 +364,7 @@ function Results({ orderData, results, onBack, onEdit }) {
   const handleSaveComboProduct = () => {
     if (!editingComboProduct) return;
 
+    saveToHistory();
     const { comboIndex, productIndex, artikelnummer, boxCount } = editingComboProduct;
     const parsedArtikelnummer = parseInt(artikelnummer);
     const parsedBoxCount = parseInt(boxCount);
@@ -450,6 +502,7 @@ function Results({ orderData, results, onBack, onEdit }) {
   const handleSaveComboMixPallProduct = () => {
     if (!editingComboMixPallProduct) return;
 
+    saveToHistory();
     const { comboIndex, mixItemIndex, artikelnummer, boxCount } = editingComboMixPallProduct;
     const parsedArtikelnummer = parseInt(artikelnummer);
     const parsedBoxCount = parseInt(boxCount);
@@ -741,6 +794,8 @@ function Results({ orderData, results, onBack, onEdit }) {
       return;
     }
 
+    saveToHistory();
+
     // Check if product exists
     if (!productExists(artikelnummer)) {
       alert(`Artikelnummer ${artikelnummer} finns inte i produktdatabasen.`);
@@ -784,6 +839,8 @@ function Results({ orderData, results, onBack, onEdit }) {
 
   const handleSaveNewCombo = () => {
     if (newComboSkvettpalls.length === 0) return;
+
+    saveToHistory();
 
     // Calculate total height
     const totalHeight = newComboSkvettpalls.reduce((sum, pall) => sum + pall.heightInRedUnits, 0);
