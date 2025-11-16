@@ -19,6 +19,8 @@ function Home() {
   const [error, setError] = useState(null);
   const [showResults, setShowResults] = useState(false);
   const [results, setResults] = useState(null);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordInput, setPasswordInput] = useState('');
 
   const handleFileSelect = (event) => {
     const file = event.target.files[0];
@@ -227,12 +229,24 @@ function Home() {
   };
 
   const handleNavigateToProducts = () => {
-    const password = prompt('Ange lösenord för att komma åt produkthantering:');
-    if (password === 'GuldKyckling!') {
+    setShowPasswordModal(true);
+    setPasswordInput('');
+  };
+
+  const handlePasswordSubmit = () => {
+    if (passwordInput === 'GuldKyckling!') {
+      setShowPasswordModal(false);
+      setPasswordInput('');
       navigate('/products');
-    } else if (password !== null) {
+    } else {
       alert('Fel lösenord!');
+      setPasswordInput('');
     }
+  };
+
+  const handlePasswordCancel = () => {
+    setShowPasswordModal(false);
+    setPasswordInput('');
   };
 
   if (showResults && results) {
@@ -405,6 +419,80 @@ function Home() {
           color: '#fff'
         }}>%</span>
       </div>
+
+      {/* Password Modal */}
+      {showPasswordModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            padding: '30px',
+            borderRadius: '8px',
+            minWidth: '350px',
+            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+          }}>
+            <h3 style={{ marginTop: 0, color: '#333' }}>Produkthantering</h3>
+            <p style={{ color: '#666', marginBottom: '20px' }}>Ange lösenord för att komma åt produkthantering:</p>
+            <input
+              type="password"
+              value={passwordInput}
+              onChange={(e) => setPasswordInput(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handlePasswordSubmit()}
+              placeholder="Lösenord"
+              autoFocus
+              style={{
+                width: '100%',
+                padding: '10px',
+                border: '2px solid #dee2e6',
+                borderRadius: '4px',
+                fontSize: '16px',
+                marginBottom: '20px',
+                boxSizing: 'border-box'
+              }}
+            />
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={handlePasswordCancel}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: '#6c757d',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '14px'
+                }}
+              >
+                Avbryt
+              </button>
+              <button
+                onClick={handlePasswordSubmit}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: '#5ba0a0',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '14px'
+                }}
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

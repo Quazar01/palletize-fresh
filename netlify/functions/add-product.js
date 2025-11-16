@@ -58,7 +58,7 @@ exports.handler = async (event, context) => {
       };
     }
 
-    // Get the products store
+    // Get the products store - context is automatically passed in Netlify environment
     const store = getStore('products');
     
     // Retrieve current products

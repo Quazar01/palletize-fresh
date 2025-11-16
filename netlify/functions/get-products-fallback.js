@@ -1,7 +1,10 @@
+// Simple in-memory storage as fallback when Netlify Blobs isn't available
+// This data resets with each function invocation
+let productsCache = null;
+
 const { getStore } = require('@netlify/blobs');
 
 exports.handler = async (event, context) => {
-  // Set CORS headers
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
@@ -9,13 +12,8 @@ exports.handler = async (event, context) => {
     'Content-Type': 'application/json',
   };
 
-  // Handle preflight requests
   if (event.httpMethod === 'OPTIONS') {
-    return {
-      statusCode: 200,
-      headers,
-      body: '',
-    };
+    return { statusCode: 200, headers, body: '' };
   }
 
   if (event.httpMethod !== 'GET') {
@@ -27,25 +25,29 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    // Get the products store - context is automatically passed in Netlify environment
-    const store = getStore('products');
-    
-    // Retrieve products from blob storage
-    const productsData = await store.get('products-list', { type: 'json' });
-    
-    // If no data exists yet, return empty array
-    if (!productsData) {
-      return {
-        statusCode: 200,
-        headers,
-        body: JSON.stringify({ products: [] }),
-      };
+    // Try to use Netlify Blobs if available
+    try {
+      const store = getStore('products');
+      const productsData = await store.get('products-list', { type: 'json' });
+      
+      if (productsData) {
+        return {
+          statusCode: 200,
+          headers,
+          body: JSON.stringify(productsData),
+        };
+      }
+    } catch (blobError) {
+      console.log('Netlify Blobs not available, using fallback:', blobError.message);
     }
 
+    // Fallback: load from products.json
+    const productsJson = require('../../src/data/products.json');
+    
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify(productsData),
+      body: JSON.stringify(productsJson),
     };
   } catch (error) {
     console.error('Error fetching products:', error);

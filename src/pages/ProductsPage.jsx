@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getProducts, addProduct } from '../firebase/productService';
 import './ProductsPage.css';
 
 const ProductsPage = () => {
@@ -15,6 +16,16 @@ const ProductsPage = () => {
   const [errorMessage, setErrorMessage] = useState('');
 
   const boxTypes = ['red', 'green', 'black', 'blue', 'half-blue', 'renrum'];
+  
+  // Map internal values to Swedish display names
+  const boxTypeLabels = {
+    'red': 'RÖD',
+    'green': 'GRÖN',
+    'black': 'SVART',
+    'blue': 'BLÅ',
+    'half-blue': 'HALF-BLUE',
+    'renrum': 'RENRUM'
+  };
 
   // Fetch products on component mount
   useEffect(() => {
@@ -24,17 +35,11 @@ const ProductsPage = () => {
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/.netlify/functions/get-products');
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch products');
-      }
-      
-      const data = await response.json();
-      setProducts(data.products || []);
+      const fetchedProducts = await getProducts();
+      setProducts(fetchedProducts);
     } catch (error) {
       console.error('Error fetching products:', error);
-      setErrorMessage('Failed to load products');
+      setErrorMessage('Failed to load products: ' + error.message);
       setShowError(true);
     } finally {
       setLoading(false);
@@ -81,26 +86,12 @@ const ProductsPage = () => {
     }
 
     try {
-      // Send product to API
-      const response = await fetch('/.netlify/functions/add-product', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          id: parseInt(newProduct.id),
-          name: newProduct.name.trim(),
-          type: newProduct.type,
-        }),
+      // Add product to Firebase
+      const addedProduct = await addProduct({
+        id: parseInt(newProduct.id),
+        name: newProduct.name.trim(),
+        type: newProduct.type,
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setErrorMessage(data.error || 'Failed to add product');
-        setShowError(true);
-        return;
-      }
 
       // Refresh products list
       await fetchProducts();
@@ -112,10 +103,10 @@ const ProductsPage = () => {
         type: 'red'
       });
 
-      alert(`Product ${data.product.id} - ${data.product.name} added successfully!`);
+      alert(`Product ${addedProduct.id} - ${addedProduct.name} added successfully!`);
     } catch (error) {
       console.error('Error adding product:', error);
-      setErrorMessage('Failed to add product. Please try again.');
+      setErrorMessage(error.message || 'Failed to add product. Please try again.');
       setShowError(true);
     }
   };
@@ -174,7 +165,7 @@ const ProductsPage = () => {
               >
                 {boxTypes.map(type => (
                   <option key={type} value={type}>
-                    {type.charAt(0).toUpperCase() + type.slice(1)}
+                    {boxTypeLabels[type]}
                   </option>
                 ))}
               </select>
@@ -209,7 +200,7 @@ const ProductsPage = () => {
                       <td>{product.name}</td>
                       <td>
                         <span className={`box-type-badge ${product.type}`}>
-                          {product.type}
+                          {boxTypeLabels[product.type] || product.type}
                         </span>
                       </td>
                     </tr>
