@@ -1504,7 +1504,9 @@ function Results({ orderData, results, onBack, onEdit }) {
                                   style={{cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem'}}
                                 >
                                   <strong>{skvettpall.artikelnummer}:</strong>
-                                  <strong>{skvettpall.boxCount}</strong>
+                                  <span className="pallet-box-badge" style={{fontSize: '0.8rem', padding: '0.3rem 0.6rem'}}>
+                                    {skvettpall.boxCount}
+                                  </span>
                                 </span>
                                 <span 
                                   onClick={() => handleClickStashedComboProduct(index, pallIndex)}
@@ -1597,7 +1599,9 @@ function Results({ orderData, results, onBack, onEdit }) {
                                 style={{cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem'}}
                               >
                                 <strong>{item.skvettpall.artikelnummer}:</strong>
-                                <strong>{item.skvettpall.boxCount}</strong>
+                                <span className="pallet-box-badge" style={{fontSize: '0.8rem', padding: '0.3rem 0.6rem'}}>
+                                  {item.skvettpall.boxCount}
+                                </span>
                               </span>
                               <span 
                                 onClick={() => handleClickStashedSkvettpall(index)}
@@ -1682,7 +1686,9 @@ function Results({ orderData, results, onBack, onEdit }) {
                     <div key={index} className="combo-product-line" style={{fontSize: '0.85rem', padding: '0.4rem'}}>
                       <span style={{display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
                         <strong>{skvettpall.artikelnummer}:</strong>
-                        <strong>{skvettpall.boxCount}</strong>
+                        <span className="pallet-box-badge" style={{fontSize: '0.8rem', padding: '0.3rem 0.6rem'}}>
+                          {skvettpall.boxCount}
+                        </span>
                       </span>
                       <span style={{display: 'flex', alignItems: 'center', gap: '0.25rem'}}>
                         <span style={{fontSize: '0.75rem', color: '#666'}}>({skvettpall.stackHeight}r)</span>
@@ -1780,7 +1786,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                       }}
                       title="Klicka för att markera/avmarkera alla skvettpalls"
                     >
-                      <span className="combo-title">Pall #{displayIndex + 1}</span>
+                      <span className="combo-title">#{combo.skvettpalls.length}</span>
                       <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
                         <span className="combo-height" title="Höjden i röda backar enhet">
                           {(combo.totalHeight - 1).toFixed(2)}
@@ -2073,7 +2079,9 @@ function Results({ orderData, results, onBack, onEdit }) {
                                   style={{cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem'}}
                                 >
                                   <strong>{skvettpall.artikelnummer}:</strong>
-                                  <strong>{skvettpall.boxCount}</strong>
+                                  <span className="pallet-box-badge" style={{fontSize: '0.8rem', padding: '0.3rem 0.6rem'}}>
+                                    {skvettpall.boxCount}
+                                  </span>
                                 </span>
                                 <span style={{display: 'flex', alignItems: 'center', gap: '0.25rem'}}>
                                   <span 
@@ -2691,6 +2699,11 @@ function Results({ orderData, results, onBack, onEdit }) {
             )}
           </div>
         </div>
+      </div>
+      
+      {/* Print-only footer */}
+      <div className="print-footer">
+        Kund: <strong>{orderData.kund || '-'}</strong>
       </div>
     </div>
   );

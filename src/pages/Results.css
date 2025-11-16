@@ -6,6 +6,10 @@
   margin: 0 auto;
 }
 
+.print-footer {
+  display: none;
+}
+
 .results-header {
   background: white;
   padding: 0.25rem 0.5rem;
@@ -248,15 +252,15 @@
 .pallet-box-badge {
   display: inline-block;
   background: #f8f9fa;
-  color: #495057;
-  padding: 0.15rem 0.35rem;
-  border-radius: 3px;
-  font-weight: 600;
-  font-size: 0.7rem;
-  min-width: 30px;
+  color: #212529;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-weight: 500;
+  font-size: 0.95rem;
+  min-width: 35px;
   text-align: center;
   position: relative;
-  border: 1px solid #dee2e6;
+  border: 1.5px solid #adb5bd;
 }
 
 .pallet-box-badge:hover .delete-box-btn {
@@ -696,7 +700,7 @@
   /* Ultra-compact header - just 1 line */
   .results-header {
     padding: 0;
-    margin-bottom: 2mm;
+    margin-bottom: 1mm;
     box-shadow: none;
     border-bottom: 1px solid #333;
     page-break-inside: avoid;
@@ -713,9 +717,9 @@
   
   .order-info {
     display: flex;
-    gap: 5mm;
+    gap: 3mm;
     margin: 0;
-    padding: 1.5mm 0;
+    padding: 1mm 0;
     justify-content: space-between;
     flex-wrap: nowrap;
   }
@@ -725,6 +729,19 @@
     flex-direction: row;
     align-items: baseline;
     gap: 1mm;
+  }
+  
+  /* Make Kund and Datum more prominent */
+  .info-item:nth-child(1) .info-label,
+  .info-item:nth-child(2) .info-label {
+    font-size: 9pt;
+    font-weight: 600;
+  }
+  
+  .info-item:nth-child(1) .info-value,
+  .info-item:nth-child(2) .info-value {
+    font-size: 9pt;
+    font-weight: normal;
   }
   
   .info-item.print-only {
@@ -759,8 +776,8 @@
   
   .pallets-grid {
     display: grid;
-    grid-template-columns: 1.1fr 1fr;
-    gap: 3mm;
+    grid-template-columns: 1.3fr 1fr;
+    gap: 2mm;
     page-break-inside: avoid;
   }
   
@@ -769,9 +786,9 @@
   }
   
   .section-header {
-    margin-bottom: 1.5mm;
+    margin-bottom: 1mm;
     padding-bottom: 0.5mm;
-    border-bottom: 1px solid #333;
+    border-bottom: 1.5px solid #333;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -784,18 +801,20 @@
   }
   
   .section-title {
-    font-size: 9pt;
+    font-size: 10pt;
     font-weight: 700;
     margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.3pt;
   }
   
   .section-count {
-    font-size: 8pt;
+    font-size: 8.5pt;
     padding: 0;
     background: none;
     color: #333;
     border-radius: 0;
-    font-weight: 600;
+    font-weight: 700;
   }
   
   .section-count::after {
@@ -809,26 +828,38 @@
   
   /* Compact combo pallets */
   .combo-pallet-item {
-    padding: 1mm;
-    margin-bottom: 1mm;
+    padding: 0.8mm;
+    margin-bottom: 0.8mm;
+    margin-left: 3mm;
     page-break-inside: avoid;
-    font-size: 6.5pt;
+    font-size: 7pt;
     background: white !important;
-    border-left: 1.5px solid #333;
+    border-left: 2px solid #333;
     border-bottom: 0.5px solid #ddd;
-    padding-bottom: 1.5mm;
+    padding-bottom: 0.8mm;
+    position: relative;
   }
   
   .combo-header {
-    padding: 0.5mm 0;
-    margin-bottom: 0.5mm;
-    display: flex;
-    justify-content: space-between;
+    position: absolute;
+    left: -3.5mm;
+    top: 50%;
+    transform: translateY(-50%);
+    padding: 0.5mm 1mm;
+    margin: 0;
+    width: auto;
+    background: white;
+    border: 1px solid #333;
+    border-radius: 2px;
   }
   
   .combo-title {
-    font-size: 7.5pt;
+    font-size: 8pt;
     font-weight: 700;
+    display: block;
+    margin: 0;
+    padding: 0;
+    line-height: 1;
   }
   
   .combo-height {
@@ -841,8 +872,8 @@
   }
   
   .combo-product-line {
-    padding: 0.5mm 0.5mm;
-    font-size: 6.5pt;
+    padding: 0.4mm 0.5mm;
+    font-size: 7pt;
     background: white !important;
     border: none;
     line-height: 1.2;
@@ -850,26 +881,28 @@
   
   /* Compact full pallet table */
   .pallet-table {
-    font-size: 6.5pt;
+    font-size: 7pt;
     width: 100%;
     border-collapse: collapse;
   }
   
   .pallet-table th {
-    padding: 0.5mm 1mm;
-    font-size: 7pt;
-    background: white !important;
-    border-bottom: 1px solid #333;
+    padding: 0.5mm 0.5mm;
+    font-size: 7.5pt;
+    background: #f8f9fa !important;
+    border-bottom: 1.5px solid #333;
     font-weight: 700;
     line-height: 1.2;
+    text-transform: uppercase;
+    letter-spacing: 0.2pt;
   }
   
   .pallet-table td {
-    padding: 0.5mm 1mm;
-    font-size: 6.5pt;
-    border-bottom: 0.3px solid #ddd;
+    padding: 0.5mm 0.5mm;
+    font-size: 7pt;
+    border-bottom: 0.5px solid #ddd;
     line-height: 1.2;
-    vertical-align: top;
+    vertical-align: middle;
   }
   
   .pallet-table tr {
@@ -877,18 +910,18 @@
   }
   
   .pallet-box-badge {
-    padding: 0.3mm 1mm;
-    font-size: 6.5pt;
-    min-width: 15px;
+    padding: 1mm 2mm;
+    font-size: 8pt;
+    min-width: 22px;
     background: white !important;
     color: #333 !important;
     border: 0.5px solid #333;
     display: inline-block;
-    line-height: 1.2;
+    line-height: 1.3;
   }
   
   .pallet-boxes {
-    gap: 0.5mm;
+    gap: 1mm;
     display: flex;
     flex-wrap: wrap;
   }
@@ -967,5 +1000,25 @@
     border-color: #28a745 !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+  }
+  
+  /* Print footer */
+  .print-footer {
+    display: block !important;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 2.5mm 6mm;
+    border-top: 2px solid #333;
+    background: white;
+    font-size: 9pt;
+    font-weight: normal;
+    text-align: center;
+  }
+  
+  .print-footer strong {
+    font-weight: 700;
+    font-size: 10pt;
   }
 }
