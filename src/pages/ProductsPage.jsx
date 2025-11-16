@@ -15,7 +15,7 @@ const ProductsPage = () => {
   const [showError, setShowError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  const boxTypes = ['red', 'green', 'black', 'blue', 'half-blue', 'renrum'];
+  const boxTypes = ['red', 'green', 'black', 'blue', 'renrum'];
   
   // Map internal values to Swedish display names
   const boxTypeLabels = {
@@ -23,7 +23,6 @@ const ProductsPage = () => {
     'green': 'GRÖN',
     'black': 'SVART',
     'blue': 'BLÅ',
-    'half-blue': 'HALF-BLUE',
     'renrum': 'RENRUM'
   };
 
@@ -64,6 +63,12 @@ const ProductsPage = () => {
     // Check if ID is a valid number
     if (isNaN(newProduct.id)) {
       setErrorMessage('Product ID must be a number');
+      return false;
+    }
+
+    // Check if ID is not negative
+    if (newProduct.id < 0) {
+      setErrorMessage('Product ID cannot be negative');
       return false;
     }
 

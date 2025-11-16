@@ -651,7 +651,8 @@
   .stash-empty,
   .summary-stats,
   .edit-actions-header,
-  .unknown-products-banner {
+  .unknown-products-banner,
+  .undo-tip-banner {
     display: none !important;
   }
   

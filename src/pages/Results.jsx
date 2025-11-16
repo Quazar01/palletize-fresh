@@ -30,6 +30,7 @@ function Results({ orderData, results, onBack, onEdit }) {
   const [checkedPallets, setCheckedPallets] = useState({}); // Track checked pallets: { palletIndex: Set<boxIndex> }
   const [checkedComboSkvettpalls, setCheckedComboSkvettpalls] = useState({}); // Track checked skvettpalls: { comboIndex: Set<skvettpallIndex> }
   const [checkedMixPallItems, setCheckedMixPallItems] = useState({}); // Track checked mix pall items: { comboIndex: Set<mixItemArticleNumber> }
+  const [checkedStandaloneMixItems, setCheckedStandaloneMixItems] = useState(new Set()); // Track checked standalone mix pall items by artikelnummer
   const [history, setHistory] = useState([]); // Track state history for undo
   const [historyIndex, setHistoryIndex] = useState(-1); // Current position in history
 
@@ -160,6 +161,43 @@ function Results({ orderData, results, onBack, onEdit }) {
     });
   };
 
+  const handleToggleAllPalletBoxes = (palletIndex, pallet) => {
+    setCheckedPallets(prev => {
+      const newChecked = { ...prev };
+      
+      // Determine the number of boxes for this pallet
+      let boxCount;
+      if (pallet.isSingleSkvettpall) {
+        boxCount = 1;
+      } else if (pallet.palletBoxCounts) {
+        boxCount = pallet.palletBoxCounts.length;
+      } else {
+        boxCount = pallet.fullPallets || 0;
+      }
+      
+      if (!newChecked[palletIndex]) {
+        newChecked[palletIndex] = new Set();
+      } else {
+        newChecked[palletIndex] = new Set(newChecked[palletIndex]);
+      }
+      
+      // Check if all boxes are already checked
+      const allChecked = newChecked[palletIndex].size === boxCount;
+      
+      if (allChecked) {
+        // Uncheck all
+        delete newChecked[palletIndex];
+      } else {
+        // Check all
+        for (let i = 0; i < boxCount; i++) {
+          newChecked[palletIndex].add(i);
+        }
+      }
+      
+      return newChecked;
+    });
+  };
+
   const handleToggleCheckedComboPallet = (comboIndex) => {
     // Toggle all skvettpalls in the combo
     setCheckedComboSkvettpalls(prev => {
@@ -261,6 +299,18 @@ function Results({ orderData, results, onBack, onEdit }) {
         newChecked[comboIndex].add(artikelnummer);
       }
       
+      return newChecked;
+    });
+  };
+
+  const handleToggleStandaloneMixItem = (artikelnummer) => {
+    setCheckedStandaloneMixItems(prev => {
+      const newChecked = new Set(prev);
+      if (newChecked.has(artikelnummer)) {
+        newChecked.delete(artikelnummer);
+      } else {
+        newChecked.add(artikelnummer);
+      }
       return newChecked;
     });
   };
@@ -1109,6 +1159,29 @@ function Results({ orderData, results, onBack, onEdit }) {
     <div className="results-container">
       <div className="results-header">
         <div className="header-layout">
+          {/* Left: Undo tip banner */}
+          <div 
+            className="undo-tip-banner"
+            style={{
+              position: 'absolute',
+              left: '1rem',
+              top: '1rem',
+              background: '#fff3cd',
+              border: '1px solid #ffc107',
+              borderRadius: '4px',
+              padding: '0.3rem 0.6rem',
+              fontSize: '0.75rem',
+              color: '#856404',
+              fontWeight: '500',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.3rem',
+              zIndex: 10
+            }}
+          >
+            💡 Psst, testa CTRL + Z
+          </div>
+          
           {/* Center: Title, Order Info, and Stats */}
           <div className="header-center">
             <h1>Plocklista Generator - Resultat</h1>
@@ -2108,9 +2181,27 @@ function Results({ orderData, results, onBack, onEdit }) {
                 <div className="combo-products">
                   {[...mixPall].sort((a, b) => b.boxCount - a.boxCount).map((item, index) => {
                     const isEditing = editingMixPallProduct?.index === index;
+                    const isChecked = checkedStandaloneMixItems.has(item.artikelnummer);
                     
                     return (
-                      <div key={index} className={`combo-product-line ${isEditing ? 'editing' : ''}`} style={{fontSize: '0.85rem', padding: '0.4rem'}}>
+                      <div 
+                        key={index} 
+                        className={`combo-product-line ${isEditing ? 'editing' : ''}`} 
+                        style={{
+                          fontSize: '0.85rem', 
+                          padding: '0.4rem',
+                          background: isChecked ? '#28a745' : undefined,
+                          color: isChecked ? 'white' : undefined,
+                          cursor: !isEditing ? 'pointer' : undefined
+                        }}
+                        onClick={(e) => {
+                          if (!isEditing && !e.target.closest('.icon-btn') && !e.target.closest('strong')) {
+                            e.stopPropagation();
+                            handleToggleStandaloneMixItem(item.artikelnummer);
+                          }
+                        }}
+                        title={!isEditing ? (isChecked ? 'Klicka för att avmarkera' : 'Klicka för att markera') : undefined}
+                      >
                         {isEditing ? (
                           <>
                             <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
@@ -2153,30 +2244,45 @@ function Results({ orderData, results, onBack, onEdit }) {
                         ) : (
                           <>
                             <span 
-                              onClick={() => handleClickMixPallProduct(index)}
                               style={{
-                                cursor: 'pointer', 
                                 display: 'flex', 
                                 alignItems: 'center', 
-                                gap: '0.5rem',
+                                gap: '0.25rem',
                                 padding: '0.25rem 0.5rem',
-                                borderRadius: '4px',
-                                transition: 'background 0.2s'
+                                flex: 1
                               }}
-                              onMouseEnter={(e) => e.currentTarget.style.background = '#f0f0f0'}
-                              onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-                              title="Klicka för att redigera"
                             >
-                              <strong>{item.artikelnummer}:</strong>
-                              <strong>{item.boxCount}</strong>
+                              <strong 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleClickMixPallProduct(index);
+                                }}
+                                style={{cursor: 'pointer'}}
+                                title="Klicka för att redigera"
+                              >
+                                {item.artikelnummer}:
+                              </strong>
+                              <strong
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleClickMixPallProduct(index);
+                                }}
+                                style={{cursor: 'pointer'}}
+                                title="Klicka för att redigera"
+                              >
+                                {item.boxCount}
+                              </strong>
                             </span>
                             <button 
                               className="icon-btn delete small" 
-                              onClick={() => handleDeleteMixPallProduct(index)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteMixPallProduct(index);
+                              }}
                               title="Ta bort"
                               style={{fontSize: '0.8rem', padding: '0.2rem'}}
                             >
-                              ✕
+                              ×
                             </button>
                           </>
                         )}
@@ -2213,9 +2319,27 @@ function Results({ orderData, results, onBack, onEdit }) {
                 <div className="combo-products">
                   {[...mixPall].sort((a, b) => b.boxCount - a.boxCount).map((item, index) => {
                     const isEditing = editingMixPallProduct?.index === index;
+                    const isChecked = checkedStandaloneMixItems.has(item.artikelnummer);
                     
                     return (
-                      <div key={index} className={`combo-product-line ${isEditing ? 'editing' : ''}`} style={{fontSize: '0.85rem', padding: '0.4rem'}}>
+                      <div 
+                        key={index} 
+                        className={`combo-product-line ${isEditing ? 'editing' : ''}`} 
+                        style={{
+                          fontSize: '0.85rem', 
+                          padding: '0.4rem',
+                          background: isChecked ? '#28a745' : undefined,
+                          color: isChecked ? 'white' : undefined,
+                          cursor: !isEditing ? 'pointer' : undefined
+                        }}
+                        onClick={(e) => {
+                          if (!isEditing && !e.target.closest('.icon-btn') && !e.target.closest('strong')) {
+                            e.stopPropagation();
+                            handleToggleStandaloneMixItem(item.artikelnummer);
+                          }
+                        }}
+                        title={!isEditing ? (isChecked ? 'Klicka för att avmarkera' : 'Klicka för att markera') : undefined}
+                      >
                         {isEditing ? (
                           <>
                             <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
@@ -2350,10 +2474,10 @@ function Results({ orderData, results, onBack, onEdit }) {
                           <span 
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleEditPallet(index);
+                              handleToggleAllPalletBoxes(index, pallet);
                             }}
                             style={{cursor: 'pointer'}}
-                            title="Klicka för att redigera"
+                            title="Klicka för att markera/avmarkera alla pallar"
                           >
                             <strong>{pallet.artikelnummer}</strong>
                           </span>
