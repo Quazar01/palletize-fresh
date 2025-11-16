@@ -853,6 +853,17 @@
     position: relative;
   }
   
+  /* Hide combo numbers in Enkel and Helsingborg modes */
+  .mode-enkel .combo-pallet-item,
+  .mode-helsingborg .combo-pallet-item {
+    margin-left: 0 !important;
+  }
+  
+  .mode-enkel .combo-header,
+  .mode-helsingborg .combo-header {
+    display: none !important;
+  }
+  
   .combo-header {
     position: absolute;
     left: -6mm;
@@ -864,6 +875,51 @@
     background: white;
     border: 1px solid #333;
     border-radius: 2px;
+  }
+  
+  /* Fix standalone mix pall positioning in print */
+  .standalone-mix {
+    margin-left: 0 !important;
+    border-left: 1px solid #999 !important;
+    border-bottom: 0.5px solid #999 !important;
+    padding: 1mm !important;
+    position: relative;
+  }
+  
+  .standalone-mix::before {
+    content: 'Blandpall';
+    position: absolute;
+    top: 0.5mm;
+    left: 0.5mm;
+    font-size: 7pt;
+    font-weight: 700;
+    color: #333;
+    text-transform: uppercase;
+    letter-spacing: 0.3pt;
+  }
+  
+  .standalone-mix .combo-header {
+    display: none !important;
+  }
+  
+  .standalone-mix .combo-products {
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1mm;
+    margin-top: 4mm;
+  }
+  
+  .standalone-mix .combo-product-line {
+    padding: 0.5mm 1mm;
+    font-size: 6.5pt;
+    background: white !important;
+    border: 0.5px solid #ddd;
+    border-radius: 1px;
+    line-height: 1.2;
+    text-align: left;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
   }
   
   .combo-title {
@@ -971,46 +1027,32 @@
   
   /* Highlighted Mix Pall (Blandpall) styling */
   .mix-pall-item {
-    background: #e8d7b8 !important;
-    border: 1px solid #999 !important;
+    background: #ffeb3b !important;
+    border: 2px solid #333 !important;
     border-left: 2px solid #333 !important;
-    padding: 2mm !important;
-    margin-bottom: 1mm !important;
-    margin-top: 1mm !important;
-    margin-left: 0 !important;
+    padding: 3mm !important;
+    margin-bottom: 2mm !important;
+    margin-top: 2mm !important;
     position: relative;
   }
   
-  .mix-pall-item .combo-header {
-    position: static !important;
-    transform: none !important;
-    background: transparent !important;
-    border: none !important;
-    display: block !important;
+  .mix-pall-item .combo-header::before {
+    content: 'Blandpall';
+    display: block;
+    font-size: 16pt;
+    font-weight: 700;
+    color: #d32f2f;
     text-align: center;
-    padding: 2mm 0 !important;
     margin-bottom: 2mm;
   }
   
   .mix-pall-item .combo-title {
-    display: block !important;
-    font-size: 16pt !important;
-    font-weight: 700 !important;
-    color: #333;
-    text-align: center;
-    background: transparent !important;
-    border: none !important;
-    padding: 2mm 0;
-  }
-  
-  .mix-pall-item .combo-products {
-    padding-left: 0 !important;
+    display: none;
   }
   
   .mix-pall-item .combo-product-line {
-    background: transparent !important;
-    font-weight: normal;
-    padding: 0.3mm 0.5mm;
+    background: #ffeb3b !important;
+    font-weight: 600;
   }
   
   /* Checked skvettpall styling for print */

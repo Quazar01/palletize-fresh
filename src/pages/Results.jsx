@@ -1156,7 +1156,7 @@ function Results({ orderData, results, onBack, onEdit }) {
   const totalEUPallets = totalEUPalletsFromFullPallets + totalEUPalletsFromComboPallets + totalEUPalletsFromMixPall;
 
   return (
-    <div className="results-container">
+    <div className={`results-container mode-${palletMode}`}>
       <div className="results-header">
         <div className="header-layout">
           {/* Left: Undo tip banner */}
@@ -2170,7 +2170,10 @@ function Results({ orderData, results, onBack, onEdit }) {
             {palletMode === 'combo' && mixPall.length > 0 && (
               <div className="combo-pallet-item mix-pall-item" style={{marginTop: '1rem'}}>
                 <div className="combo-header">
-                  <span className="combo-title">Blandpall</span>
+                  <span className="combo-title">
+                    <span className="screen-only">Blandpall</span>
+                    <span className="print-only">#1</span>
+                  </span>
                   <button 
                     className="icon-btn" 
                     onClick={handleAddMixPallProduct} 
@@ -2306,9 +2309,12 @@ function Results({ orderData, results, onBack, onEdit }) {
 
             {/* Mix Pall for Enkel and Helsingborg modes */}
             {(palletMode === 'enkel' || palletMode === 'helsingborg') && mixPall.length > 0 && (
-              <div className="combo-pallet-item mix-pall-item" style={{marginTop: '1rem'}}>
+              <div className="combo-pallet-item mix-pall-item standalone-mix" style={{marginTop: '1rem'}}>
                 <div className="combo-header">
-                  <span className="combo-title">Blandpall</span>
+                  <span className="combo-title">
+                    <span className="screen-only">Blandpall</span>
+                    <span className="print-only">Blandpall</span>
+                  </span>
                   <button 
                     className="icon-btn" 
                     onClick={handleAddMixPallProduct} 
