@@ -1356,7 +1356,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                                   justifyContent: 'space-between',
                                   alignItems: 'center'
                                 }}>
-                                  <span>Mix</span>
+                                  <span>Blandpall</span>
                                   <button 
                                     className="icon-btn" 
                                     onClick={() => handleAddProductToStashedComboMixPall(index)}
@@ -1895,7 +1895,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                                   }}
                                   title="Klicka för att markera/avmarkera alla produkter"
                                 >
-                                  <span>Mix</span>
+                                  <span>Blandpall</span>
                                   <button 
                                     className="icon-btn" 
                                     onClick={(e) => {
@@ -2170,7 +2170,7 @@ function Results({ orderData, results, onBack, onEdit }) {
             {palletMode === 'combo' && mixPall.length > 0 && (
               <div className="combo-pallet-item mix-pall-item" style={{marginTop: '1rem'}}>
                 <div className="combo-header">
-                  <span className="combo-title">Mix Pall</span>
+                  <span className="combo-title">Blandpall</span>
                   <button 
                     className="icon-btn" 
                     onClick={handleAddMixPallProduct} 
@@ -2308,7 +2308,7 @@ function Results({ orderData, results, onBack, onEdit }) {
             {(palletMode === 'enkel' || palletMode === 'helsingborg') && mixPall.length > 0 && (
               <div className="combo-pallet-item mix-pall-item" style={{marginTop: '1rem'}}>
                 <div className="combo-header">
-                  <span className="combo-title">Mix Pall</span>
+                  <span className="combo-title">Blandpall</span>
                   <button 
                     className="icon-btn" 
                     onClick={handleAddMixPallProduct} 
