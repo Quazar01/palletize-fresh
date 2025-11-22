@@ -890,7 +890,8 @@
     content: 'Blandpall';
     position: absolute;
     top: 0.5mm;
-    left: 0.5mm;
+    left: 50%;
+    transform: translateX(-50%);
     font-size: 7pt;
     font-weight: 700;
     color: #333;

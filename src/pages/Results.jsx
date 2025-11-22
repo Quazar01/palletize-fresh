@@ -2168,7 +2168,7 @@ function Results({ orderData, results, onBack, onEdit }) {
 
             {/* Mix Pall for Combo mode when standalone */}
             {palletMode === 'combo' && mixPall.length > 0 && (
-              <div className="combo-pallet-item mix-pall-item" style={{marginTop: '1rem'}}>
+              <div className="combo-pallet-item mix-pall-item standalone-mix" style={{marginTop: '1rem'}}>
                 <div className="combo-header">
                   <span className="combo-title">
                     <span className="screen-only">Blandpall</span>
