@@ -250,6 +250,12 @@
   vertical-align: middle;
 }
 
+.pallet-table td strong {
+  font-weight: 600;
+  color: #2c3e50;
+  font-size: 0.95rem;
+}
+
 .pallet-table tr:hover {
   background: #f8f9fa;
 }
@@ -630,13 +636,15 @@
   padding: 0.15rem 0.25rem;
   background: white;
   border-radius: 3px;
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   transition: background-color 0.2s;
   cursor: default;
 }
 
 .combo-product-line strong {
-  font-weight: normal;
+  font-weight: 600;
+  color: #2c3e50;
+  font-size: 0.85rem;
 }
 
 .combo-product-line.draggable:hover {
@@ -899,7 +907,8 @@
     content: 'Blandpall';
     position: absolute;
     top: 0.5mm;
-    left: 0.5mm;
+    left: 50%;
+    transform: translateX(-50%);
     font-size: 7pt;
     font-weight: 700;
     color: #333;
