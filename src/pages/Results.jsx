@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import './Results.css';
 import { getBoxType } from '../utils/constants';
 import { getProductBoxType, productExists } from '../utils/productMapping';
@@ -33,6 +33,65 @@ function Results({ orderData, results, onBack, onEdit }) {
   const [checkedStandaloneMixItems, setCheckedStandaloneMixItems] = useState(new Set()); // Track checked standalone mix pall items by artikelnummer
   const [history, setHistory] = useState([]); // Track state history for undo
   const [historyIndex, setHistoryIndex] = useState(-1); // Current position in history
+  const [isManuallyOrdered, setIsManuallyOrdered] = useState(false); // Track if user has manually reordered combos
+
+  // Sort combo pallets once on initial load
+  useEffect(() => {
+    if (comboPallets.length > 0 && history.length === 0) {
+      // Only sort on the very first render (when history is empty)
+      const sortedCombos = [...comboPallets].sort((a, b) => {
+        const aHasMixPall = a.skvettpalls.some(s => s.isMixPall);
+        const bHasMixPall = b.skvettpalls.some(s => s.isMixPall);
+        
+        if (aHasMixPall && !bHasMixPall) return 1;
+        if (!aHasMixPall && bHasMixPall) return -1;
+        
+        return b.totalHeight - a.totalHeight;
+      });
+      setComboPallets(sortedCombos);
+    }
+  }, []); // Empty dependency array - only run once on mount
+
+  // Auto-scroll state for drag and drop
+  const autoScrollIntervalRef = useRef(null);
+  const mouseYRef = useRef(0);
+
+  // Auto-scroll functions
+  const updateMousePosition = (clientY) => {
+    mouseYRef.current = clientY;
+  };
+
+  const startAutoScroll = () => {
+    if (autoScrollIntervalRef.current) return;
+    
+    autoScrollIntervalRef.current = setInterval(() => {
+      const scrollThreshold = 100; // Distance from edge to trigger scroll
+      const scrollSpeed = 10; // Pixels to scroll per interval
+      const mouseY = mouseYRef.current;
+      const windowHeight = window.innerHeight;
+      
+      // Scroll up if near top
+      if (mouseY < scrollThreshold) {
+        window.scrollBy(0, -scrollSpeed);
+      }
+      // Scroll down if near bottom
+      else if (mouseY > windowHeight - scrollThreshold) {
+        window.scrollBy(0, scrollSpeed);
+      }
+    }, 16); // ~60fps
+  };
+
+  const stopAutoScroll = () => {
+    if (autoScrollIntervalRef.current) {
+      clearInterval(autoScrollIntervalRef.current);
+      autoScrollIntervalRef.current = null;
+    }
+  };
+
+  // Clean up auto-scroll on unmount
+  useEffect(() => {
+    return () => stopAutoScroll();
+  }, []);
 
   // Save current state to history
   const saveToHistory = () => {
@@ -922,16 +981,25 @@ function Results({ orderData, results, onBack, onEdit }) {
   const handleDragStart = (e, item, type) => {
     setDraggedItem({ ...item, type });
     e.currentTarget.classList.add('dragging');
+    
+    // Start auto-scroll when dragging
+    startAutoScroll();
   };
 
   const handleDragEnd = (e) => {
     e.currentTarget.classList.remove('dragging');
     setDraggedItem(null);
+    
+    // Stop auto-scroll when drag ends
+    stopAutoScroll();
   };
 
   const handleDragOver = (e) => {
     e.preventDefault();
     e.currentTarget.classList.add('drag-over');
+    
+    // Update mouse position for auto-scroll
+    updateMousePosition(e.clientY);
   };
 
   const handleDragLeave = (e) => {
@@ -944,6 +1012,12 @@ function Results({ orderData, results, onBack, onEdit }) {
     
     if (!draggedItem) return;
 
+    // If the item is already stashed (isStashed flag), don't process it here
+    // It's being moved between stashed combos, not to the general stash area
+    if (draggedItem.isStashed) return;
+
+    saveToHistory();
+
     if (draggedItem.type === 'combo') {
       // Add entire combo to stash
       setStash({
@@ -954,17 +1028,29 @@ function Results({ orderData, results, onBack, onEdit }) {
       const newComboPallets = comboPallets.filter((_, i) => i !== draggedItem.comboIndex);
       setComboPallets(newComboPallets);
     } else if (draggedItem.type === 'skvettpall') {
-      // Add skvettpall to stash
-      setStash({
-        ...stash,
-        skvettpalls: [...stash.skvettpalls, draggedItem]
-      });
-      // Remove from combo
+      // Create a new stashed combo with this skvettpall instead of adding as standalone
       const newComboPallets = [...comboPallets];
       const combo = newComboPallets[draggedItem.comboIndex];
+      const skvettpall = combo.skvettpalls[draggedItem.productIndex];
+      
+      // Create new stashed combo pallet
+      const newStashedCombo = {
+        combo: {
+          skvettpalls: [skvettpall],
+          totalHeight: skvettpall.heightInRedUnits
+        }
+      };
+      
+      // Add to stash as a combo pallet
+      setStash({
+        ...stash,
+        comboPallets: [...stash.comboPallets, newStashedCombo]
+      });
+      
+      // Remove from source combo
       combo.skvettpalls = combo.skvettpalls.filter((_, i) => i !== draggedItem.productIndex);
       
-      // If combo is empty, remove it
+      // If source combo is empty, remove it
       if (combo.skvettpalls.length === 0) {
         setComboPallets(newComboPallets.filter((_, i) => i !== draggedItem.comboIndex));
       } else {
@@ -1002,6 +1088,165 @@ function Results({ orderData, results, onBack, onEdit }) {
       setComboPallets([...comboPallets, newCombo]);
       handleRemoveFromStash('skvettpall', index);
     }
+  };
+
+  // Handler for reordering combos by drag and drop OR moving skvettpalls between combos
+  const handleDropOnCombo = (e, targetComboIndex) => {
+    e.preventDefault();
+    e.currentTarget.classList.remove('drag-over');
+    
+    if (!draggedItem) return;
+    
+    // Handle combo reordering
+    if (draggedItem.type === 'combo') {
+      if (draggedItem.comboIndex === targetComboIndex) return; // Same position
+      
+      saveToHistory();
+      
+      const newComboPallets = [...comboPallets];
+      
+      // Insert the dragged combo after the target combo
+      const draggedCombo = newComboPallets[draggedItem.comboIndex];
+      
+      // Remove from original position
+      newComboPallets.splice(draggedItem.comboIndex, 1);
+      
+      // Calculate new insert position (after removal, indices may shift)
+      let insertIndex;
+      if (draggedItem.comboIndex < targetComboIndex) {
+        // If dragging downward, target index shifts by -1 after removal
+        insertIndex = targetComboIndex;
+      } else {
+        // If dragging upward, insert after target
+        insertIndex = targetComboIndex + 1;
+      }
+      
+      // Insert at new position
+      newComboPallets.splice(insertIndex, 0, draggedCombo);
+      
+      setComboPallets(newComboPallets);
+      setIsManuallyOrdered(true); // Mark as manually ordered
+      setDraggedItem(null);
+    }
+    // Handle skvettpall movement between combos
+    else if (draggedItem.type === 'skvettpall') {
+      saveToHistory();
+      
+      // Check if dragging from stashed combo to main combo
+      if (draggedItem.isStashed) {
+        // Moving from stashed combo to main combo
+        const newStash = { ...stash };
+        const newComboPallets = [...comboPallets];
+        
+        const sourceCombo = newStash.comboPallets[draggedItem.comboIndex].combo;
+        const targetCombo = newComboPallets[targetComboIndex];
+        const skvettpall = sourceCombo.skvettpalls[draggedItem.productIndex];
+        
+        // Remove from stashed combo
+        sourceCombo.skvettpalls = sourceCombo.skvettpalls.filter((_, i) => i !== draggedItem.productIndex);
+        sourceCombo.totalHeight = sourceCombo.skvettpalls.reduce((sum, pall) => sum + pall.heightInRedUnits, 0);
+        
+        // Add to target main combo
+        targetCombo.skvettpalls.push(skvettpall);
+        targetCombo.totalHeight = targetCombo.skvettpalls.reduce((sum, pall) => sum + pall.heightInRedUnits, 0);
+        
+        // If stashed combo is now empty, remove it
+        if (sourceCombo.skvettpalls.length === 0) {
+          newStash.comboPallets.splice(draggedItem.comboIndex, 1);
+        }
+        
+        setStash(newStash);
+        setComboPallets(newComboPallets);
+      } else {
+        // Moving between main combos
+        if (draggedItem.comboIndex === targetComboIndex) return; // Same combo
+        
+        const newComboPallets = [...comboPallets];
+        const sourceCombo = newComboPallets[draggedItem.comboIndex];
+        const targetCombo = newComboPallets[targetComboIndex];
+        const skvettpall = sourceCombo.skvettpalls[draggedItem.productIndex];
+        
+        // Remove from source combo
+        sourceCombo.skvettpalls = sourceCombo.skvettpalls.filter((_, i) => i !== draggedItem.productIndex);
+        sourceCombo.totalHeight = sourceCombo.skvettpalls.reduce((sum, pall) => sum + pall.heightInRedUnits, 0);
+        
+        // Add to target combo
+        targetCombo.skvettpalls.push(skvettpall);
+        targetCombo.totalHeight = targetCombo.skvettpalls.reduce((sum, pall) => sum + pall.heightInRedUnits, 0);
+        
+        // If source combo is now empty, remove it
+        if (sourceCombo.skvettpalls.length === 0) {
+          newComboPallets.splice(draggedItem.comboIndex, 1);
+        }
+        
+        setComboPallets(newComboPallets);
+      }
+      
+      setDraggedItem(null);
+    }
+  };
+
+  // Handler for dropping skvettpalls on stashed combo pallets
+  const handleDropOnStashedCombo = (e, targetStashIndex) => {
+    e.preventDefault();
+    e.stopPropagation(); // Prevent event from bubbling to stash-drop-zone
+    e.currentTarget.classList.remove('drag-over');
+    
+    if (!draggedItem || draggedItem.type !== 'skvettpall') return;
+    
+    saveToHistory();
+    
+    const newStash = { ...stash };
+    let skvettpall;
+    
+    // Check if dragging from main combos or from stashed combos
+    if (draggedItem.isStashed) {
+      // Moving between stashed combos
+      if (draggedItem.comboIndex === targetStashIndex) return; // Same stashed combo
+      
+      const sourceCombo = newStash.comboPallets[draggedItem.comboIndex].combo;
+      const targetCombo = newStash.comboPallets[targetStashIndex].combo;
+      skvettpall = sourceCombo.skvettpalls[draggedItem.productIndex];
+      
+      // Remove from source
+      sourceCombo.skvettpalls = sourceCombo.skvettpalls.filter((_, i) => i !== draggedItem.productIndex);
+      sourceCombo.totalHeight = sourceCombo.skvettpalls.reduce((sum, pall) => sum + pall.heightInRedUnits, 0);
+      
+      // Add to target
+      targetCombo.skvettpalls.push(skvettpall);
+      targetCombo.totalHeight = targetCombo.skvettpalls.reduce((sum, pall) => sum + pall.heightInRedUnits, 0);
+      
+      // If source combo is now empty, remove it
+      if (sourceCombo.skvettpalls.length === 0) {
+        newStash.comboPallets.splice(draggedItem.comboIndex, 1);
+      }
+      
+      setStash(newStash);
+    } else {
+      // Moving from main combos to stashed combos
+      const newComboPallets = [...comboPallets];
+      const sourceCombo = newComboPallets[draggedItem.comboIndex];
+      const targetCombo = newStash.comboPallets[targetStashIndex].combo;
+      skvettpall = sourceCombo.skvettpalls[draggedItem.productIndex];
+      
+      // Remove from main combo
+      sourceCombo.skvettpalls = sourceCombo.skvettpalls.filter((_, i) => i !== draggedItem.productIndex);
+      sourceCombo.totalHeight = sourceCombo.skvettpalls.reduce((sum, pall) => sum + pall.heightInRedUnits, 0);
+      
+      // Add to stashed combo
+      targetCombo.skvettpalls.push(skvettpall);
+      targetCombo.totalHeight = targetCombo.skvettpalls.reduce((sum, pall) => sum + pall.heightInRedUnits, 0);
+      
+      // If source combo is now empty, remove it
+      if (sourceCombo.skvettpalls.length === 0) {
+        newComboPallets.splice(draggedItem.comboIndex, 1);
+      }
+      
+      setComboPallets(newComboPallets);
+      setStash(newStash);
+    }
+    
+    setDraggedItem(null);
   };
 
   // Handlers for editing stashed combo skvettpalls
@@ -1310,7 +1555,14 @@ function Results({ orderData, results, onBack, onEdit }) {
               <>
                 {/* Stashed Combo Pallets */}
                 {stash.comboPallets.map((item, index) => (
-                  <div key={`combo-${index}`} className="combo-pallet-item" style={{marginBottom: '1rem'}}>
+                  <div 
+                    key={`combo-${index}`} 
+                    className="combo-pallet-item" 
+                    style={{marginBottom: '1rem'}}
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={(e) => handleDropOnStashedCombo(e, index)}
+                  >
                     <div className="combo-header">
                       <span className="combo-title">Stashed Pall #{index + 1}</span>
                       <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
@@ -1342,7 +1594,24 @@ function Results({ orderData, results, onBack, onEdit }) {
                         const isMixPall = skvettpall.isMixPall;
                         
                         return (
-                          <div key={pallIndex} className={`combo-product-line ${isEditing ? 'editing' : ''}`} style={{fontSize: '0.85rem', padding: '0.4rem'}}>
+                          <div 
+                            key={pallIndex} 
+                            className={`combo-product-line ${isEditing ? 'editing' : ''} ${!isMixPall ? 'draggable' : ''}`}
+                            style={{fontSize: '0.85rem', padding: '0.4rem'}}
+                            draggable={!isEditing && !isMixPall}
+                            onDragStart={(e) => {
+                              if (!isEditing && !isMixPall) {
+                                e.stopPropagation();
+                                handleDragStart(e, { skvettpall, comboIndex: index, productIndex: pallIndex, isStashed: true }, 'skvettpall');
+                              }
+                            }}
+                            onDragEnd={(e) => {
+                              if (!isMixPall) {
+                                e.stopPropagation();
+                                handleDragEnd(e);
+                              }
+                            }}
+                          >
                             {isMixPall ? (
                               // Display mix pall items
                               <div style={{width: '100%'}}>
@@ -1752,33 +2021,22 @@ function Results({ orderData, results, onBack, onEdit }) {
 
             {comboPallets.length > 0 ? (
               <>
-                {[...comboPallets]
-                  .map((combo, originalIndex) => ({ combo, originalIndex }))
-                  .sort((a, b) => {
-                    // Check if combo contains mix pall
-                    const aHasMixPall = a.combo.skvettpalls.some(s => s.isMixPall);
-                    const bHasMixPall = b.combo.skvettpalls.some(s => s.isMixPall);
-                    
-                    // If one has mix pall and other doesn't, put mix pall last
-                    if (aHasMixPall && !bHasMixPall) return 1;
-                    if (!aHasMixPall && bHasMixPall) return -1;
-                    
-                    // Otherwise sort by height (highest to lowest)
-                    return b.combo.totalHeight - a.combo.totalHeight;
-                  })
-                  .map(({ combo, originalIndex: comboIndex }, displayIndex) => (
+                {comboPallets.map((combo, index) => (
                   <div 
-                    key={comboIndex} 
+                    key={index} 
                     className="combo-pallet-item"
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={(e) => handleDropOnCombo(e, index)}
                   >
                     <div 
                       className="combo-header draggable"
                       draggable="true"
-                      onDragStart={(e) => handleDragStart(e, { combo, comboIndex }, 'combo')}
+                      onDragStart={(e) => handleDragStart(e, { combo, comboIndex: index }, 'combo')}
                       onDragEnd={handleDragEnd}
                       onClick={(e) => {
                         if (!e.target.closest('.icon-btn')) {
-                          handleToggleCheckedComboPallet(comboIndex);
+                          handleToggleCheckedComboPallet(index);
                         }
                       }}
                       style={{
@@ -1787,7 +2045,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                       title="Klicka för att markera/avmarkera alla skvettpalls"
                     >
                       <span className="combo-title">
-                        <span className="screen-only">Pall #{displayIndex + 1}</span>
+                        <span className="screen-only">Pall #{index + 1}</span>
                         <span className="print-only">#{combo.skvettpalls.length}</span>
                       </span>
                       <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
@@ -1796,7 +2054,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                         </span>
                         <button 
                           className="icon-btn add" 
-                          onClick={() => handleAddSkvettpallToCombo(comboIndex)}
+                          onClick={() => handleAddSkvettpallToCombo(index)}
                           onMouseDown={(e) => e.stopPropagation()}
                           title="Lägg till skvettpall"
                           style={{fontSize: '0.9rem', padding: '0.25rem'}}
@@ -1805,7 +2063,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                         </button>
                         <button 
                           className="icon-btn delete" 
-                          onClick={() => handleDeleteComboPallet(comboIndex)}
+                          onClick={() => handleDeleteComboPallet(index)}
                           onMouseDown={(e) => e.stopPropagation()}
                           title="Radera"
                           style={{fontSize: '0.9rem', padding: '0.25rem'}}
@@ -1826,8 +2084,8 @@ function Results({ orderData, results, onBack, onEdit }) {
                         .map((skvettpall, sortedIndex) => {
                         // Find original index for editing operations
                         const pallIndex = combo.skvettpalls.indexOf(skvettpall);
-                        const isEditing = editingComboProduct?.comboIndex === comboIndex && editingComboProduct?.productIndex === pallIndex;
-                        const isChecked = checkedComboSkvettpalls[comboIndex]?.has(pallIndex);
+                        const isEditing = editingComboProduct?.comboIndex === index && editingComboProduct?.productIndex === pallIndex;
+                        const isChecked = checkedComboSkvettpalls[index]?.has(pallIndex);
                         
                         // Check if this is a mix pall
                         const isMixPall = skvettpall.isMixPall;
@@ -1840,7 +2098,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                             onDragStart={(e) => {
                               if (!isEditing && !isMixPall) {
                                 e.stopPropagation();
-                                handleDragStart(e, { skvettpall, comboIndex, productIndex: pallIndex }, 'skvettpall');
+                                handleDragStart(e, { skvettpall, comboIndex: index, productIndex: pallIndex }, 'skvettpall');
                               }
                             }}
                             onDragEnd={(e) => {
@@ -1852,7 +2110,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                             onClick={(e) => {
                               if (!isEditing && !e.target.closest('.icon-btn') && !e.target.closest('input')) {
                                 e.stopPropagation();
-                                handleToggleCheckedSkvettpall(comboIndex, pallIndex);
+                                handleToggleCheckedSkvettpall(index, pallIndex);
                               }
                             }}
                             style={{
@@ -1872,7 +2130,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                                   // Only trigger if clicking directly on the Mix container, not on children
                                   if (e.target === e.currentTarget) {
                                     e.stopPropagation();
-                                    handleToggleCheckedMixPall(comboIndex, skvettpall.mixPallItems || []);
+                                    handleToggleCheckedMixPall(index, skvettpall.mixPallItems || []);
                                   }
                                 }}
                               >
@@ -1890,7 +2148,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                                   onClick={(e) => {
                                     if (!e.target.closest('.icon-btn')) {
                                       e.stopPropagation();
-                                      handleToggleCheckedMixPall(comboIndex, skvettpall.mixPallItems || []);
+                                      handleToggleCheckedMixPall(index, skvettpall.mixPallItems || []);
                                     }
                                   }}
                                   title="Klicka för att markera/avmarkera alla produkter"
@@ -1900,7 +2158,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                                     className="icon-btn" 
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      handleAddProductToComboMixPall(comboIndex);
+                                      handleAddProductToComboMixPall(index);
                                     }}
                                     style={{
                                       fontSize: '1rem', 
@@ -1917,8 +2175,8 @@ function Results({ orderData, results, onBack, onEdit }) {
                                   </button>
                                 </div>
                                 {skvettpall.mixPallItems && [...skvettpall.mixPallItems].sort((a, b) => b.boxCount - a.boxCount).map((mixItem, mixIdx) => {
-                                  const isMixItemEditing = editingComboMixPallProduct?.comboIndex === comboIndex && editingComboMixPallProduct?.mixItemIndex === mixIdx;
-                                  const isMixItemChecked = checkedMixPallItems[comboIndex]?.has(mixItem.artikelnummer);
+                                  const isMixItemEditing = editingComboMixPallProduct?.comboIndex === index && editingComboMixPallProduct?.mixItemIndex === mixIdx;
+                                  const isMixItemChecked = checkedMixPallItems[index]?.has(mixItem.artikelnummer);
                                   
                                   return (
                                     <div 
@@ -1939,7 +2197,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                                       onClick={(e) => {
                                         if (!isMixItemEditing && !e.target.closest('.icon-btn') && !e.target.closest('strong')) {
                                           e.stopPropagation();
-                                          handleToggleCheckedMixItem(comboIndex, mixItem.artikelnummer);
+                                          handleToggleCheckedMixItem(index, mixItem.artikelnummer);
                                         }
                                       }}
                                       title={!isMixItemEditing ? (isMixItemChecked ? 'Klicka för att avmarkera' : 'Klicka för att markera') : undefined}
@@ -1998,7 +2256,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                                             <strong 
                                               onClick={(e) => {
                                                 e.stopPropagation();
-                                                handleClickComboMixPallProduct(comboIndex, mixItem.artikelnummer);
+                                                handleClickComboMixPallProduct(index, mixItem.artikelnummer);
                                               }}
                                               style={{cursor: 'pointer'}}
                                               title="Klicka för att redigera"
@@ -2008,7 +2266,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                                             <strong
                                               onClick={(e) => {
                                                 e.stopPropagation();
-                                                handleClickComboMixPallProduct(comboIndex, mixItem.artikelnummer);
+                                                handleClickComboMixPallProduct(index, mixItem.artikelnummer);
                                               }}
                                               style={{cursor: 'pointer'}}
                                               title="Klicka för att redigera"
@@ -2020,7 +2278,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                                             className="icon-btn delete small" 
                                             onClick={(e) => {
                                               e.stopPropagation();
-                                              handleDeleteComboMixPallProduct(comboIndex, mixIdx);
+                                              handleDeleteComboMixPallProduct(index, mixIdx);
                                             }}
                                             title="Ta bort"
                                             style={{fontSize: '0.7rem', padding: '0.15rem'}}
@@ -2077,7 +2335,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                                 <span 
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    handleClickComboProduct(comboIndex, pallIndex);
+                                    handleClickComboProduct(index, pallIndex);
                                   }}
                                   style={{cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem'}}
                                 >
@@ -2090,7 +2348,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                                   <span 
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      handleClickComboProduct(comboIndex, pallIndex);
+                                      handleClickComboProduct(index, pallIndex);
                                     }}
                                     style={{cursor: 'pointer', fontSize: '0.75rem', color: '#666'}}
                                   >
@@ -2098,7 +2356,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                                   </span>
                                   <button 
                                     className="icon-btn delete small" 
-                                    onClick={() => handleDeleteComboProduct(comboIndex, pallIndex)}
+                                    onClick={() => handleDeleteComboProduct(index, pallIndex)}
                                     title="Ta bort"
                                     style={{fontSize: '0.8rem', padding: '0.2rem'}}
                                   >
@@ -2112,7 +2370,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                       })}
                       
                       {/* Add skvettpall to existing combo */}
-                      {addingToComboIndex === comboIndex && (
+                      {addingToComboIndex === index && (
                         <div style={{
                           display: 'flex',
                           alignItems: 'center',
