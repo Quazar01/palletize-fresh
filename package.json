@@ -2,6 +2,9 @@
   "name": "palletize-fresh",
   "version": "0.1.0",
   "private": true,
+  "license": "UNLICENSED",
+  "author": "Quazar01",
+  "description": "Proprietary pallet management system",
   "dependencies": {
     "@netlify/blobs": "^10.3.3",
     "@netlify/functions": "^5.1.0",
@@ -21,7 +24,8 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build",
+    "build": "GENERATE_SOURCEMAP=false react-scripts build",
+    "build:windows": "set \"GENERATE_SOURCEMAP=false\" && react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },

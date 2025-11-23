@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2025 Quazar01. All Rights Reserved.
+ * PROPRIETARY AND CONFIDENTIAL
+ * Unauthorized copying, distribution, or use is strictly prohibited.
+ */
+
 import './App.css';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Home from './pages/Home';

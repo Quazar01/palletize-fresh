@@ -60,3 +60,14 @@ Ready for Netlify deployment with included configuration. Connect your repositor
 ---
 
 **Built with React • Optimized for Performance • Ready for Production**
+
+---
+
+## 📄 License & Copyright
+
+**Copyright © 2025 Quazar01. All Rights Reserved.**
+
+This is proprietary software. Unauthorized copying, modification, distribution, or use of this software is strictly prohibited. See the [LICENSE](LICENSE) file for full terms and conditions.
+
+For licensing inquiries, please contact Quazar01.
+

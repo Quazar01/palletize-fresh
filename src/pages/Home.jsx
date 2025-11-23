@@ -493,6 +493,22 @@ function Home() {
           </div>
         </div>
       )}
+      
+      {/* Copyright Footer */}
+      <div style={{
+        position: 'fixed',
+        bottom: '10px',
+        left: '10px',
+        fontSize: '12px',
+        color: '#6c757d',
+        padding: '5px 15px',
+        background: 'rgba(255, 255, 255, 0.9)',
+        borderRadius: '4px',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+        zIndex: 1000
+      }}>
+        © 2025 Quazar01. All Rights Reserved. Proprietary Software.
+      </div>
     </div>
   );
 }
