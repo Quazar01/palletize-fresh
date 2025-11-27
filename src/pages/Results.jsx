@@ -41,16 +41,21 @@ function Results({ orderData, results, onBack, onEdit }) {
   useEffect(() => {
     if (comboPallets.length > 0 && history.length === 0) {
       // Only sort on the very first render (when history is empty)
-      const sortedCombos = [...comboPallets].sort((a, b) => {
-        const aHasMixPall = a.skvettpalls.some(s => s.isMixPall);
-        const bHasMixPall = b.skvettpalls.some(s => s.isMixPall);
-        
-        if (aHasMixPall && !bHasMixPall) return 1;
-        if (!aHasMixPall && bHasMixPall) return -1;
-        
-        return b.totalHeight - a.totalHeight;
-      });
-      setComboPallets(sortedCombos);
+      
+      if (palletMode === 'combo') {
+        // Combo mode: sort by height
+        const sortedCombos = [...comboPallets].sort((a, b) => {
+          const aHasMixPall = a.skvettpalls.some(s => s.isMixPall);
+          const bHasMixPall = b.skvettpalls.some(s => s.isMixPall);
+          
+          if (aHasMixPall && !bHasMixPall) return 1;
+          if (!aHasMixPall && bHasMixPall) return -1;
+          
+          return b.totalHeight - a.totalHeight;
+        });
+        setComboPallets(sortedCombos);
+      }
+      // For Enkel and Helsingborg modes, keep the order from Home.jsx (sorted by artikelnummer)
     }
   }, []); // Empty dependency array - only run once on mount
 
@@ -176,6 +181,14 @@ function Results({ orderData, results, onBack, onEdit }) {
 
   const handleSaveEdit = () => {
     if (editingPalletIndex !== null && editingPallet) {
+      const artikelnummer = parseInt(editingPallet.artikelnummer);
+      
+      // Validate that the product exists in the database
+      if (!productExists(artikelnummer)) {
+        alert(`Produkt ${artikelnummer} finns inte i databasen. Vänligen kontrollera artikelnumret.`);
+        return;
+      }
+      
       saveToHistory();
       const newFullPallets = [...fullPallets];
       const boxesPerPallet = parseInt(editingPallet.boxesPerPallet) || 0;
@@ -183,7 +196,7 @@ function Results({ orderData, results, onBack, onEdit }) {
       
       newFullPallets[editingPalletIndex] = {
         ...newFullPallets[editingPalletIndex],
-        artikelnummer: parseInt(editingPallet.artikelnummer) || newFullPallets[editingPalletIndex].artikelnummer,
+        artikelnummer: artikelnummer || newFullPallets[editingPalletIndex].artikelnummer,
         boxesPerPallet: boxesPerPallet,
         fullPallets: palletCount,
         totalBoxes: boxesPerPallet * palletCount
@@ -387,6 +400,12 @@ function Results({ orderData, results, onBack, onEdit }) {
     const count = parseInt(newPallet.count) || 1;
 
     if (artikelnummer && boxesPerPallet && boxesPerPallet > 0 && count > 0) {
+      // Validate that the product exists in the database
+      if (!productExists(artikelnummer)) {
+        alert(`Produkt ${artikelnummer} finns inte i databasen. Vänligen kontrollera artikelnumret.`);
+        return;
+      }
+      
       saveToHistory();
       const newFullPallets = [...fullPallets, {
         artikelnummer,

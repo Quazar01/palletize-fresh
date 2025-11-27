@@ -186,8 +186,11 @@ function Home() {
           palletCount: 1,
         }));
         
-        // Sort Full Pall list by artikelnummer (product number) ascending
-        fullPalletsList.sort((a, b) => a.artikelnummer - b.artikelnummer);
+        // Sort Full Pall list by antal pallar (number of pallets) descending
+        fullPalletsList.sort((a, b) => b.fullPallets - a.fullPallets);
+        
+        // Sort Enkel pallets by artikelnummer (product number) ascending
+        comboPallets.sort((a, b) => a.skvettpalls[0].artikelnummer - b.skvettpalls[0].artikelnummer);
       } else if (selectedOption === 'helsingborg') {
         // Helsingborg mode: same as Enkel, each skvettpall is its own parcel
         comboPallets = processed.skvettpallsList.map(skvettpall => ({
@@ -196,8 +199,11 @@ function Home() {
           palletCount: 1,
         }));
         
-        // Sort Full Pall list by artikelnummer (product number) ascending
-        fullPalletsList.sort((a, b) => a.artikelnummer - b.artikelnummer);
+        // Sort Full Pall list by antal pallar (number of pallets) descending
+        fullPalletsList.sort((a, b) => b.fullPallets - a.fullPallets);
+        
+        // Sort Enkel pallets by artikelnummer (product number) ascending
+        comboPallets.sort((a, b) => a.skvettpalls[0].artikelnummer - b.skvettpalls[0].artikelnummer);
       } else {
         // Other modes: each skvettpall is its own parcel
         comboPallets = processed.skvettpallsList.map(skvettpall => ({
