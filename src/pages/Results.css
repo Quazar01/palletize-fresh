@@ -140,8 +140,8 @@
 
 .pallets-section {
   background: white;
-  padding: 1.5rem;
-  border-radius: 10px;
+  padding: 0.6rem 0.8rem;
+  border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
@@ -150,9 +150,9 @@
 
 .pallets-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 1.5rem;
-  margin-bottom: 1.5rem;
+  grid-template-columns: 0.5fr 1.5fr 1fr;
+  gap: 0.8rem;
+  margin-bottom: 0.8rem;
 }
 
 @media (max-width: 1400px) {
@@ -166,9 +166,9 @@
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.3rem;
-  padding-bottom: 0.3rem;
+  gap: 0.3rem;
+  margin-bottom: 0.2rem;
+  padding-bottom: 0.2rem;
   border-bottom: 2px solid #e0e0e0;
 }
 
@@ -185,16 +185,38 @@
 }
 
 .section-title {
-  font-size: 1rem;
+  font-size: 0.9rem;
   font-weight: 600;
   color: #333;
   margin: 0;
+  line-height: 1.2;
 }
 
 .section-content {
   flex: 1;
   overflow-y: visible;
   max-height: none;
+}
+
+/* Multi-column layout only for combo section */
+.combo-section .section-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.8rem;
+  column-gap: 0.8rem;
+  position: relative;
+}
+
+/* Add separator between columns */
+.combo-section .section-content::before {
+  content: '';
+  position: absolute;
+  left: calc(50% - 0.4rem);
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: #ddd;
+  pointer-events: none;
 }
 
 .section-content::-webkit-scrollbar {
@@ -586,21 +608,23 @@
 
 .combo-pallet-item {
   background: #f8f9fa;
-  padding: 0.2rem 0.3rem;
-  border-radius: 4px;
-  margin-bottom: 0.2rem;
+  padding: 0.1rem 0.2rem;
+  border-radius: 2px;
+  margin-bottom: 0.1rem;
   border-left: 2px solid #5ba0a0;
+  break-inside: avoid;
+  page-break-inside: avoid;
 }
 
 .combo-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 0.1rem;
+  margin-bottom: 0.05rem;
   flex-wrap: wrap;
-  gap: 0.15rem;
-  padding: 0.1rem 0.2rem;
-  border-radius: 3px;
+  gap: 0.08rem;
+  padding: 0.05rem 0.12rem;
+  border-radius: 2px;
   transition: background-color 0.2s;
   cursor: default;
 }
@@ -616,27 +640,30 @@
 .combo-title {
   font-weight: 600;
   color: #333;
-  font-size: 0.75rem;
+  font-size: 0.65rem;
+  line-height: 1.1;
 }
 
 .combo-height {
-  font-size: 0.65rem;
+  font-size: 0.58rem;
   color: #666;
+  line-height: 1.1;
 }
 
 .combo-products {
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
+  gap: 0.08rem;
 }
 
 .combo-product-line {
   display: flex;
   justify-content: space-between;
-  padding: 0.15rem 0.25rem;
+  padding: 0.08rem 0.18rem;
   background: white;
-  border-radius: 3px;
-  font-size: 0.8rem;
+  border-radius: 2px;
+  font-size: 0.72rem;
+  line-height: 1.2;
   transition: background-color 0.2s;
   cursor: default;
 }
@@ -644,7 +671,7 @@
 .combo-product-line strong {
   font-weight: 600;
   color: #2c3e50;
-  font-size: 0.85rem;
+  font-size: 0.75rem;
 }
 
 .combo-product-line.draggable:hover {
@@ -809,6 +836,12 @@
     grid-template-columns: 1.3fr 1fr;
     gap: 2mm;
     page-break-inside: avoid;
+    column-gap: 3mm;
+  }
+  
+  .pallets-grid > div:last-child {
+    border-left: 1px solid #333;
+    padding-left: 2mm;
   }
   
   .pallets-grid > div {
@@ -1031,6 +1064,17 @@
   /* Ensure content doesn't overflow */
   .section-content {
     font-size: 6.5pt;
+  }
+  
+  /* Reset combo section to single column for print */
+  .combo-section .section-content {
+    display: block;
+    grid-template-columns: none;
+  }
+  
+  /* Hide separator line in print */
+  .combo-section .section-content::before {
+    display: none;
   }
   
   /* Reduce line heights everywhere */

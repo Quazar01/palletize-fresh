@@ -24,6 +24,8 @@ function Results({ orderData, results, onBack, onEdit }) {
   const [newSkvettpallForCombo, setNewSkvettpallForCombo] = useState({ artikelnummer: '', boxCount: '' }); // New skvettpall data
   const [stash, setStash] = useState({ comboPallets: [], skvettpalls: [] }); // Stash for holding items
   const [draggedItem, setDraggedItem] = useState(null); // Track what's being dragged
+  const [dropTarget, setDropTarget] = useState(null); // Track where item will be dropped
+  const [tempComboPallets, setTempComboPallets] = useState(null); // Temporary reordered list during drag
   const [editingStashedComboProduct, setEditingStashedComboProduct] = useState(null); // { comboIndex, productIndex, artikelnummer, boxCount }
   const [editingStashedSkvettpall, setEditingStashedSkvettpall] = useState(null); // { index, artikelnummer, boxCount }
   const [showUnknownBanner, setShowUnknownBanner] = useState(false); // Show banner for unknown products
@@ -989,6 +991,8 @@ function Results({ orderData, results, onBack, onEdit }) {
   const handleDragEnd = (e) => {
     e.currentTarget.classList.remove('dragging');
     setDraggedItem(null);
+    setTempComboPallets(null);
+    setDropTarget(null);
     
     // Stop auto-scroll when drag ends
     stopAutoScroll();
@@ -1891,7 +1895,7 @@ function Results({ orderData, results, onBack, onEdit }) {
         </div>
 
         {/* Combo Pallets Section - Takes 1/3 of the page (MIDDLE) */}
-        <div className="pallets-section">
+        <div className="pallets-section combo-section">
           <div className="section-header">
             <div className="section-header-top">
               <h2 className="section-title">
@@ -2021,14 +2025,55 @@ function Results({ orderData, results, onBack, onEdit }) {
 
             {comboPallets.length > 0 ? (
               <>
-                {comboPallets.map((combo, index) => (
-                  <div 
-                    key={index} 
-                    className="combo-pallet-item"
-                    onDragOver={handleDragOver}
-                    onDragLeave={handleDragLeave}
-                    onDrop={(e) => handleDropOnCombo(e, index)}
-                  >
+                {(tempComboPallets || comboPallets).map((combo, index) => (
+                  <React.Fragment key={index}>
+                    <div 
+                      className="combo-pallet-item"
+                      onDragOver={(e) => {
+                        handleDragOver(e);
+                        if (draggedItem?.type === 'combo' && draggedItem?.comboIndex !== index) {
+                          // Create temporary reordered array during drag
+                          const newOrder = [...comboPallets];
+                          const draggedCombo = newOrder[draggedItem.comboIndex];
+                          
+                          // Remove from original position
+                          newOrder.splice(draggedItem.comboIndex, 1);
+                          
+                          // Calculate insert position
+                          let insertIndex;
+                          if (draggedItem.comboIndex < index) {
+                            insertIndex = index;
+                          } else {
+                            insertIndex = index;
+                          }
+                          
+                          // Insert at new position
+                          newOrder.splice(insertIndex, 0, draggedCombo);
+                          setTempComboPallets(newOrder);
+                          setDropTarget(index);
+                        }
+                      }}
+                      onDragLeave={(e) => {
+                        handleDragLeave(e);
+                        // Don't clear temp state on leave, only on drop or drag end
+                      }}
+                      onDrop={(e) => {
+                        if (tempComboPallets && draggedItem?.type === 'combo') {
+                          // Use the temp reordered array
+                          saveToHistory();
+                          setComboPallets(tempComboPallets);
+                          setIsManuallyOrdered(true);
+                          setTempComboPallets(null);
+                          setDropTarget(null);
+                          setDraggedItem(null);
+                          e.preventDefault();
+                          e.currentTarget.classList.remove('drag-over');
+                        } else {
+                          handleDropOnCombo(e, index);
+                          setDropTarget(null);
+                        }
+                      }}
+                    >
                     <div 
                       className="combo-header draggable"
                       draggable="true"
@@ -2416,6 +2461,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                       )}
                     </div>
                   </div>
+                  </React.Fragment>
                 ))}
               </>
             ) : (
