@@ -186,8 +186,8 @@ function Home() {
           palletCount: 1,
         }));
         
-        // Sort Full Pall list by antal pallar (number of pallets) descending
-        fullPalletsList.sort((a, b) => b.fullPallets - a.fullPallets);
+        // Sort Full Pall list by artikelnummer (product number) ascending
+        fullPalletsList.sort((a, b) => a.artikelnummer - b.artikelnummer);
       } else if (selectedOption === 'helsingborg') {
         // Helsingborg mode: same as Enkel, each skvettpall is its own parcel
         comboPallets = processed.skvettpallsList.map(skvettpall => ({
@@ -196,8 +196,8 @@ function Home() {
           palletCount: 1,
         }));
         
-        // Sort Full Pall list by antal pallar (number of pallets) descending
-        fullPalletsList.sort((a, b) => b.fullPallets - a.fullPallets);
+        // Sort Full Pall list by artikelnummer (product number) ascending
+        fullPalletsList.sort((a, b) => a.artikelnummer - b.artikelnummer);
       } else {
         // Other modes: each skvettpall is its own parcel
         comboPallets = processed.skvettpallsList.map(skvettpall => ({

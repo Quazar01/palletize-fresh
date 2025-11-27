@@ -999,6 +999,10 @@
     line-height: 1.2;
   }
   
+  .combo-product-line strong {
+    font-weight: 700;
+  }
+  
   /* Compact full pallet table */
   .pallet-table {
     font-size: 7pt;
@@ -1141,16 +1145,15 @@
   /* Print footer */
   .print-footer {
     display: block !important;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
+    position: static;
+    margin-top: 3mm;
     padding: 2.5mm 6mm;
     border-top: 2px solid #333;
     background: white;
     font-size: 9pt;
     font-weight: normal;
     text-align: center;
+    page-break-inside: avoid;
   }
   
   .print-footer strong {
