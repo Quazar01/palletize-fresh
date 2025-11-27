@@ -8,9 +8,8 @@
 
 [dev]
   command = "npm start"
-  port = 3000
   targetPort = 3000
-  framework = "#custom"
+  autoLaunch = false
 
 [[redirects]]
   from = "/*"

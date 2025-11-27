@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Home.css';
 import { parseExcelFile, validateExcelFile } from '../utils/excelParser';
 import { processOrder, processOrderHelsingborg } from '../utils/palletCalculations';
 import { optimizeComboPalletsAdvanced, optimizeComboPalletsWithMixPall, calculateTotalParcels } from '../utils/comboOptimizer';
 import { calculateTruckSlots } from '../utils/truckSlotCalculations';
+import { trackVisitor, getVisitorInfo } from '../utils/visitorTracking';
 import Results from './Results';
 
 function Home() {
@@ -21,6 +22,21 @@ function Home() {
   const [results, setResults] = useState(null);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
+  const [visitorInfo, setVisitorInfo] = useState(null);
+
+  // Track visitor on page load
+  useEffect(() => {
+    const initTracking = async () => {
+      // Get visitor info
+      const info = await getVisitorInfo();
+      setVisitorInfo(info);
+      
+      // Track page visit
+      await trackVisitor('Home', 'Page Load');
+    };
+    
+    initTracking();
+  }, []);
 
   const handleFileSelect = (event) => {
     const file = event.target.files[0];
@@ -214,6 +230,15 @@ function Home() {
 
       setResults(finalResults);
       setShowResults(true);
+      
+      // Track successful order processing
+      await trackVisitor('Home', 'Order Processed', {
+        kund: kund,
+        mode: selectedOption,
+        totalParcels: totalParcels,
+        fullPallets: fullPalletsList.length,
+        comboPallets: comboPallets.length
+      });
 
     } catch (err) {
       setError(err.message || 'Ett fel uppstod vid bearbetning av filen');
