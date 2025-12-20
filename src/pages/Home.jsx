@@ -8,6 +8,15 @@ import { calculateTruckSlots } from '../utils/truckSlotCalculations';
 import { trackVisitor, getVisitorInfo } from '../utils/visitorTracking';
 import Results from './Results';
 
+// Helper function to check if a skvettpall should be treated as a full pallet
+// based on being 64% or more of the max pallet height
+const shouldBeFullPallet = (skvettpall) => {
+  const { boxConfig, stackHeight } = skvettpall;
+  const fullPalletRows = boxConfig.fullPalletRows;
+  const threshold = fullPalletRows * 0.64;
+  return stackHeight >= threshold;
+};
+
 function Home() {
   const navigate = useNavigate();
   const [kund, setKund] = useState('');
@@ -156,6 +165,12 @@ function Home() {
             existingPallet.fullPallets += 1;
             existingPallet.totalBoxes += skvettpall.boxCount;
             
+            // Store stackHeight if not already set
+            if (!existingPallet.stackHeight) {
+              existingPallet.stackHeight = skvettpall.stackHeight;
+              existingPallet.boxConfig = skvettpall.boxConfig;
+            }
+            
             // If the existing entry was not marked as having varied box counts, we need to track individual pallets
             if (!existingPallet.palletBoxCounts) {
               // Create array with existing full pallets
@@ -172,6 +187,8 @@ function Home() {
               boxesPerPallet: skvettpall.boxCount,
               totalBoxes: skvettpall.boxCount,
               isSingleSkvettpall: true, // Mark as single skvettpall
+              stackHeight: skvettpall.stackHeight,
+              boxConfig: skvettpall.boxConfig,
             });
           }
         });
@@ -179,12 +196,45 @@ function Home() {
         // Sort Full Pall list by antal pallar (number of pallets) descending
         fullPalletsList.sort((a, b) => b.fullPallets - a.fullPallets);
       } else if (selectedOption === 'enkel') {
-        // Enkel Pall mode: each skvettpall is its own parcel, no combining
-        comboPallets = processed.skvettpallsList.map(skvettpall => ({
-          skvettpalls: [skvettpall],
-          totalHeight: skvettpall.heightInRedUnits,
-          palletCount: 1,
-        }));
+        // Enkel Pall mode: check if skvettpalls should be full pallets (64% threshold)
+        processed.skvettpallsList.forEach(skvettpall => {
+          if (shouldBeFullPallet(skvettpall)) {
+            // Move to full pallets list
+            const existingIndex = fullPalletsList.findIndex(
+              p => p.artikelnummer === skvettpall.artikelnummer
+            );
+            
+            if (existingIndex >= 0) {
+              // Add to existing entry
+              fullPalletsList[existingIndex].fullPallets += 1;
+              fullPalletsList[existingIndex].totalBoxes += skvettpall.boxCount;
+              // Store stackHeight if not already set
+              if (!fullPalletsList[existingIndex].stackHeight) {
+                fullPalletsList[existingIndex].stackHeight = skvettpall.stackHeight;
+                fullPalletsList[existingIndex].boxConfig = skvettpall.boxConfig;
+              }
+            } else {
+              // Create new entry
+              fullPalletsList.push({
+                artikelnummer: skvettpall.artikelnummer,
+                fullPallets: 1,
+                boxType: skvettpall.boxType,
+                boxesPerPallet: skvettpall.boxCount,
+                totalBoxes: skvettpall.boxCount,
+                isSingleSkvettpall: true, // Mark as single skvettpall promoted to full pallet
+                stackHeight: skvettpall.stackHeight,
+                boxConfig: skvettpall.boxConfig,
+              });
+            }
+          } else {
+            // Keep as skvettpall
+            comboPallets.push({
+              skvettpalls: [skvettpall],
+              totalHeight: skvettpall.heightInRedUnits,
+              palletCount: 1,
+            });
+          }
+        });
         
         // Sort Full Pall list by antal pallar (number of pallets) descending
         fullPalletsList.sort((a, b) => b.fullPallets - a.fullPallets);
@@ -192,12 +242,45 @@ function Home() {
         // Sort Enkel pallets by artikelnummer (product number) ascending
         comboPallets.sort((a, b) => a.skvettpalls[0].artikelnummer - b.skvettpalls[0].artikelnummer);
       } else if (selectedOption === 'helsingborg') {
-        // Helsingborg mode: same as Enkel, each skvettpall is its own parcel
-        comboPallets = processed.skvettpallsList.map(skvettpall => ({
-          skvettpalls: [skvettpall],
-          totalHeight: skvettpall.heightInRedUnits,
-          palletCount: 1,
-        }));
+        // Helsingborg mode: same as Enkel, check if skvettpalls should be full pallets (64% threshold)
+        processed.skvettpallsList.forEach(skvettpall => {
+          if (shouldBeFullPallet(skvettpall)) {
+            // Move to full pallets list
+            const existingIndex = fullPalletsList.findIndex(
+              p => p.artikelnummer === skvettpall.artikelnummer
+            );
+            
+            if (existingIndex >= 0) {
+              // Add to existing entry
+              fullPalletsList[existingIndex].fullPallets += 1;
+              fullPalletsList[existingIndex].totalBoxes += skvettpall.boxCount;
+              // Store stackHeight if not already set
+              if (!fullPalletsList[existingIndex].stackHeight) {
+                fullPalletsList[existingIndex].stackHeight = skvettpall.stackHeight;
+                fullPalletsList[existingIndex].boxConfig = skvettpall.boxConfig;
+              }
+            } else {
+              // Create new entry
+              fullPalletsList.push({
+                artikelnummer: skvettpall.artikelnummer,
+                fullPallets: 1,
+                boxType: skvettpall.boxType,
+                boxesPerPallet: skvettpall.boxCount,
+                totalBoxes: skvettpall.boxCount,
+                isSingleSkvettpall: true, // Mark as single skvettpall promoted to full pallet
+                stackHeight: skvettpall.stackHeight,
+                boxConfig: skvettpall.boxConfig,
+              });
+            }
+          } else {
+            // Keep as skvettpall
+            comboPallets.push({
+              skvettpalls: [skvettpall],
+              totalHeight: skvettpall.heightInRedUnits,
+              palletCount: 1,
+            });
+          }
+        });
         
         // Sort Full Pall list by antal pallar (number of pallets) descending
         fullPalletsList.sort((a, b) => b.fullPallets - a.fullPallets);

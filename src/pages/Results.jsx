@@ -1423,8 +1423,32 @@ function Results({ orderData, results, onBack, onEdit }) {
   const totalEUPalletsFromMixPall = totalMixPallCount;
   const totalEUPallets = totalEUPalletsFromFullPallets + totalEUPalletsFromComboPallets + totalEUPalletsFromMixPall;
 
+  // Calculate dynamic column break index
+  const getColumnBreakIndex = () => {
+    if (palletMode === 'combo') {
+      if (comboPallets.length <= 10) return null; // Single column
+      if (comboPallets.length < 20) return 10; // 10 in left, rest in right
+      return Math.ceil(comboPallets.length / 2); // Split evenly
+    } else {
+      if (comboPallets.length <= 18) return null;
+      return comboPallets.length > 36 ? Math.ceil(comboPallets.length / 2) : 18;
+    }
+  };
+  
+  const columnBreakIndex = getColumnBreakIndex();
+
   return (
     <div className={`results-container mode-${palletMode}`}>
+      {/* Dynamic column break style */}
+      {columnBreakIndex && (
+        <style>{`
+          @media print {
+            .mode-${palletMode} .combo-pallet-item:nth-child(${columnBreakIndex}) {
+              break-after: column !important;
+            }
+          }
+        `}</style>
+      )}
       <div className="results-header">
         <div className="header-layout">
           {/* Left: Undo tip banner */}
@@ -1914,7 +1938,14 @@ function Results({ orderData, results, onBack, onEdit }) {
         </div>
 
         {/* Combo Pallets Section - Takes 1/3 of the page (MIDDLE) */}
-        <div className="pallets-section combo-section">
+        <div 
+          className={`pallets-section combo-section mode-${palletMode} ${
+            (palletMode === 'combo' && comboPallets.length <= 10) ||
+            ((palletMode === 'enkel' || palletMode === 'helsingborg') && comboPallets.length <= 18)
+              ? 'single-column-print'
+              : ''
+          }`}
+        >
           <div className="section-header">
             <div className="section-header-top">
               <h2 className="section-title">
@@ -2787,7 +2818,7 @@ function Results({ orderData, results, onBack, onEdit }) {
             </button>
           </div>
           
-          <div className="section-content">
+          <div className="section-content full-pallet-content">
             {fullPallets.length > 0 ? (
               <table className="pallet-table">
                 <thead>
@@ -2866,7 +2897,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                                   {pallet.boxesPerPallet}
                                 </span>
                                 <span style={{marginLeft: '0.5rem', fontSize: '0.75rem', color: '#666'}}>
-                                  ({Math.ceil(pallet.boxesPerPallet / 8)}r)
+                                  ({pallet.stackHeight}r)
                                 </span>
                               </>
                             ) : pallet.palletBoxCounts ? (
