@@ -11,10 +11,10 @@ import Results from './Results';
 // Helper function to check if a skvettpall should be treated as a full pallet
 // based on being 64% or more of the max pallet height
 const shouldBeFullPallet = (skvettpall) => {
-  const { boxConfig, stackHeight } = skvettpall;
-  const fullPalletRows = boxConfig.fullPalletRows;
-  const threshold = fullPalletRows * 0.64;
-  return stackHeight >= threshold;
+  const { boxConfig, boxCount } = skvettpall;
+  const fullPalletBoxes = boxConfig.fullPalletBoxes;
+  const threshold = fullPalletBoxes * 0.64;
+  return boxCount >= threshold;
 };
 
 function Home() {
@@ -208,7 +208,16 @@ function Home() {
               // Add to existing entry
               fullPalletsList[existingIndex].fullPallets += 1;
               fullPalletsList[existingIndex].totalBoxes += skvettpall.boxCount;
-              // Store stackHeight if not already set
+              
+              // Initialize palletBoxCounts if it doesn't exist
+              if (!fullPalletsList[existingIndex].palletBoxCounts) {
+                fullPalletsList[existingIndex].palletBoxCounts = Array(fullPalletsList[existingIndex].fullPallets - 1).fill(fullPalletsList[existingIndex].boxesPerPallet);
+              }
+              
+              // Add the skvettpall's actual box count
+              fullPalletsList[existingIndex].palletBoxCounts.push(skvettpall.boxCount);
+              
+              // Store stackHeight and boxConfig if not already set
               if (!fullPalletsList[existingIndex].stackHeight) {
                 fullPalletsList[existingIndex].stackHeight = skvettpall.stackHeight;
                 fullPalletsList[existingIndex].boxConfig = skvettpall.boxConfig;
@@ -254,7 +263,16 @@ function Home() {
               // Add to existing entry
               fullPalletsList[existingIndex].fullPallets += 1;
               fullPalletsList[existingIndex].totalBoxes += skvettpall.boxCount;
-              // Store stackHeight if not already set
+              
+              // Initialize palletBoxCounts if it doesn't exist
+              if (!fullPalletsList[existingIndex].palletBoxCounts) {
+                fullPalletsList[existingIndex].palletBoxCounts = Array(fullPalletsList[existingIndex].fullPallets - 1).fill(fullPalletsList[existingIndex].boxesPerPallet);
+              }
+              
+              // Add the skvettpall's actual box count
+              fullPalletsList[existingIndex].palletBoxCounts.push(skvettpall.boxCount);
+              
+              // Store stackHeight and boxConfig if not already set
               if (!fullPalletsList[existingIndex].stackHeight) {
                 fullPalletsList[existingIndex].stackHeight = skvettpall.stackHeight;
                 fullPalletsList[existingIndex].boxConfig = skvettpall.boxConfig;

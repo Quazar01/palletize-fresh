@@ -16,9 +16,21 @@ export const calculateTruckSlots = (fullPalletsList, skvettpalls, mixPallList) =
   fullPalletsList.forEach(pallet => {
     const boxConfig = getBoxType(pallet.boxType);
     if (boxConfig) {
-      const palletHeight = COMBO_PALLET.PALLET_HEIGHT_RED_UNITS + 
-                          (boxConfig.fullPalletRows * boxConfig.heightInRedBoxUnits);
-      totalHeightInRedUnits += palletHeight * pallet.fullPallets;
+      // Check if pallet has individual box counts (mixed full pallets and skvettpalls)
+      if (pallet.palletBoxCounts && pallet.palletBoxCounts.length > 0) {
+        // Calculate height for each individual pallet based on its box count
+        pallet.palletBoxCounts.forEach(boxCount => {
+          const stackHeight = Math.ceil(boxCount / boxConfig.boxesPerRow);
+          const individualPalletHeight = COMBO_PALLET.PALLET_HEIGHT_RED_UNITS + 
+                                        (stackHeight * boxConfig.heightInRedBoxUnits);
+          totalHeightInRedUnits += individualPalletHeight;
+        });
+      } else {
+        // Standard calculation for uniform full pallets
+        const palletHeight = COMBO_PALLET.PALLET_HEIGHT_RED_UNITS + 
+                            (boxConfig.fullPalletRows * boxConfig.heightInRedBoxUnits);
+        totalHeightInRedUnits += palletHeight * pallet.fullPallets;
+      }
     }
   });
 

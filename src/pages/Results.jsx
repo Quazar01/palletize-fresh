@@ -36,6 +36,8 @@ function Results({ orderData, results, onBack, onEdit }) {
   const [history, setHistory] = useState([]); // Track state history for undo
   const [historyIndex, setHistoryIndex] = useState(-1); // Current position in history
   const [isManuallyOrdered, setIsManuallyOrdered] = useState(false); // Track if user has manually reordered combos
+  const [addingSkvettpallToPallet, setAddingSkvettpallToPallet] = useState(null); // Track which pallet is adding a skvettpall (index)
+  const [newSkvettpallBoxCount, setNewSkvettpallBoxCount] = useState(''); // Box count for new skvettpall
 
   // Sort combo pallets once on initial load
   useEffect(() => {
@@ -211,6 +213,39 @@ function Results({ orderData, results, onBack, onEdit }) {
   const handleCancelEdit = () => {
     setEditingPalletIndex(null);
     setEditingPallet(null);
+  };
+
+  const handleAddSkvettpallToPallet = (palletIndex) => {
+    setAddingSkvettpallToPallet(palletIndex);
+    setNewSkvettpallBoxCount('');
+  };
+
+  const handleSaveSkvettpallToPallet = () => {
+    if (addingSkvettpallToPallet !== null && newSkvettpallBoxCount) {
+      saveToHistory();
+      const boxCount = parseInt(newSkvettpallBoxCount);
+      const newFullPallets = [...fullPallets];
+      const pallet = newFullPallets[addingSkvettpallToPallet];
+      
+      // Initialize palletBoxCounts if it doesn't exist
+      if (!pallet.palletBoxCounts) {
+        pallet.palletBoxCounts = Array(pallet.fullPallets).fill(pallet.boxesPerPallet);
+      }
+      
+      // Add the new skvettpall
+      pallet.palletBoxCounts.push(boxCount);
+      pallet.fullPallets += 1;
+      pallet.totalBoxes += boxCount;
+      
+      setFullPallets(newFullPallets);
+      setAddingSkvettpallToPallet(null);
+      setNewSkvettpallBoxCount('');
+    }
+  };
+
+  const handleCancelSkvettpallToPallet = () => {
+    setAddingSkvettpallToPallet(null);
+    setNewSkvettpallBoxCount('');
   };
 
   const handleToggleCheckedPallet = (palletIndex, boxIndex) => {
@@ -412,7 +447,8 @@ function Results({ orderData, results, onBack, onEdit }) {
         boxesPerPallet,
         fullPallets: count,
         boxType: 'red', // Default
-        totalBoxes: boxesPerPallet * count
+        totalBoxes: boxesPerPallet * count,
+        palletBoxCounts: Array(count).fill(boxesPerPallet) // Initialize with individual box counts
       }];
       
       setFullPallets(newFullPallets);
@@ -2831,7 +2867,8 @@ function Results({ orderData, results, onBack, onEdit }) {
                 </thead>
                 <tbody>
                   {fullPallets.map((pallet, index) => (
-                    <tr key={index} className={editingPalletIndex === index ? 'editing-row' : ''}>
+                    <React.Fragment key={index}>
+                      <tr className={editingPalletIndex === index ? 'editing-row' : ''}>
                       <td>
                         {editingPalletIndex === index ? (
                           <input
@@ -2890,7 +2927,8 @@ function Results({ orderData, results, onBack, onEdit }) {
                                     padding: '0.3rem 0.6rem',
                                     background: checkedPallets[index]?.has(0) ? '#28a745' : '#6c757d',
                                     color: 'white',
-                                    cursor: 'pointer'
+                                    cursor: 'pointer',
+                                    fontStyle: 'italic'
                                   }}
                                   title={checkedPallets[index]?.has(0) ? 'Klicka för att avmarkera' : 'Klicka för att markera'}
                                 >
@@ -2904,6 +2942,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                               // Display individual box counts for each pallet
                               pallet.palletBoxCounts.map((boxCount, i) => {
                                 const isChecked = checkedPallets[index]?.has(i);
+                                const isSkvettpall = boxCount !== pallet.boxesPerPallet;
                                 return (
                                   <span 
                                     key={i} 
@@ -2918,10 +2957,11 @@ function Results({ orderData, results, onBack, onEdit }) {
                                       position: 'relative', 
                                       fontSize: '0.8rem', 
                                       padding: '0.3rem 0.6rem',
-                                      background: isChecked ? '#28a745' : (boxCount !== pallet.boxesPerPallet ? '#6c757d' : undefined),
-                                      color: (isChecked || boxCount !== pallet.boxesPerPallet) ? 'white' : undefined
+                                      background: isChecked ? '#28a745' : (isSkvettpall ? '#6c757d' : undefined),
+                                      color: (isChecked || isSkvettpall) ? 'white' : undefined,
+                                      fontStyle: isSkvettpall ? 'italic' : undefined
                                     }}
-                                    title={boxCount !== pallet.boxesPerPallet ? 'Skvättpall' : (isChecked ? 'Klicka för att avmarkera' : 'Klicka för att markera')}
+                                    title={isSkvettpall ? 'Skvättpall' : (isChecked ? 'Klicka för att avmarkera' : 'Klicka för att markera')}
                                   >
                                     {boxCount}
                                     <button
@@ -2995,6 +3035,16 @@ function Results({ orderData, results, onBack, onEdit }) {
                             <button className="icon-btn edit" onClick={() => handleEditPallet(index)} title="Redigera" style={{fontSize: '1rem'}}>
                               🔧
                             </button>
+                            {!pallet.isSingleSkvettpall && (
+                              <button 
+                                className="icon-btn add" 
+                                onClick={() => handleAddSkvettpallToPallet(index)}
+                                title="Antal lådor"
+                                style={{fontSize: '1rem'}}
+                              >
+                                ➕
+                              </button>
+                            )}
                             <button 
                               className="icon-btn delete" 
                               onClick={() => handleDeleteFullPallet(index)}
@@ -3007,6 +3057,32 @@ function Results({ orderData, results, onBack, onEdit }) {
                         )}
                       </td>
                     </tr>
+                      {addingSkvettpallToPallet === index && (
+                        <tr className="adding-skvettpall-row" style={{backgroundColor: '#f0f8ff'}}>
+                          <td colSpan="6" style={{padding: '0.75rem'}}>
+                            <div style={{display: 'flex', gap: '0.5rem', alignItems: 'center'}}>
+                              <span style={{fontWeight: 'bold'}}>Antal lådor:</span>
+                              <input
+                                type="number"
+                                className="edit-input"
+                                value={newSkvettpallBoxCount}
+                                onChange={(e) => setNewSkvettpallBoxCount(e.target.value)}
+                                placeholder="Antal lådor"
+                                style={{width: '120px'}}
+                                min="1"
+                                autoFocus
+                              />
+                              <button className="icon-btn save" onClick={handleSaveSkvettpallToPallet} title="Spara" style={{fontSize: '1.2rem'}}>
+                                ✓
+                              </button>
+                              <button className="icon-btn cancel" onClick={handleCancelSkvettpallToPallet} title="Avbryt" style={{fontSize: '1.2rem'}}>
+                                ✕
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
                   ))}
                   
                   {isAddingNew && (
