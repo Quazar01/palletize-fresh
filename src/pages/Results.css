@@ -912,9 +912,21 @@
     column-rule: 1px solid #ddd;
   }
   
-  /* Single column layout when items are below threshold */
+  /* Single column layout when items are below threshold - split left side into 2 columns */
   .combo-section.single-column-print .section-content {
-    column-count: 1 !important;
+    column-count: 2 !important;
+    column-gap: 3mm;
+    column-rule: 1px solid #ddd;
+  }
+  
+  /* Force all items into first column by preventing breaks before the last item */
+  .combo-section.single-column-print .combo-pallet-item {
+    break-after: avoid !important;
+  }
+  
+  /* Force break after the last combo item to keep right column empty */
+  .combo-section.single-column-print .combo-pallet-item:last-of-type {
+    break-after: column !important;
   }
   
   /* Full Pall section should be single column */
