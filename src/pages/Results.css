@@ -1213,8 +1213,9 @@
   .print-footer {
     display: block !important;
     position: static;
-    margin-top: 3mm;
-    padding: 2.5mm 6mm;
+    margin-top: 1mm;
+    /* padding: 2.5mm 3mm; */
+    /* padding-top: 5mm; */
     border-top: 2px solid #333;
     background: white;
     font-size: 15pt;

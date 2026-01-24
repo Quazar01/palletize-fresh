@@ -43,18 +43,7 @@ const isArticleNumberHeader = (str) => {
   // Exact matches only
   const exactMatches = [
     'artikelnummer',
-    'artikelnr',
-    'artnr',
-    'art.nr',
     'levartikel',
-    'levartikelnr',
-    'lev.artikel',
-    'article',
-    'articlenumber',
-    'itemnumber',
-    'produktnummer',
-    'produktnr',
-    'varunummer'
   ];
   
   // Check exact matches (normalize by removing dots and spaces)
@@ -73,16 +62,7 @@ const isQuantityHeader = (str) => {
   // Exact matches only
   const exactMatches = [
     'beställdadfp',
-    'beställda',
     'kollin',
-    'antal',
-    'quantity',
-    'qty',
-    'mängd',
-    'dfp',
-    'kolli',
-    'boxes',
-    'lådor'
   ];
   
   // Check exact matches (normalize by removing dots and spaces)
