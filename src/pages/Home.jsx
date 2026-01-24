@@ -491,7 +491,7 @@ function Home() {
       </button>
       </div>
 
-      <button
+      {/* <button
         className="products-nav-button"
         onClick={handleNavigateToProducts}
         style={{
@@ -513,7 +513,7 @@ function Home() {
         onMouseLeave={(e) => e.target.style.backgroundColor = '#5ba0a0'}
       >
         📦 Hantera Produkter
-      </button>
+      </button> */}
 
       <div className="margin-input-container" style={{
         position: 'absolute',
