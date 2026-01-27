@@ -30,6 +30,7 @@ function Results({ orderData, results, onBack, onEdit }) {
   const [editingStashedSkvettpall, setEditingStashedSkvettpall] = useState(null); // { index, artikelnummer, boxCount }
   const [showUnknownBanner, setShowUnknownBanner] = useState(false); // Show banner for unknown products
   const [checkedPallets, setCheckedPallets] = useState({}); // Track checked pallets: { palletIndex: Set<boxIndex> }
+  const [plockedPallets, setPlockedPallets] = useState({}); // Track plocke (done) pallets: { palletIndex: Set<boxIndex> }
   const [checkedComboSkvettpalls, setCheckedComboSkvettpalls] = useState({}); // Track checked skvettpalls: { comboIndex: Set<skvettpallIndex> }
   const [checkedMixPallItems, setCheckedMixPallItems] = useState({}); // Track checked mix pall items: { comboIndex: Set<mixItemArticleNumber> }
   const [checkedStandaloneMixItems, setCheckedStandaloneMixItems] = useState(new Set()); // Track checked standalone mix pall items by artikelnummer
@@ -270,9 +271,31 @@ function Results({ orderData, results, onBack, onEdit }) {
     });
   };
 
+  const handleTogglePlockedPallet = (palletIndex, boxIndex) => {
+    setPlockedPallets(prev => {
+      const newPlocked = { ...prev };
+      if (!newPlocked[palletIndex]) {
+        newPlocked[palletIndex] = new Set();
+      } else {
+        newPlocked[palletIndex] = new Set(newPlocked[palletIndex]);
+      }
+      
+      if (newPlocked[palletIndex].has(boxIndex)) {
+        newPlocked[palletIndex].delete(boxIndex);
+        if (newPlocked[palletIndex].size === 0) {
+          delete newPlocked[palletIndex];
+        }
+      } else {
+        newPlocked[palletIndex].add(boxIndex);
+      }
+      
+      return newPlocked;
+    });
+  };
+
   const handleToggleAllPalletBoxes = (palletIndex, pallet) => {
-    setCheckedPallets(prev => {
-      const newChecked = { ...prev };
+    setPlockedPallets(prev => {
+      const newPlocked = { ...prev };
       
       // Determine the number of boxes for this pallet
       let boxCount;
@@ -284,26 +307,26 @@ function Results({ orderData, results, onBack, onEdit }) {
         boxCount = pallet.fullPallets || 0;
       }
       
-      if (!newChecked[palletIndex]) {
-        newChecked[palletIndex] = new Set();
+      if (!newPlocked[palletIndex]) {
+        newPlocked[palletIndex] = new Set();
       } else {
-        newChecked[palletIndex] = new Set(newChecked[palletIndex]);
+        newPlocked[palletIndex] = new Set(newPlocked[palletIndex]);
       }
       
-      // Check if all boxes are already checked
-      const allChecked = newChecked[palletIndex].size === boxCount;
+      // Check if all boxes are already plocked
+      const allPlocked = newPlocked[palletIndex].size === boxCount;
       
-      if (allChecked) {
-        // Uncheck all
-        delete newChecked[palletIndex];
+      if (allPlocked) {
+        // Unplock all
+        delete newPlocked[palletIndex];
       } else {
-        // Check all
+        // Plock all
         for (let i = 0; i < boxCount; i++) {
-          newChecked[palletIndex].add(i);
+          newPlocked[palletIndex].add(i);
         }
       }
       
-      return newChecked;
+      return newPlocked;
     });
   };
 
@@ -1462,8 +1485,8 @@ function Results({ orderData, results, onBack, onEdit }) {
   // Calculate dynamic column break index
   const getColumnBreakIndex = () => {
     if (palletMode === 'combo') {
-      if (comboPallets.length <= 10) return null; // Single column
-      if (comboPallets.length < 20) return 10; // 10 in left, rest in right
+      if (comboPallets.length <= 11) return null; // Single column
+      if (comboPallets.length < 22) return 11; // 11 in left, rest in right
       return Math.ceil(comboPallets.length / 2); // Split evenly
     } else {
       if (comboPallets.length <= 18) return null;
@@ -1976,7 +1999,7 @@ function Results({ orderData, results, onBack, onEdit }) {
         {/* Combo Pallets Section - Takes 1/3 of the page (MIDDLE) */}
         <div 
           className={`pallets-section combo-section mode-${palletMode} ${
-            (palletMode === 'combo' && comboPallets.length <= 10) ||
+            (palletMode === 'combo' && comboPallets.length <= 11) ||
             ((palletMode === 'enkel' || palletMode === 'helsingborg') && comboPallets.length <= 18)
               ? 'single-column-print'
               : ''
@@ -2922,15 +2945,21 @@ function Results({ orderData, results, onBack, onEdit }) {
                                     e.stopPropagation();
                                     handleToggleCheckedPallet(index, 0);
                                   }}
+                                  onDoubleClick={(e) => {
+                                    e.stopPropagation();
+                                    handleTogglePlockedPallet(index, 0);
+                                  }}
                                   style={{
                                     fontSize: '0.8rem', 
                                     padding: '0.3rem 0.6rem',
                                     background: checkedPallets[index]?.has(0) ? '#28a745' : '#6c757d',
                                     color: 'white',
                                     cursor: 'pointer',
-                                    fontStyle: 'italic'
+                                    fontStyle: 'italic',
+                                    textDecoration: plockedPallets[index]?.has(0) ? 'line-through' : 'none',
+                                    opacity: plockedPallets[index]?.has(0) ? 0.6 : 1
                                   }}
-                                  title={checkedPallets[index]?.has(0) ? 'Klicka för att avmarkera' : 'Klicka för att markera'}
+                                  title={checkedPallets[index]?.has(0) ? 'Klicka för att avmarkera' : 'Klicka för att markera. Dubbelklicka för att markera som plockad'}
                                 >
                                   {pallet.boxesPerPallet}
                                 </span>
@@ -2952,6 +2981,12 @@ function Results({ orderData, results, onBack, onEdit }) {
                                         handleToggleCheckedPallet(index, i);
                                       }
                                     }}
+                                    onDoubleClick={(e) => {
+                                      if (!e.target.classList.contains('delete-box-btn')) {
+                                        e.stopPropagation();
+                                        handleTogglePlockedPallet(index, i);
+                                      }
+                                    }}
                                     style={{
                                       cursor: 'pointer', 
                                       position: 'relative', 
@@ -2959,9 +2994,11 @@ function Results({ orderData, results, onBack, onEdit }) {
                                       padding: '0.3rem 0.6rem',
                                       background: isChecked ? '#28a745' : (isSkvettpall ? '#6c757d' : undefined),
                                       color: (isChecked || isSkvettpall) ? 'white' : undefined,
-                                      fontStyle: isSkvettpall ? 'italic' : undefined
+                                      fontStyle: isSkvettpall ? 'italic' : undefined,
+                                      textDecoration: plockedPallets[index]?.has(i) ? 'line-through' : 'none',
+                                      opacity: plockedPallets[index]?.has(i) ? 0.6 : 1
                                     }}
-                                    title={isSkvettpall ? 'Skvättpall' : (isChecked ? 'Klicka för att avmarkera' : 'Klicka för att markera')}
+                                    title={isSkvettpall ? 'Skvättpall' : (isChecked ? 'Klicka för att avmarkera' : 'Klicka för att markera. Dubbelklicka för att markera som plockad')}
                                   >
                                     {boxCount}
                                     <button
@@ -2989,15 +3026,23 @@ function Results({ orderData, results, onBack, onEdit }) {
                                         handleToggleCheckedPallet(index, i);
                                       }
                                     }}
+                                    onDoubleClick={(e) => {
+                                      if (!e.target.classList.contains('delete-box-btn')) {
+                                        e.stopPropagation();
+                                        handleTogglePlockedPallet(index, i);
+                                      }
+                                    }}
                                     style={{
                                       cursor: 'pointer', 
                                       position: 'relative', 
                                       fontSize: '0.8rem', 
                                       padding: '0.3rem 0.6rem',
                                       background: isChecked ? '#28a745' : undefined,
-                                      color: isChecked ? 'white' : undefined
+                                      color: isChecked ? 'white' : undefined,
+                                      textDecoration: plockedPallets[index]?.has(i) ? 'line-through' : 'none',
+                                      opacity: plockedPallets[index]?.has(i) ? 0.6 : 1
                                     }}
-                                    title={isChecked ? 'Klicka för att avmarkera' : 'Klicka för att markera'}
+                                    title={isChecked ? 'Klicka för att avmarkera' : 'Klicka för att markera. Dubbelklicka för att markera som plockad'}
                                   >
                                     {pallet.boxesPerPallet}
                                     <button

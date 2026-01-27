@@ -933,16 +933,16 @@
   
   /* Compact combo pallets */
   .combo-pallet-item {
-    padding: 1.5mm !important;
-    margin-bottom: 2mm !important;
+    padding: 2.5mm !important;
+    margin-bottom: 4mm !important;
     margin-left: 6mm;
     page-break-inside: avoid;
     break-inside: avoid;
     font-size: 10pt !important;
     background: white !important;
     border-left: 2px solid #333;
-    border-bottom: 1px solid #999;
-    padding-bottom: 1.5mm !important;
+    border-bottom: 1px solid #585858;
+    padding-bottom: 2mm !important;
     position: relative;
   }
   
@@ -950,6 +950,8 @@
   .mode-enkel .combo-pallet-item,
   .mode-helsingborg .combo-pallet-item {
     margin-left: 0 !important;
+    padding: 1.2mm !important;
+    padding-bottom: 1.9mm !important;
   }
   
   /* Also apply to standalone-mix in Enkel and Helsingborg modes */
@@ -1050,7 +1052,7 @@
   
   .combo-product-line {
     padding: 1mm 1.2mm !important;
-    font-size: 9.5pt !important;
+    font-size: 10.5pt !important;
     background: white !important;
     border: none;
     border-bottom: 1px dashed #ddd;
@@ -1063,6 +1065,15 @@
   
   .combo-product-line strong {
     font-weight: 700;
+    font-size: 11pt !important;
+  }
+  
+  /* Remove box around combo quantity numbers */
+  .combo-product-line .pallet-box-badge {
+    border: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+    font-size: 11pt !important;
   }
   
   /* Compact full pallet table */
