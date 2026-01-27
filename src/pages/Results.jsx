@@ -32,8 +32,11 @@ function Results({ orderData, results, onBack, onEdit }) {
   const [checkedPallets, setCheckedPallets] = useState({}); // Track checked pallets: { palletIndex: Set<boxIndex> }
   const [plockedPallets, setPlockedPallets] = useState({}); // Track plocke (done) pallets: { palletIndex: Set<boxIndex> }
   const [checkedComboSkvettpalls, setCheckedComboSkvettpalls] = useState({}); // Track checked skvettpalls: { comboIndex: Set<skvettpallIndex> }
+  const [plockedComboSkvettpalls, setPlockedComboSkvettpalls] = useState({}); // Track plocked skvettpalls: { comboIndex: Set<skvettpallIndex> }
   const [checkedMixPallItems, setCheckedMixPallItems] = useState({}); // Track checked mix pall items: { comboIndex: Set<mixItemArticleNumber> }
+  const [plockedMixPallItems, setPlockedMixPallItems] = useState({}); // Track plocked mix pall items: { comboIndex: Set<mixItemArticleNumber> }
   const [checkedStandaloneMixItems, setCheckedStandaloneMixItems] = useState(new Set()); // Track checked standalone mix pall items by artikelnummer
+  const [plockedStandaloneMixItems, setPlockedStandaloneMixItems] = useState(new Set()); // Track plocked standalone mix pall items by artikelnummer
   const [history, setHistory] = useState([]); // Track state history for undo
   const [historyIndex, setHistoryIndex] = useState(-1); // Current position in history
   const [isManuallyOrdered, setIsManuallyOrdered] = useState(false); // Track if user has manually reordered combos
@@ -331,33 +334,33 @@ function Results({ orderData, results, onBack, onEdit }) {
   };
 
   const handleToggleCheckedComboPallet = (comboIndex) => {
-    // Toggle all skvettpalls in the combo
-    setCheckedComboSkvettpalls(prev => {
-      const newChecked = { ...prev };
+    // Toggle all skvettpalls in the combo as plocked
+    setPlockedComboSkvettpalls(prev => {
+      const newPlocked = { ...prev };
       const combo = comboPallets[comboIndex];
       
       if (!combo) return prev;
       
-      if (!newChecked[comboIndex]) {
-        newChecked[comboIndex] = new Set();
+      if (!newPlocked[comboIndex]) {
+        newPlocked[comboIndex] = new Set();
       } else {
-        newChecked[comboIndex] = new Set(newChecked[comboIndex]);
+        newPlocked[comboIndex] = new Set(newPlocked[comboIndex]);
       }
       
-      // Check if all skvettpalls are already checked
-      const allChecked = combo.skvettpalls.every((_, idx) => newChecked[comboIndex].has(idx));
+      // Check if all skvettpalls are already plocked
+      const allPlocked = combo.skvettpalls.every((_, idx) => newPlocked[comboIndex].has(idx));
       
-      if (allChecked) {
-        // Uncheck all
-        delete newChecked[comboIndex];
+      if (allPlocked) {
+        // Unplock all
+        delete newPlocked[comboIndex];
       } else {
-        // Check all
+        // Plock all
         combo.skvettpalls.forEach((_, idx) => {
-          newChecked[comboIndex].add(idx);
+          newPlocked[comboIndex].add(idx);
         });
       }
       
-      return newChecked;
+      return newPlocked;
     });
   };
 
@@ -381,6 +384,29 @@ function Results({ orderData, results, onBack, onEdit }) {
       }
       
       return newChecked;
+    });
+  };
+
+  const handleTogglePlockedSkvettpall = (comboIndex, skvettpallIndex) => {
+    setPlockedComboSkvettpalls(prev => {
+      const newPlocked = { ...prev };
+      
+      if (!newPlocked[comboIndex]) {
+        newPlocked[comboIndex] = new Set();
+      } else {
+        newPlocked[comboIndex] = new Set(newPlocked[comboIndex]);
+      }
+      
+      if (newPlocked[comboIndex].has(skvettpallIndex)) {
+        newPlocked[comboIndex].delete(skvettpallIndex);
+        if (newPlocked[comboIndex].size === 0) {
+          delete newPlocked[comboIndex];
+        }
+      } else {
+        newPlocked[comboIndex].add(skvettpallIndex);
+      }
+      
+      return newPlocked;
     });
   };
 
@@ -444,6 +470,69 @@ function Results({ orderData, results, onBack, onEdit }) {
         newChecked.add(artikelnummer);
       }
       return newChecked;
+    });
+  };
+
+  const handleTogglePlockedMixPall = (comboIndex, mixPallItems) => {
+    // Toggle all mix items in the mix pall as plocked
+    setPlockedMixPallItems(prev => {
+      const newPlocked = { ...prev };
+      
+      if (!newPlocked[comboIndex]) {
+        newPlocked[comboIndex] = new Set();
+      } else {
+        newPlocked[comboIndex] = new Set(newPlocked[comboIndex]);
+      }
+      
+      // Check if all mix items are already plocked
+      const allPlocked = mixPallItems.every(item => newPlocked[comboIndex].has(item.artikelnummer));
+      
+      if (allPlocked) {
+        // Unplock all
+        delete newPlocked[comboIndex];
+      } else {
+        // Plock all
+        mixPallItems.forEach(item => {
+          newPlocked[comboIndex].add(item.artikelnummer);
+        });
+      }
+      
+      return newPlocked;
+    });
+  };
+
+  const handleTogglePlockedMixItem = (comboIndex, artikelnummer) => {
+    setPlockedMixPallItems(prev => {
+      const newPlocked = { ...prev };
+      
+      if (!newPlocked[comboIndex]) {
+        newPlocked[comboIndex] = new Set();
+      } else {
+        newPlocked[comboIndex] = new Set(newPlocked[comboIndex]);
+      }
+      
+      if (newPlocked[comboIndex].has(artikelnummer)) {
+        newPlocked[comboIndex].delete(artikelnummer);
+        if (newPlocked[comboIndex].size === 0) {
+          delete newPlocked[comboIndex];
+        }
+      } else {
+        newPlocked[comboIndex].add(artikelnummer);
+      }
+      
+      return newPlocked;
+    });
+  };
+
+  const handleTogglePlockedStandaloneMixItem = (artikelnummer) => {
+    setPlockedStandaloneMixItems(prev => {
+      const newPlocked = new Set(prev);
+      if (newPlocked.has(artikelnummer)) {
+        newPlocked.delete(artikelnummer);
+      } else {
+        newPlocked.add(artikelnummer);
+      }
+      return newPlocked;
     });
   };
 
@@ -2240,6 +2329,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                         const pallIndex = combo.skvettpalls.indexOf(skvettpall);
                         const isEditing = editingComboProduct?.comboIndex === index && editingComboProduct?.productIndex === pallIndex;
                         const isChecked = checkedComboSkvettpalls[index]?.has(pallIndex);
+                        const isPlocked = plockedComboSkvettpalls[index]?.has(pallIndex);
                         
                         // Check if this is a mix pall
                         const isMixPall = skvettpall.isMixPall;
@@ -2264,6 +2354,12 @@ function Results({ orderData, results, onBack, onEdit }) {
                             onClick={(e) => {
                               if (!isEditing && !e.target.closest('.icon-btn') && !e.target.closest('input')) {
                                 e.stopPropagation();
+                                handleTogglePlockedSkvettpall(index, pallIndex);
+                              }
+                            }}
+                            onDoubleClick={(e) => {
+                              if (!isEditing && !e.target.closest('.icon-btn') && !e.target.closest('input')) {
+                                e.stopPropagation();
                                 handleToggleCheckedSkvettpall(index, pallIndex);
                               }
                             }}
@@ -2272,9 +2368,11 @@ function Results({ orderData, results, onBack, onEdit }) {
                               padding: '0.4rem',
                               background: isChecked ? '#28a745' : undefined,
                               color: isChecked ? 'white' : undefined,
-                              cursor: !isEditing ? 'pointer' : undefined
+                              cursor: !isEditing ? 'pointer' : undefined,
+                              textDecoration: isPlocked ? 'line-through' : 'none',
+                              opacity: isPlocked ? 0.6 : 1
                             }}
-                            title={!isEditing ? (isChecked ? 'Klicka för att avmarkera' : 'Klicka för att markera') : undefined}
+                            title={!isEditing ? (isPlocked ? 'Klicka för att avmarkera som plockad' : 'Klicka för att markera som plockad. Dubbelklicka för att markera') : undefined}
                           >
                             {isMixPall ? (
                               // Display mix pall items
@@ -2284,7 +2382,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                                   // Only trigger if clicking directly on the Mix container, not on children
                                   if (e.target === e.currentTarget) {
                                     e.stopPropagation();
-                                    handleToggleCheckedMixPall(index, skvettpall.mixPallItems || []);
+                                    handleTogglePlockedMixPall(index, skvettpall.mixPallItems || []);
                                   }
                                 }}
                               >
@@ -2302,10 +2400,16 @@ function Results({ orderData, results, onBack, onEdit }) {
                                   onClick={(e) => {
                                     if (!e.target.closest('.icon-btn')) {
                                       e.stopPropagation();
+                                      handleTogglePlockedMixPall(index, skvettpall.mixPallItems || []);
+                                    }
+                                  }}
+                                  onDoubleClick={(e) => {
+                                    if (!e.target.closest('.icon-btn')) {
+                                      e.stopPropagation();
                                       handleToggleCheckedMixPall(index, skvettpall.mixPallItems || []);
                                     }
                                   }}
-                                  title="Klicka för att markera/avmarkera alla produkter"
+                                  title="Klicka för att markera som plockad. Dubbelklicka för att markera alla produkter"
                                 >
                                   <span>Blandpall</span>
                                   <button 
@@ -2331,6 +2435,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                                 {skvettpall.mixPallItems && [...skvettpall.mixPallItems].sort((a, b) => b.boxCount - a.boxCount).map((mixItem, mixIdx) => {
                                   const isMixItemEditing = editingComboMixPallProduct?.comboIndex === index && editingComboMixPallProduct?.mixItemIndex === mixIdx;
                                   const isMixItemChecked = checkedMixPallItems[index]?.has(mixItem.artikelnummer);
+                                  const isMixItemPlocked = plockedMixPallItems[index]?.has(mixItem.artikelnummer);
                                   
                                   return (
                                     <div 
@@ -2346,15 +2451,23 @@ function Results({ orderData, results, onBack, onEdit }) {
                                         display: 'flex',
                                         justifyContent: 'space-between',
                                         alignItems: 'center',
-                                        cursor: !isMixItemEditing ? 'pointer' : undefined
+                                        cursor: !isMixItemEditing ? 'pointer' : undefined,
+                                        textDecoration: isMixItemPlocked ? 'line-through' : 'none',
+                                        opacity: isMixItemPlocked ? 0.6 : 1
                                       }}
                                       onClick={(e) => {
+                                        if (!isMixItemEditing && !e.target.closest('.icon-btn') && !e.target.closest('strong')) {
+                                          e.stopPropagation();
+                                          handleTogglePlockedMixItem(index, mixItem.artikelnummer);
+                                        }
+                                      }}
+                                      onDoubleClick={(e) => {
                                         if (!isMixItemEditing && !e.target.closest('.icon-btn') && !e.target.closest('strong')) {
                                           e.stopPropagation();
                                           handleToggleCheckedMixItem(index, mixItem.artikelnummer);
                                         }
                                       }}
-                                      title={!isMixItemEditing ? (isMixItemChecked ? 'Klicka för att avmarkera' : 'Klicka för att markera') : undefined}
+                                      title={!isMixItemEditing ? (isMixItemPlocked ? 'Klicka för att avmarkera som plockad' : 'Klicka för att markera som plockad. Dubbelklicka för att markera') : undefined}
                                     >
                                       {isMixItemEditing ? (
                                         <>
@@ -2609,6 +2722,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                   {[...mixPall].sort((a, b) => b.boxCount - a.boxCount).map((item, index) => {
                     const isEditing = editingMixPallProduct?.index === index;
                     const isChecked = checkedStandaloneMixItems.has(item.artikelnummer);
+                    const isPlocked = plockedStandaloneMixItems.has(item.artikelnummer);
                     
                     return (
                       <div 
@@ -2619,15 +2733,23 @@ function Results({ orderData, results, onBack, onEdit }) {
                           padding: '0.4rem',
                           background: isChecked ? '#28a745' : undefined,
                           color: isChecked ? 'white' : undefined,
-                          cursor: !isEditing ? 'pointer' : undefined
+                          cursor: !isEditing ? 'pointer' : undefined,
+                          textDecoration: isPlocked ? 'line-through' : 'none',
+                          opacity: isPlocked ? 0.6 : 1
                         }}
                         onClick={(e) => {
+                          if (!isEditing && !e.target.closest('.icon-btn') && !e.target.closest('strong')) {
+                            e.stopPropagation();
+                            handleTogglePlockedStandaloneMixItem(item.artikelnummer);
+                          }
+                        }}
+                        onDoubleClick={(e) => {
                           if (!isEditing && !e.target.closest('.icon-btn') && !e.target.closest('strong')) {
                             e.stopPropagation();
                             handleToggleStandaloneMixItem(item.artikelnummer);
                           }
                         }}
-                        title={!isEditing ? (isChecked ? 'Klicka för att avmarkera' : 'Klicka för att markera') : undefined}
+                        title={!isEditing ? (isPlocked ? 'Klicka för att avmarkera plockad, dubbelklicka för att markera/avmarkera' : isChecked ? 'Klicka för att markera plockad, dubbelklicka för att avmarkera' : 'Klicka för att markera plockad, dubbelklicka för att markera') : undefined}
                       >
                         {isEditing ? (
                           <>
@@ -2750,6 +2872,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                   {[...mixPall].sort((a, b) => b.boxCount - a.boxCount).map((item, index) => {
                     const isEditing = editingMixPallProduct?.index === index;
                     const isChecked = checkedStandaloneMixItems.has(item.artikelnummer);
+                    const isPlocked = plockedStandaloneMixItems.has(item.artikelnummer);
                     
                     return (
                       <div 
@@ -2760,15 +2883,23 @@ function Results({ orderData, results, onBack, onEdit }) {
                           padding: '0.4rem',
                           background: isChecked ? '#28a745' : undefined,
                           color: isChecked ? 'white' : undefined,
-                          cursor: !isEditing ? 'pointer' : undefined
+                          cursor: !isEditing ? 'pointer' : undefined,
+                          textDecoration: isPlocked ? 'line-through' : 'none',
+                          opacity: isPlocked ? 0.6 : 1
                         }}
                         onClick={(e) => {
+                          if (!isEditing && !e.target.closest('.icon-btn') && !e.target.closest('strong')) {
+                            e.stopPropagation();
+                            handleTogglePlockedStandaloneMixItem(item.artikelnummer);
+                          }
+                        }}
+                        onDoubleClick={(e) => {
                           if (!isEditing && !e.target.closest('.icon-btn') && !e.target.closest('strong')) {
                             e.stopPropagation();
                             handleToggleStandaloneMixItem(item.artikelnummer);
                           }
                         }}
-                        title={!isEditing ? (isChecked ? 'Klicka för att avmarkera' : 'Klicka för att markera') : undefined}
+                        title={!isEditing ? (isPlocked ? 'Klicka för att avmarkera plockad, dubbelklicka för att markera/avmarkera' : isChecked ? 'Klicka för att markera plockad, dubbelklicka för att avmarkera' : 'Klicka för att markera plockad, dubbelklicka för att markera') : undefined}
                       >
                         {isEditing ? (
                           <>
@@ -2943,11 +3074,11 @@ function Results({ orderData, results, onBack, onEdit }) {
                                   className="pallet-box-badge"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    handleToggleCheckedPallet(index, 0);
+                                    handleTogglePlockedPallet(index, 0);
                                   }}
                                   onDoubleClick={(e) => {
                                     e.stopPropagation();
-                                    handleTogglePlockedPallet(index, 0);
+                                    handleToggleCheckedPallet(index, 0);
                                   }}
                                   style={{
                                     fontSize: '0.8rem', 
@@ -2959,7 +3090,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                                     textDecoration: plockedPallets[index]?.has(0) ? 'line-through' : 'none',
                                     opacity: plockedPallets[index]?.has(0) ? 0.6 : 1
                                   }}
-                                  title={checkedPallets[index]?.has(0) ? 'Klicka för att avmarkera' : 'Klicka för att markera. Dubbelklicka för att markera som plockad'}
+                                  title={plockedPallets[index]?.has(0) ? 'Klicka för att avmarkera som plockad' : 'Klicka för att markera som plockad. Dubbelklicka för att markera'}
                                 >
                                   {pallet.boxesPerPallet}
                                 </span>
@@ -2978,13 +3109,13 @@ function Results({ orderData, results, onBack, onEdit }) {
                                     className="pallet-box-badge"
                                     onClick={(e) => {
                                       if (!e.target.classList.contains('delete-box-btn')) {
-                                        handleToggleCheckedPallet(index, i);
+                                        handleTogglePlockedPallet(index, i);
                                       }
                                     }}
                                     onDoubleClick={(e) => {
                                       if (!e.target.classList.contains('delete-box-btn')) {
                                         e.stopPropagation();
-                                        handleTogglePlockedPallet(index, i);
+                                        handleToggleCheckedPallet(index, i);
                                       }
                                     }}
                                     style={{
@@ -2998,7 +3129,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                                       textDecoration: plockedPallets[index]?.has(i) ? 'line-through' : 'none',
                                       opacity: plockedPallets[index]?.has(i) ? 0.6 : 1
                                     }}
-                                    title={isSkvettpall ? 'Skvättpall' : (isChecked ? 'Klicka för att avmarkera' : 'Klicka för att markera. Dubbelklicka för att markera som plockad')}
+                                    title={isSkvettpall ? 'Skvättpall' : (plockedPallets[index]?.has(i) ? 'Klicka för att avmarkera som plockad' : 'Klicka för att markera som plockad. Dubbelklicka för att markera')}
                                   >
                                     {boxCount}
                                     <button
@@ -3023,13 +3154,13 @@ function Results({ orderData, results, onBack, onEdit }) {
                                     className="pallet-box-badge"
                                     onClick={(e) => {
                                       if (!e.target.classList.contains('delete-box-btn')) {
-                                        handleToggleCheckedPallet(index, i);
+                                        handleTogglePlockedPallet(index, i);
                                       }
                                     }}
                                     onDoubleClick={(e) => {
                                       if (!e.target.classList.contains('delete-box-btn')) {
                                         e.stopPropagation();
-                                        handleTogglePlockedPallet(index, i);
+                                        handleToggleCheckedPallet(index, i);
                                       }
                                     }}
                                     style={{
@@ -3042,7 +3173,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                                       textDecoration: plockedPallets[index]?.has(i) ? 'line-through' : 'none',
                                       opacity: plockedPallets[index]?.has(i) ? 0.6 : 1
                                     }}
-                                    title={isChecked ? 'Klicka för att avmarkera' : 'Klicka för att markera. Dubbelklicka för att markera som plockad'}
+                                    title={plockedPallets[index]?.has(i) ? 'Klicka för att avmarkera som plockad' : 'Klicka för att markera som plockad. Dubbelklicka för att markera'}
                                   >
                                     {pallet.boxesPerPallet}
                                     <button
