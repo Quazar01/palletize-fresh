@@ -1,12 +1,12 @@
 {
   "files": {
     "main.css": "/palletize-fresh/static/css/main.93b0a51a.css",
-    "main.js": "/palletize-fresh/static/js/main.8541bc78.js",
+    "main.js": "/palletize-fresh/static/js/main.63e77958.js",
     "static/js/206.6a8be0ce.chunk.js": "/palletize-fresh/static/js/206.6a8be0ce.chunk.js",
     "index.html": "/palletize-fresh/index.html"
   },
   "entrypoints": [
     "static/css/main.93b0a51a.css",
-    "static/js/main.8541bc78.js"
+    "static/js/main.63e77958.js"
   ]
 }
