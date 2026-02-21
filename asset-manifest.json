@@ -1,12 +1,12 @@
 {
   "files": {
-    "main.css": "/palocklistare/static/css/main.224477f8.css",
-    "main.js": "/palocklistare/static/js/main.dec2c485.js",
-    "static/js/206.6a8be0ce.chunk.js": "/palocklistare/static/js/206.6a8be0ce.chunk.js",
-    "index.html": "/palocklistare/index.html"
+    "main.css": "/palletize-fresh/static/css/main.224477f8.css",
+    "main.js": "/palletize-fresh/static/js/main.e6aebc1f.js",
+    "static/js/206.6a8be0ce.chunk.js": "/palletize-fresh/static/js/206.6a8be0ce.chunk.js",
+    "index.html": "/palletize-fresh/index.html"
   },
   "entrypoints": [
     "static/css/main.224477f8.css",
-    "static/js/main.dec2c485.js"
+    "static/js/main.e6aebc1f.js"
   ]
 }
