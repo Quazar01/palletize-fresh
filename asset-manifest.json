@@ -1,12 +1,12 @@
 {
   "files": {
     "main.css": "/palocklistare/static/css/main.224477f8.css",
-    "main.js": "/palocklistare/static/js/main.723b3e11.js",
+    "main.js": "/palocklistare/static/js/main.dec2c485.js",
     "static/js/206.6a8be0ce.chunk.js": "/palocklistare/static/js/206.6a8be0ce.chunk.js",
     "index.html": "/palocklistare/index.html"
   },
   "entrypoints": [
     "static/css/main.224477f8.css",
-    "static/js/main.723b3e11.js"
+    "static/js/main.dec2c485.js"
   ]
 }
