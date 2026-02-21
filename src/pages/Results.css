@@ -1229,4 +1229,84 @@
     font-weight: 700;
     font-size: 16pt;
   }
+  
+  /* Page break for Bålsta mode */
+  .page-break {
+    page-break-before: always;
+  }
+}
+
+/* Bålsta table styling */
+.balsta-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.balsta-table thead {
+  background: #5ba0a0;
+  color: white;
+}
+
+.balsta-table th {
+  padding: 0.75rem;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.9rem;
+  border-bottom: 2px solid #4a8a8a;
+}
+
+.balsta-table tbody tr {
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.balsta-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.balsta-table tbody tr:hover:not(.empty-row) {
+  background: #f8f9fa;
+}
+
+.balsta-table td {
+  padding: 0.75rem;
+  font-size: 0.85rem;
+}
+
+.balsta-table td:first-child {
+  border-right: 1px solid #e0e0e0;
+}
+
+.balsta-table .empty-row {
+  background: #f9f9f9;
+}
+
+.balsta-table .empty-row td {
+  color: #ccc;
+}
+
+.balsta-table .sum-row {
+  background: #e8f4f4;
+  border-top: 2px solid #5ba0a0;
+  font-weight: 600;
+}
+
+.balsta-table .sum-row td {
+  padding: 1rem 0.75rem;
+  font-size: 0.95rem;
+  color: #333;
+}
+
+.list-section {
+  border: 2px solid #5ba0a0;
+  border-radius: 8px;
+  padding: 1rem;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  flex: 0 0 auto;
+  min-width: 350px;
+  max-width: 450px;
 }
