@@ -7,6 +7,9 @@ import { optimizeComboPalletsAdvanced, optimizeComboPalletsWithMixPall, calculat
 import { calculateTruckSlots } from '../utils/truckSlotCalculations';
 import { trackVisitor, getVisitorInfo } from '../utils/visitorTracking';
 import Results from './Results';
+import BalstaResults from './BalstaResults';
+import { getProductBoxType } from '../utils/productMapping';
+import { getBoxType } from '../utils/constants';
 
 // Helper function to check if a skvettpall should be treated as a full pallet
 // based on being 64% or more of the max pallet height
@@ -305,6 +308,100 @@ function Home() {
         
         // Sort Enkel pallets by artikelnummer (product number) ascending
         comboPallets.sort((a, b) => a.skvettpalls[0].artikelnummer - b.skvettpalls[0].artikelnummer);
+      } else if (selectedOption === 'balsta') {
+        // Bålsta mode: Divide the order into two lists (Axfood and Bålsta) based on percentage
+        const splitPercentage = heightMargin; // Use heightMargin as the split percentage for Bålsta
+        
+        // Divide order data into two lists with adjustments
+        const balstaList = [];
+        const axfoodList = [];
+        
+        orderData.forEach(item => {
+          const totalDFP = item.beställdaDFP || 0;
+          let balstaShare = Math.floor(totalDFP * (splitPercentage / 100));
+          let axfoodShare = totalDFP - balstaShare;
+          
+          // Get box configuration for this product
+          const boxType = getProductBoxType(item.artikelnummer);
+          const boxConfig = getBoxType(boxType);
+          
+          if (balstaShare > 0 && boxConfig) {
+            // Calculate boxes per row
+            const boxesPerRow = boxConfig.boxesPerRow || 1;
+            
+            // Calculate how many full rows we can make
+            const fullRows = balstaShare / boxesPerRow;
+            
+            /*
+            // Always round down (floor) and give remainder to Axfood
+            const adjustedBalstaShare = Math.floor(fullRows) * boxesPerRow;
+            const difference = balstaShare - adjustedBalstaShare;
+            axfoodShare += difference;
+            
+            balstaShare = adjustedBalstaShare;
+          }
+            */
+          
+          // Round based on percentage and ensure total remains the same
+          
+                      const decimal = fullRows % 1;
+            
+            // Round based on decimal value
+            let adjustedBalstaShare;
+            if (decimal <= 0.5) {
+              // Round down (floor) and give remainder to Axfood
+              adjustedBalstaShare = Math.floor(fullRows) * boxesPerRow;
+              const difference = balstaShare - adjustedBalstaShare;
+              axfoodShare += difference;
+            } else {
+              // Round up (ceil) and take from Axfood
+              adjustedBalstaShare = Math.ceil(fullRows) * boxesPerRow;
+              const difference = adjustedBalstaShare - balstaShare;
+              axfoodShare -= difference;
+            }
+
+            balstaShare = adjustedBalstaShare;
+          }
+              
+          
+          if (balstaShare > 0) {
+            balstaList.push({
+              artikelnummer: item.artikelnummer,
+              dfp: balstaShare
+            });
+          }
+          
+          if (axfoodShare > 0) {
+            axfoodList.push({
+              artikelnummer: item.artikelnummer,
+              dfp: axfoodShare
+            });
+          }
+        });
+        
+        // Set the results with the split lists
+        const finalResults = {
+          balstaList,
+          axfoodList,
+          splitPercentage,
+          palletMode: 'balsta',
+          orderData // Keep original order data for reference
+        };
+        
+        setResults(finalResults);
+        setShowResults(true);
+        
+        // Track successful order split
+        await trackVisitor('Home', 'Order Split (Bålsta)', {
+          kund: kund,
+          mode: 'balsta',
+          splitPercentage: splitPercentage,
+          balstaItems: balstaList.length,
+          axfoodItems: axfoodList.length
+        });
+        
+        setLoading(false);
+        return; // Exit early for Bålsta mode
       } else {
         // Other modes: each skvettpall is its own parcel
         comboPallets = processed.skvettpallsList.map(skvettpall => ({
@@ -385,6 +482,19 @@ function Home() {
     // Use today's date if no date was provided
     const displayDatum = datum || new Date().toISOString().split('T')[0];
     
+    // Check if it's Bålsta mode
+    if (results.palletMode === 'balsta') {
+      return (
+        <BalstaResults 
+          results={results}
+          onBack={handleBack}
+          kund={kund}
+          datum={displayDatum}
+          ordersnummer={ordersnummer}
+        />
+      );
+    }
+    
     return (
       <Results 
         orderData={{ kund, datum: displayDatum, ordersnummer }}
@@ -454,6 +564,16 @@ function Home() {
           />
           <span>Helsingborg</span>
         </label>
+        <label className="radio-option">
+          <input
+            type="radio"
+            name="palletType"
+            value="balsta"
+            checked={selectedOption === 'balsta'}
+            onChange={(e) => setSelectedOption(e.target.value)}
+          />
+          <span>Bålsta</span>
+        </label>
       </div>
 
       {error && (
@@ -491,7 +611,7 @@ function Home() {
       </button>
       </div>
 
-      <button
+      {/* <button
         className="products-nav-button"
         onClick={handleNavigateToProducts}
         style={{
@@ -513,7 +633,7 @@ function Home() {
         onMouseLeave={(e) => e.target.style.backgroundColor = '#5ba0a0'}
       >
         📦 Hantera Produkter
-      </button>
+      </button> */}
 
       <div className="margin-input-container" style={{
         position: 'absolute',
@@ -528,14 +648,14 @@ function Home() {
           color: '#fff',
           fontWeight: '500'
         }}>
-          Max Höjd Marginal:
+          {selectedOption === 'balsta' ? 'Bålsta Procent:' : 'Max Höjd Marginal:'}
         </label>
         <input
           id="heightMargin"
           type="number"
           min="0"
-          max="20"
-          step="0.5"
+          max={selectedOption === 'balsta' ? '100' : '20'}
+          step={selectedOption === 'balsta' ? '1' : '0.5'}
           value={heightMargin}
           onChange={(e) => setHeightMargin(parseFloat(e.target.value) || 0)}
           style={{
