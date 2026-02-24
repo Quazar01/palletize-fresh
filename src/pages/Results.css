@@ -205,6 +205,8 @@
   gap: 0.8rem;
   column-gap: 0.8rem;
   position: relative;
+  align-items: start;
+  grid-auto-rows: min-content;
 }
 
 /* Add separator between columns */
@@ -737,13 +739,14 @@
   
   @page {
     size: A4 portrait;
-    margin: 6mm;
+    margin: 5mm;
   }
-  
+
   html, body {
     margin: 0;
     padding: 0;
     height: auto;
+    font-size: 16pt;
   }
   
   .results-container {
@@ -757,7 +760,7 @@
   /* Ultra-compact header - just 1 line */
   .results-header {
     padding: 0;
-    margin-bottom: 1mm;
+    margin-bottom: 0.5mm;
     box-shadow: none;
     border-bottom: 1px solid #333;
     page-break-inside: avoid;
@@ -777,7 +780,7 @@
     gap: 3mm;
     margin: 0;
     padding: 1mm 0;
-    justify-content: space-between;
+    justify-content: flex-start;
     flex-wrap: nowrap;
   }
   
@@ -788,29 +791,26 @@
     gap: 1mm;
   }
   
+  /* Push print-only items to center */
+  .info-item:nth-child(3) {
+    margin-left: auto;
+  }
+  
   /* Make Kund and Datum more prominent */
   .info-item:nth-child(1) .info-label,
   .info-item:nth-child(2) .info-label {
-    font-size: 9pt;
-    font-weight: 600;
+    font-size: 13pt;
+    font-weight: 700;
   }
   
   .info-item:nth-child(1) .info-value,
   .info-item:nth-child(2) .info-value {
-    font-size: 9pt;
-    font-weight: normal;
-  }
-  
-  .info-item.print-only {
-    margin-left: auto;
-  }
-  
-  .info-item:nth-child(3) {
-    margin-right: auto;
+    font-size: 13pt;
+    font-weight: 700;
   }
   
   .info-label {
-    font-size: 7pt;
+    font-size: 9pt;
     font-weight: 600;
   }
   
@@ -819,7 +819,7 @@
   }
   
   .info-value {
-    font-size: 7pt;
+    font-size: 9pt;
     font-weight: normal;
   }
   
@@ -832,31 +832,18 @@
   }
   
   .pallets-grid {
-    display: grid;
-    grid-template-columns: 1fr 85mm;
-    gap: 5mm;
+    display: grid !important;
+    grid-template-columns: 0.5fr 1.5fr !important;
+    gap: 3mm !important;
     page-break-inside: avoid;
-  }
-  
-  /* When left side is in single-column mode, make it take half the page */
-  .combo-section.single-column-print ~ .pallets-section .pallets-grid,
-  .pallets-grid:has(.combo-section.single-column-print) {
-    grid-template-columns: 1fr 1fr;
-    gap: 7mm;
   }
   
   .pallets-grid > div:last-child {
     border-left: 1px solid #333;
     padding-left: 2mm;
-    min-width: 85mm;
-    max-width: 85mm;
     overflow: visible;
-  }
-  
-  /* Adjust Full Pall width when in single-column layout */
-  .combo-section.single-column-print ~ .pallets-section .pallets-grid > div:last-child {
-    min-width: auto;
-    max-width: none;
+    width: 100%;
+    max-width: 100%;
   }
   
   .pallets-grid > div:first-child {
@@ -884,7 +871,7 @@
   }
   
   .section-title {
-    font-size: 10pt;
+    font-size: 13pt;
     font-weight: 700;
     margin: 0;
     text-transform: uppercase;
@@ -892,7 +879,7 @@
   }
   
   .section-count {
-    font-size: 8.5pt;
+    font-size: 11.5pt;
     padding: 0;
     background: none;
     color: #333;
@@ -907,14 +894,15 @@
   .section-content {
     max-height: none;
     overflow: visible;
-    column-count: 2;
-    column-gap: 3mm;
-    column-rule: 1px solid #ddd;
+    column-count: 1;
+    column-gap: 0;
   }
   
-  /* Single column layout when items are below threshold */
-  .combo-section.single-column-print .section-content {
-    column-count: 1 !important;
+  /* Two-column layout when more than 11 combo pallets */
+  .combo-section.multi-column-print .section-content {
+    column-count: 2 !important;
+    column-gap: 2mm;
+    column-rule: 1px solid #ddd;
   }
   
   /* Full Pall section should be single column */
@@ -929,7 +917,7 @@
     margin-left: 6mm;
     page-break-inside: avoid;
     break-inside: avoid;
-    font-size: 10pt !important;
+    font-size: 11pt !important;
     background: white !important;
     border-left: 2px solid #333;
     border-bottom: 1px solid #999;
@@ -960,13 +948,13 @@
     left: -6mm;
     top: 50%;
     transform: translateY(-50%);
-    padding: 0.4mm 1mm;
+    padding: 0.5mm 1.2mm;
     margin: 0;
     width: auto;
     background: white;
     border: 1px solid #333;
     border-radius: 2px;
-    font-size: 8pt;
+    font-size: 9pt;
   }
   
   /* Fix standalone mix pall positioning in print */
@@ -1022,26 +1010,26 @@
   }
   
   .combo-title {
-    font-size: 9pt !important;
+    font-size: 11.5pt !important;
     font-weight: 700;
     display: block;
     margin: 0;
     padding: 0;
-    line-height: 1.2;
+    line-height: 1.3;
   }
   
   .combo-height {
-    font-size: 6.5pt;
+    font-size: 8pt;
     display: none !important;
   }
   
   .combo-products {
-    gap: 0.8mm !important;
+    gap: 1mm !important;
   }
   
   .combo-product-line {
-    padding: 1mm 1.2mm !important;
-    font-size: 9.5pt !important;
+    padding: 1.2mm 1.5mm !important;
+    font-size: 11pt !important;
     background: white !important;
     border: none;
     border-bottom: 1px dashed #ddd;
@@ -1058,14 +1046,16 @@
   
   /* Compact full pallet table */
   .pallet-table {
-    font-size: 8pt;
-    width: 100%;
+    font-size: 10pt;
+    width: 100% !important;
+    max-width: 100% !important;
     border-collapse: collapse;
+    table-layout: auto;
   }
   
   .pallet-table th {
-    padding: 0.58mm 0.58mm;
-    font-size: 8.6pt;
+    padding: 1mm 1mm;
+    font-size: 11pt;
     background: #f8f9fa !important;
     border-bottom: 1.5px solid #333;
     font-weight: 700;
@@ -1080,10 +1070,10 @@
   }
   
   .pallet-table td {
-    padding: 0.58mm 0.58mm;
-    font-size: 8pt;
+    padding: 0.8mm 1mm;
+    font-size: 10pt;
     border-bottom: 0.5px solid #ddd;
-    line-height: 1.2;
+    line-height: 1.3;
     vertical-align: middle;
   }
   
@@ -1091,21 +1081,30 @@
     page-break-inside: avoid;
   }
   
+  .pallet-table tbody tr {
+    border-bottom: 3mm solid transparent;
+  }
+  
   .pallet-box-badge {
-    padding: 1.15mm 2.3mm;
-    font-size: 9.2pt;
-    min-width: 25px;
+    padding: 2mm 3mm;
+    font-size: 10pt;
+    min-width: 40px;
     background: white !important;
     color: #333 !important;
     border: 0.5px solid #333;
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     line-height: 1.3;
+    text-align: center;
+    box-sizing: border-box;
   }
   
   .pallet-boxes {
-    gap: 1mm;
+    gap: 1.5mm;
     display: grid;
     grid-template-columns: repeat(5, 1fr);
+    width: 100%;
     max-width: 100%;
   }
   
@@ -1200,18 +1199,100 @@
   .print-footer {
     display: block !important;
     position: static;
-    margin-top: 3mm;
-    padding: 2.5mm 6mm;
+    margin-top: 1mm;
+    /* padding: 2.5mm 3mm; */
+    /* padding-top: 5mm; */
     border-top: 2px solid #333;
     background: white;
-    font-size: 9pt;
+    font-size: 15pt;
     font-weight: normal;
+    font-style: italic;
     text-align: center;
     page-break-inside: avoid;
   }
   
   .print-footer strong {
     font-weight: 700;
-    font-size: 10pt;
+    font-size: 16pt;
   }
+  
+  /* Page break for Bålsta mode */
+  .page-break {
+    page-break-before: always;
+  }
+}
+
+/* Bålsta table styling */
+.balsta-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.balsta-table thead {
+  background: #5ba0a0;
+  color: white;
+}
+
+.balsta-table th {
+  padding: 0.75rem;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.9rem;
+  border-bottom: 2px solid #4a8a8a;
+}
+
+.balsta-table tbody tr {
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.balsta-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.balsta-table tbody tr:hover:not(.empty-row) {
+  background: #f8f9fa;
+}
+
+.balsta-table td {
+  padding: 0.75rem;
+  font-size: 0.85rem;
+}
+
+.balsta-table td:first-child {
+  border-right: 1px solid #e0e0e0;
+}
+
+.balsta-table .empty-row {
+  background: #f9f9f9;
+}
+
+.balsta-table .empty-row td {
+  color: #ccc;
+}
+
+.balsta-table .sum-row {
+  background: #e8f4f4;
+  border-top: 2px solid #5ba0a0;
+  font-weight: 600;
+}
+
+.balsta-table .sum-row td {
+  padding: 1rem 0.75rem;
+  font-size: 0.95rem;
+  color: #333;
+}
+
+.list-section {
+  border: 2px solid #5ba0a0;
+  border-radius: 8px;
+  padding: 1rem;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  flex: 0 0 auto;
+  min-width: 350px;
+  max-width: 450px;
 }
