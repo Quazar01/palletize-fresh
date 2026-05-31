@@ -3,6 +3,9 @@ import './Results.css';
 import { getBoxType } from '../utils/constants';
 import { getProductBoxType, productExists } from '../utils/productMapping';
 import { calculateTruckSlots } from '../utils/truckSlotCalculations';
+import { convertMixPallToSkvettpall } from '../utils/comboOptimizer';
+import { exportResultsToExcelTemplate, getTemplateSheetNames, getTemplateTableNames } from '../utils/excelExport';
+import { getDefaultTemplateFile } from '../firebase/templateService';
 
 function Results({ orderData, results, onBack, onEdit }) {
   const [fullPallets, setFullPallets] = useState(results.fullPalletsList);
@@ -42,6 +45,88 @@ function Results({ orderData, results, onBack, onEdit }) {
   const [isManuallyOrdered, setIsManuallyOrdered] = useState(false); // Track if user has manually reordered combos
   const [addingSkvettpallToPallet, setAddingSkvettpallToPallet] = useState(null); // Track which pallet is adding a skvettpall (index)
   const [newSkvettpallBoxCount, setNewSkvettpallBoxCount] = useState(''); // Box count for new skvettpall
+  const [defaultTemplateFile, setDefaultTemplateFile] = useState(null);
+  const [selectedTemplateFile, setSelectedTemplateFile] = useState(null);
+  const [templateSheetNames, setTemplateSheetNames] = useState([]);
+  const [selectedSheetName, setSelectedSheetName] = useState('');
+  const [templateTableNames, setTemplateTableNames] = useState([]);
+  const [selectedTableName, setSelectedTableName] = useState('');
+  const [exportDebugEnabled, setExportDebugEnabled] = useState(false);
+  const [templateStatusLabel, setTemplateStatusLabel] = useState('Laddar standardmall...');
+  const templateFileInputRef = useRef(null);
+
+  const syncSheetNames = async ({ templatePath, templateFile }) => {
+    try {
+      const sheetNames = await getTemplateSheetNames({ templatePath, templateFile });
+      setTemplateSheetNames(sheetNames);
+      setSelectedSheetName((prev) => (prev && sheetNames.includes(prev) ? prev : (sheetNames[0] || '')));
+      return sheetNames;
+    } catch (error) {
+      console.error('Failed to read template sheet names:', error);
+      setTemplateSheetNames([]);
+      setSelectedSheetName('');
+      setTemplateTableNames([]);
+      setSelectedTableName('');
+      throw error;
+    }
+  };
+
+  useEffect(() => {
+    const activeTemplateFile = selectedTemplateFile || defaultTemplateFile;
+
+    if (!activeTemplateFile || !selectedSheetName) {
+      setTemplateTableNames([]);
+      setSelectedTableName('');
+      return;
+    }
+
+    getTemplateTableNames({ templateFile: activeTemplateFile, sheetName: selectedSheetName })
+      .then((tableNames) => {
+        setTemplateTableNames(tableNames);
+        setSelectedTableName((prev) => (prev && tableNames.includes(prev) ? prev : (tableNames[0] || '')));
+      })
+      .catch((error) => {
+        console.error('Failed to read template table names:', error);
+        setTemplateTableNames([]);
+        setSelectedTableName('');
+      });
+  }, [selectedTemplateFile, defaultTemplateFile, selectedSheetName]);
+
+  useEffect(() => {
+    const loadDefaultTemplate = async () => {
+      try {
+        setTemplateStatusLabel('Laddar standardmall: hämtar från public...');
+        const templateInfo = await Promise.race([
+          getDefaultTemplateFile(),
+          new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('Timeout vid hämtning av standardmall (public/Firebase).')), 20000);
+          })
+        ]);
+        const file = templateInfo?.file;
+        setDefaultTemplateFile(file);
+
+        setTemplateStatusLabel('Laddar standardmall: läser blad...');
+        const sheetNames = await syncSheetNames({ templateFile: file });
+        if (!sheetNames.length) {
+          throw new Error('Inga blad hittades i standardmallen.');
+        }
+        setTemplateStatusLabel(
+          templateInfo?.path
+            ? `Standardmall aktiv (${templateInfo?.source || templateInfo?.bucket || '-'}): ${templateInfo?.bucket || '-'} / ${templateInfo.path}`
+            : 'Standardmall aktiv'
+        );
+      } catch (error) {
+        console.error('Failed to load default template (public/Firebase):', error);
+        setTemplateStatusLabel(
+          error?.message
+            ? `Kunde inte ladda standardmall: ${error.message}`
+            : 'Kunde inte ladda standardmall från public/Firebase'
+        );
+      }
+    };
+
+    loadDefaultTemplate();
+  }, []);
 
   // Sort combo pallets once on initial load
   useEffect(() => {
@@ -165,10 +250,6 @@ function Results({ orderData, results, onBack, onEdit }) {
       setTruckSlots(newTruckSlots);
     }
   }, [fullPallets, comboPallets, mixPall, palletMode]);
-
-  const handlePrint = () => {
-    window.print();
-  };
 
   const handleDeleteFullPallet = (index) => {
     saveToHistory();
@@ -1355,6 +1436,45 @@ function Results({ orderData, results, onBack, onEdit }) {
       
       setDraggedItem(null);
     }
+    // Handle standalone mix pall (Blandpall) movement into combo
+    else if (draggedItem.type === 'standaloneMixPall') {
+      if (!mixPall || mixPall.length === 0) return;
+
+      saveToHistory();
+
+      const newComboPallets = [...comboPallets];
+      const targetCombo = newComboPallets[targetComboIndex];
+      const standaloneMixAsSkvettpall = convertMixPallToSkvettpall([...mixPall]);
+
+      if (!targetCombo || !standaloneMixAsSkvettpall) return;
+
+      const existingMixIndex = targetCombo.skvettpalls.findIndex((pall) => pall.isMixPall);
+
+      if (existingMixIndex >= 0) {
+        const existingMix = targetCombo.skvettpalls[existingMixIndex];
+        const mergedMixItems = [
+          ...(existingMix.mixPallItems || []),
+          ...mixPall
+        ];
+        const mergedMixSkvettpall = convertMixPallToSkvettpall(mergedMixItems);
+        if (mergedMixSkvettpall) {
+          targetCombo.skvettpalls[existingMixIndex] = mergedMixSkvettpall;
+        }
+      } else {
+        targetCombo.skvettpalls.push(standaloneMixAsSkvettpall);
+      }
+
+      targetCombo.totalHeight = targetCombo.skvettpalls.reduce(
+        (sum, pall) => sum + (pall.heightInRedUnits || 0),
+        0
+      );
+
+      setComboPallets(newComboPallets);
+      setMixPall([]);
+      setCheckedStandaloneMixItems(new Set());
+      setPlockedStandaloneMixItems(new Set());
+      setDraggedItem(null);
+    }
   };
 
   // Handler for dropping skvettpalls on stashed combo pallets
@@ -1571,32 +1691,96 @@ function Results({ orderData, results, onBack, onEdit }) {
   const totalEUPalletsFromMixPall = totalMixPallCount;
   const totalEUPallets = totalEUPalletsFromFullPallets + totalEUPalletsFromComboPallets + totalEUPalletsFromMixPall;
 
-  // Calculate dynamic column break index
-  const getColumnBreakIndex = () => {
-    if (palletMode === 'combo') {
-      if (comboPallets.length <= 11) return null; // Single column
-      if (comboPallets.length < 22) return 11; // 11 in left, rest in right
-      return Math.ceil(comboPallets.length / 2); // Split evenly
-    } else {
-      if (comboPallets.length <= 18) return null;
-      return comboPallets.length > 36 ? Math.ceil(comboPallets.length / 2) : 18;
+  const handlePrint = async () => {
+    try {
+      const activeTemplateFile = selectedTemplateFile || defaultTemplateFile;
+
+      if (!activeTemplateFile) {
+        alert('Ingen mall är tillgänglig. Ladda upp en mall eller kontrollera Firebase standardmall.');
+        return;
+      }
+
+      if (!selectedSheetName) {
+        alert('Välj ett blad (sheet) innan export.');
+        return;
+      }
+
+      if (templateTableNames.length > 0 && !selectedTableName) {
+        alert('Välj en tabell innan export.');
+        return;
+      }
+
+      await exportResultsToExcelTemplate({
+        orderData,
+        palletMode,
+        tableName: selectedTableName || undefined,
+        fullPallets,
+        comboPallets,
+        mixPall,
+        templateFile: activeTemplateFile,
+        sheetName: selectedSheetName,
+        debug: exportDebugEnabled,
+        totals: {
+          totalBoxes,
+          totalEUPallets,
+          totalParcels,
+          truckSlots: (palletMode === 'enkel' || palletMode === 'helsingborg') ? truckSlots : null
+        }
+      });
+    } catch (error) {
+      console.error('Excel export failed:', error);
+      alert(error?.message ? `Kunde inte skapa Excel-filen: ${error.message}` : 'Kunde inte skapa Excel-filen. Kontrollera mallen och försök igen.');
     }
   };
-  
-  const columnBreakIndex = getColumnBreakIndex();
+
+  const handleUploadTemplateClick = () => {
+    templateFileInputRef.current?.click();
+  };
+
+  const handleTemplateFileSelected = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const extension = file.name.split('.').pop()?.toLowerCase();
+    if (extension !== 'xlsx') {
+      alert('Ogiltig mallfil. Välj en .xlsx-fil.');
+      event.target.value = '';
+      return;
+    }
+
+    setSelectedTemplateFile(file);
+    syncSheetNames({ templateFile: file })
+      .then((sheetNames) => {
+        if (!sheetNames.length) {
+          throw new Error('Inga blad hittades i uppladdad mall.');
+        }
+        setTemplateStatusLabel(`Uppladdad mall aktiv: ${file.name}`);
+      })
+      .catch((error) => {
+        setSelectedTemplateFile(null);
+        setTemplateStatusLabel(
+          error?.message
+            ? `Kunde inte läsa uppladdad mall: ${error.message}`
+            : 'Kunde inte läsa uppladdad mall'
+        );
+      });
+    event.target.value = '';
+  };
+
+  const handleResetToDefaultTemplate = () => {
+    setSelectedTemplateFile(null);
+    if (defaultTemplateFile) {
+      syncSheetNames({ templateFile: defaultTemplateFile });
+    }
+    setTemplateStatusLabel(
+      defaultTemplateFile
+        ? 'Standardmall aktiv'
+        : 'Kunde inte ladda standardmall från public/Firebase'
+    );
+  };
 
   return (
     <div className={`results-container mode-${palletMode}`}>
-      {/* Dynamic column break style */}
-      {columnBreakIndex && (
-        <style>{`
-          @media print {
-            .mode-${palletMode} .combo-pallet-item:nth-child(${columnBreakIndex}) {
-              break-after: column !important;
-            }
-          }
-        `}</style>
-      )}
       <div className="results-header">
         <div className="header-layout">
           {/* Left: Undo tip banner */}
@@ -1641,24 +1825,6 @@ function Results({ orderData, results, onBack, onEdit }) {
                   <span className="info-value">{orderData.ordersnummer}</span>
                 </div>
               )}
-              <div className="info-item print-only">
-                <span className="info-label">Lådor</span>
-                <span className="info-value">{totalBoxes}</span>
-              </div>
-              <div className="info-item print-only">
-                <span className="info-label">SRS Pall</span>
-                <span className="info-value">{totalEUPallets}</span>
-              </div>
-              <div className="info-item print-only">
-                <span className="info-label">Kolli</span>
-                <span className="info-value">{totalParcels}</span>
-              </div>
-              {(palletMode === 'enkel' || palletMode === 'helsingborg') && truckSlots !== null && (
-                <div className="info-item print-only">
-                  <span className="info-label">Platser</span>
-                  <span className="info-value">{truckSlots}</span>
-                </div>
-              )}
             </div>
 
             <div className="summary-stats">
@@ -1689,9 +1855,78 @@ function Results({ orderData, results, onBack, onEdit }) {
           <button className="btn btn-secondary" onClick={onBack}>
             ← Tillbaka
           </button>
+          <select
+            value={selectedSheetName}
+            onChange={(e) => {
+              setSelectedSheetName(e.target.value);
+              setSelectedTableName('');
+            }}
+            style={{
+              padding: '0.25rem 0.5rem',
+              borderRadius: '4px',
+              border: '1px solid #ced4da',
+              fontSize: '0.75rem',
+              background: 'white'
+            }}
+            title="Välj blad"
+          >
+            {templateSheetNames.length === 0 ? (
+              <option value="">Inga blad hittades</option>
+            ) : (
+              templateSheetNames.map((sheetName) => (
+                <option key={sheetName} value={sheetName}>{sheetName}</option>
+              ))
+            )}
+          </select>
+          <select
+            value={selectedTableName}
+            onChange={(e) => setSelectedTableName(e.target.value)}
+            style={{
+              padding: '0.25rem 0.5rem',
+              borderRadius: '4px',
+              border: '1px solid #ced4da',
+              fontSize: '0.75rem',
+              background: 'white'
+            }}
+            title="Välj tabell"
+          >
+            {templateTableNames.length === 0 ? (
+              <option value="">Inga tabeller hittades</option>
+            ) : (
+              templateTableNames.map((tableName) => (
+                <option key={tableName} value={tableName}>{tableName}</option>
+              ))
+            )}
+          </select>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.75rem', color: '#555' }}>
+            <input
+              type="checkbox"
+              checked={exportDebugEnabled}
+              onChange={(e) => setExportDebugEnabled(e.target.checked)}
+            />
+            Debug export
+          </label>
+          <button className="btn btn-secondary" onClick={handleUploadTemplateClick}>
+            📄 Ladda upp mall
+          </button>
+          {selectedTemplateFile && (
+            <button className="btn btn-secondary" onClick={handleResetToDefaultTemplate}>
+              ↺ Standardmall
+            </button>
+          )}
           <button className="btn btn-primary" onClick={handlePrint}>
             🖨️ Skriv ut
           </button>
+          <input
+            ref={templateFileInputRef}
+            type="file"
+            accept=".xlsx"
+            style={{ display: 'none' }}
+            onChange={handleTemplateFileSelected}
+          />
+        </div>
+        <div style={{ fontSize: '0.75rem', color: '#555', marginTop: '0.35rem', textAlign: 'right' }}>
+          Mall: {templateStatusLabel}
         </div>
       </div>
 
@@ -2086,14 +2321,7 @@ function Results({ orderData, results, onBack, onEdit }) {
         </div>
 
         {/* Combo Pallets Section - Takes 1/3 of the page (MIDDLE) */}
-        <div 
-          className={`pallets-section combo-section mode-${palletMode} ${
-            (palletMode === 'combo' && comboPallets.length <= 11) ||
-            ((palletMode === 'enkel' || palletMode === 'helsingborg') && comboPallets.length <= 18)
-              ? 'single-column-print'
-              : ''
-          }`}
-        >
+        <div className={`pallets-section combo-section mode-${palletMode}`}>
           <div className="section-header">
             <div className="section-header-top">
               <h2 className="section-title">
@@ -2287,10 +2515,7 @@ function Results({ orderData, results, onBack, onEdit }) {
                       }}
                       title="Klicka för att markera/avmarkera alla skvettpalls"
                     >
-                      <span className="combo-title">
-                        <span className="screen-only">Pall #{index + 1}</span>
-                        <span className="print-only">#{combo.skvettpalls.length}</span>
-                      </span>
+                      <span className="combo-title">Pall #{index + 1}</span>
                       <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
                         <span className="combo-height" title="Höjden i röda backar enhet">
                           {(combo.totalHeight - 1).toFixed(2)}
@@ -2694,12 +2919,18 @@ function Results({ orderData, results, onBack, onEdit }) {
 
             {/* Mix Pall for Combo mode when standalone */}
             {palletMode === 'combo' && mixPall.length > 0 && (
-              <div className="combo-pallet-item mix-pall-item standalone-mix" style={{marginTop: '1rem'}}>
-                <div className="combo-header">
-                  <span className="combo-title">
-                    <span className="screen-only">Blandpall</span>
-                    <span className="print-only">#1</span>
-                  </span>
+              <div
+                className="combo-pallet-item mix-pall-item standalone-mix"
+                style={{marginTop: '1rem'}}
+              >
+                <div
+                  className="combo-header draggable"
+                  draggable="true"
+                  onDragStart={(e) => handleDragStart(e, { mixPallItems: mixPall }, 'standaloneMixPall')}
+                  onDragEnd={handleDragEnd}
+                  title="Dra Blandpall till en combo-pall"
+                >
+                  <span className="combo-title">Blandpall</span>
                   <button 
                     className="icon-btn" 
                     onClick={handleAddMixPallProduct} 
@@ -2846,10 +3077,7 @@ function Results({ orderData, results, onBack, onEdit }) {
             {(palletMode === 'enkel' || palletMode === 'helsingborg') && mixPall.length > 0 && (
               <div className="combo-pallet-item mix-pall-item standalone-mix" style={{marginTop: '1rem'}}>
                 <div className="combo-header">
-                  <span className="combo-title">
-                    <span className="screen-only">Blandpall</span>
-                    <span className="print-only">Blandpall</span>
-                  </span>
+                  <span className="combo-title">Blandpall</span>
                   <button 
                     className="icon-btn" 
                     onClick={handleAddMixPallProduct} 
@@ -3314,11 +3542,6 @@ function Results({ orderData, results, onBack, onEdit }) {
             )}
           </div>
         </div>
-      </div>
-      
-      {/* Print-only footer */}
-      <div className="print-footer">
-        Kund: <strong>{orderData.kund || '-'}</strong>
       </div>
     </div>
   );

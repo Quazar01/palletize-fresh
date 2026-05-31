@@ -2,7 +2,6 @@
   "name": "palletize-fresh",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://quazar01.github.io/palletize-fresh",
   "license": "UNLICENSED",
   "author": "Quazar01",
   "description": "Proprietary pallet management system",
@@ -21,7 +20,8 @@
     "react-router-dom": "^7.9.6",
     "react-scripts": "5.0.1",
     "web-vitals": "^2.1.4",
-    "xlsx": "^0.18.5"
+    "xlsx": "^0.18.5",
+    "xlsx-populate": "^1.21.0"
   },
   "scripts": {
     "start": "react-scripts start",
