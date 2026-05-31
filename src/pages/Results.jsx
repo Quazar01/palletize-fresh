@@ -51,8 +51,6 @@ function Results({ orderData, results, onBack, onEdit }) {
   const [selectedSheetName, setSelectedSheetName] = useState('');
   const [templateTableNames, setTemplateTableNames] = useState([]);
   const [selectedTableName, setSelectedTableName] = useState('');
-  const [exportDebugEnabled, setExportDebugEnabled] = useState(false);
-  const [templateStatusLabel, setTemplateStatusLabel] = useState('Laddar standardmall...');
   const templateFileInputRef = useRef(null);
 
   const syncSheetNames = async ({ templatePath, templateFile }) => {
@@ -95,7 +93,6 @@ function Results({ orderData, results, onBack, onEdit }) {
   useEffect(() => {
     const loadDefaultTemplate = async () => {
       try {
-        setTemplateStatusLabel('Laddar standardmall: hämtar från public...');
         const templateInfo = await Promise.race([
           getDefaultTemplateFile(),
           new Promise((_, reject) => {
@@ -105,23 +102,12 @@ function Results({ orderData, results, onBack, onEdit }) {
         const file = templateInfo?.file;
         setDefaultTemplateFile(file);
 
-        setTemplateStatusLabel('Laddar standardmall: läser blad...');
         const sheetNames = await syncSheetNames({ templateFile: file });
         if (!sheetNames.length) {
           throw new Error('Inga blad hittades i standardmallen.');
         }
-        setTemplateStatusLabel(
-          templateInfo?.path
-            ? `Standardmall aktiv (${templateInfo?.source || templateInfo?.bucket || '-'}): ${templateInfo?.bucket || '-'} / ${templateInfo.path}`
-            : 'Standardmall aktiv'
-        );
       } catch (error) {
         console.error('Failed to load default template (public/Firebase):', error);
-        setTemplateStatusLabel(
-          error?.message
-            ? `Kunde inte ladda standardmall: ${error.message}`
-            : 'Kunde inte ladda standardmall från public/Firebase'
-        );
       }
     };
 
@@ -1710,6 +1696,14 @@ function Results({ orderData, results, onBack, onEdit }) {
         return;
       }
 
+      const serializeSetMap = (setMap) => {
+        const serialized = {};
+        Object.entries(setMap || {}).forEach(([key, value]) => {
+          serialized[key] = Array.from(value || []);
+        });
+        return serialized;
+      };
+
       await exportResultsToExcelTemplate({
         orderData,
         palletMode,
@@ -1719,7 +1713,17 @@ function Results({ orderData, results, onBack, onEdit }) {
         mixPall,
         templateFile: activeTemplateFile,
         sheetName: selectedSheetName,
-        debug: exportDebugEnabled,
+        debug: false,
+        uiState: {
+          checkedPallets: serializeSetMap(checkedPallets),
+          plockedPallets: serializeSetMap(plockedPallets),
+          checkedComboSkvettpalls: serializeSetMap(checkedComboSkvettpalls),
+          plockedComboSkvettpalls: serializeSetMap(plockedComboSkvettpalls),
+          checkedMixPallItems: serializeSetMap(checkedMixPallItems),
+          plockedMixPallItems: serializeSetMap(plockedMixPallItems),
+          checkedStandaloneMixItems: Array.from(checkedStandaloneMixItems),
+          plockedStandaloneMixItems: Array.from(plockedStandaloneMixItems)
+        },
         totals: {
           totalBoxes,
           totalEUPallets,
@@ -1754,11 +1758,10 @@ function Results({ orderData, results, onBack, onEdit }) {
         if (!sheetNames.length) {
           throw new Error('Inga blad hittades i uppladdad mall.');
         }
-        setTemplateStatusLabel(`Uppladdad mall aktiv: ${file.name}`);
       })
       .catch((error) => {
         setSelectedTemplateFile(null);
-        setTemplateStatusLabel(
+        alert(
           error?.message
             ? `Kunde inte läsa uppladdad mall: ${error.message}`
             : 'Kunde inte läsa uppladdad mall'
@@ -1767,17 +1770,7 @@ function Results({ orderData, results, onBack, onEdit }) {
     event.target.value = '';
   };
 
-  const handleResetToDefaultTemplate = () => {
-    setSelectedTemplateFile(null);
-    if (defaultTemplateFile) {
-      syncSheetNames({ templateFile: defaultTemplateFile });
-    }
-    setTemplateStatusLabel(
-      defaultTemplateFile
-        ? 'Standardmall aktiv'
-        : 'Kunde inte ladda standardmall från public/Firebase'
-    );
-  };
+  const templateLabel = selectedTemplateFile?.name || 'Standardmall';
 
   return (
     <div className={`results-container mode-${palletMode}`}>
@@ -1852,71 +1845,68 @@ function Results({ orderData, results, onBack, onEdit }) {
 
         {/* Bottom Action Buttons within header */}
         <div className="header-action-buttons">
-          <button className="btn btn-secondary" onClick={onBack}>
-            ← Tillbaka
-          </button>
-          <select
-            value={selectedSheetName}
-            onChange={(e) => {
-              setSelectedSheetName(e.target.value);
-              setSelectedTableName('');
-            }}
-            style={{
-              padding: '0.25rem 0.5rem',
-              borderRadius: '4px',
-              border: '1px solid #ced4da',
-              fontSize: '0.75rem',
-              background: 'white'
-            }}
-            title="Välj blad"
-          >
-            {templateSheetNames.length === 0 ? (
-              <option value="">Inga blad hittades</option>
-            ) : (
-              templateSheetNames.map((sheetName) => (
-                <option key={sheetName} value={sheetName}>{sheetName}</option>
-              ))
-            )}
-          </select>
-          <select
-            value={selectedTableName}
-            onChange={(e) => setSelectedTableName(e.target.value)}
-            style={{
-              padding: '0.25rem 0.5rem',
-              borderRadius: '4px',
-              border: '1px solid #ced4da',
-              fontSize: '0.75rem',
-              background: 'white'
-            }}
-            title="Välj tabell"
-          >
-            {templateTableNames.length === 0 ? (
-              <option value="">Inga tabeller hittades</option>
-            ) : (
-              templateTableNames.map((tableName) => (
-                <option key={tableName} value={tableName}>{tableName}</option>
-              ))
-            )}
-          </select>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.75rem', color: '#555' }}>
-            <input
-              type="checkbox"
-              checked={exportDebugEnabled}
-              onChange={(e) => setExportDebugEnabled(e.target.checked)}
-            />
-            Debug export
-          </label>
-          <button className="btn btn-secondary" onClick={handleUploadTemplateClick}>
-            📄 Ladda upp mall
-          </button>
-          {selectedTemplateFile && (
-            <button className="btn btn-secondary" onClick={handleResetToDefaultTemplate}>
-              ↺ Standardmall
+          <div className="header-actions-left">
+            <button className="btn btn-secondary" onClick={onBack}>
+              ← Tillbaka
             </button>
-          )}
-          <button className="btn btn-primary" onClick={handlePrint}>
-            🖨️ Skriv ut
-          </button>
+            <button className="btn btn-secondary" onClick={handleUploadTemplateClick}>
+              📄 Ladda upp mall
+            </button>
+          </div>
+
+          <div className="header-actions-center">
+            <select
+              value={selectedSheetName}
+              onChange={(e) => {
+                setSelectedSheetName(e.target.value);
+                setSelectedTableName('');
+              }}
+              style={{
+                padding: '0.25rem 0.5rem',
+                borderRadius: '4px',
+                border: '1px solid #ced4da',
+                fontSize: '0.75rem',
+                background: 'white'
+              }}
+              title="Välj blad"
+            >
+              {templateSheetNames.length === 0 ? (
+                <option value="">Inga blad hittades</option>
+              ) : (
+                templateSheetNames.map((sheetName) => (
+                  <option key={sheetName} value={sheetName}>{sheetName}</option>
+                ))
+              )}
+            </select>
+
+            <select
+              value={selectedTableName}
+              onChange={(e) => setSelectedTableName(e.target.value)}
+              style={{
+                padding: '0.25rem 0.5rem',
+                borderRadius: '4px',
+                border: '1px solid #ced4da',
+                fontSize: '0.75rem',
+                background: 'white'
+              }}
+              title="Välj tabell"
+            >
+              {templateTableNames.length === 0 ? (
+                <option value="">Inga tabeller hittades</option>
+              ) : (
+                templateTableNames.map((tableName) => (
+                  <option key={tableName} value={tableName}>{tableName}</option>
+                ))
+              )}
+            </select>
+          </div>
+
+          <div className="header-actions-right">
+            <button className="btn btn-primary" onClick={handlePrint}>
+              🖨️ Skriv ut
+            </button>
+          </div>
+
           <input
             ref={templateFileInputRef}
             type="file"
@@ -1926,7 +1916,7 @@ function Results({ orderData, results, onBack, onEdit }) {
           />
         </div>
         <div style={{ fontSize: '0.75rem', color: '#555', marginTop: '0.35rem', textAlign: 'right' }}>
-          Mall: {templateStatusLabel}
+          Mall: {templateLabel}
         </div>
       </div>
 

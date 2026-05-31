@@ -29,11 +29,30 @@
 }
 
 .header-action-buttons {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
   margin-top: 0.2rem;
   padding-top: 0.2rem;
   border-top: 1px solid #e0e0e0;
+}
+
+.header-actions-left {
+  justify-self: start;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.header-actions-center {
+  justify-self: center;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.header-actions-right {
+  justify-self: end;
 }
 
 .results-header h1 {

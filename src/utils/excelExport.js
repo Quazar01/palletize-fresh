@@ -10,11 +10,66 @@ const COL = {
   DATE: 10 // J
 };
 
+const LIGHT_GREY_FILL = {
+  type: 'solid',
+  color: 'D9D9D9'
+};
+
 const sanitizeFilenamePart = (value) => {
   return String(value || '')
     .trim()
     .replace(/[\\/:*?"<>|]/g, '-')
     .replace(/\s+/g, '_');
+};
+
+const formatLocalDate = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const parseDateForFilename = (value) => {
+  if (!value) return formatLocalDate(new Date());
+
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return formatLocalDate(value);
+  }
+
+  const raw = String(value).trim();
+  if (!raw) return formatLocalDate(new Date());
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+    return raw;
+  }
+
+  const dayFirst = raw.match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{2,4})$/);
+  if (dayFirst) {
+    const day = Number(dayFirst[1]);
+    const month = Number(dayFirst[2]);
+    let year = Number(dayFirst[3]);
+    if (year < 100) {
+      year += year >= 70 ? 1900 : 2000;
+    }
+
+    const parsed = new Date(year, month - 1, day);
+    if (!Number.isNaN(parsed.getTime())) {
+      return formatLocalDate(parsed);
+    }
+  }
+
+  const parsed = new Date(raw);
+  if (!Number.isNaN(parsed.getTime())) {
+    return formatLocalDate(parsed);
+  }
+
+  return formatLocalDate(new Date());
+};
+
+const buildExportFileName = (orderData) => {
+  const customer = sanitizeFilenamePart(orderData?.kund || 'Kund') || 'Kund';
+  const datePart = parseDateForFilename(orderData?.datum);
+  return `${customer}_${datePart}.xlsx`;
 };
 
 const normalizeCustomerText = (value) => {
@@ -76,6 +131,23 @@ const setCellValue = (sheet, row, col, value) => {
 
   cell.style('bold', true);
   cell.style('fontSize', 18);
+};
+
+const applyLightGreyFill = (sheet, row, columns = []) => {
+  columns.forEach((col) => {
+    sheet.cell(row, col).style('fill', LIGHT_GREY_FILL);
+  });
+};
+
+const toSetFromIndexMap = (source, key) => {
+  const raw = source?.[String(key)] ?? source?.[key];
+  return new Set(Array.isArray(raw) ? raw : []);
+};
+
+const isFullPalletBoxMarked = (uiState, palletIndex, boxIndex) => {
+  const checked = toSetFromIndexMap(uiState?.checkedPallets, palletIndex);
+  const plocked = toSetFromIndexMap(uiState?.plockedPallets, palletIndex);
+  return checked.has(boxIndex) || plocked.has(boxIndex);
 };
 
 const clearColumnRange = (sheet, startRow, endRow, columns) => {
@@ -289,29 +361,51 @@ const updateKundAndDateHeaderRow = (sheet, orderData, kundHeader) => {
   setCellValue(sheet, kundRow, dateCol, providedDate);
 };
 
-const flattenComboItems = (combo) => {
+const flattenComboItems = (combo, comboIndex, uiState) => {
   const rows = [];
+
+  const checkedSkvett = toSetFromIndexMap(uiState?.checkedComboSkvettpalls, comboIndex);
+  const plockedSkvett = toSetFromIndexMap(uiState?.plockedComboSkvettpalls, comboIndex);
+  const checkedMix = toSetFromIndexMap(uiState?.checkedMixPallItems, comboIndex);
+  const plockedMix = toSetFromIndexMap(uiState?.plockedMixPallItems, comboIndex);
+
   const hasMixPall = combo.skvettpalls.some((item) => item.isMixPall);
 
   if (hasMixPall) {
-    rows.push({ art: 'Blandpall', dfp: '' });
+    let mixPallHighlighted = false;
+    combo.skvettpalls.forEach((item) => {
+      if (!item.isMixPall || !Array.isArray(item.mixPallItems)) return;
+      const allMixItemsMarked =
+        item.mixPallItems.length > 0 &&
+        item.mixPallItems.every((mixItem) =>
+          checkedMix.has(mixItem.artikelnummer) || plockedMix.has(mixItem.artikelnummer)
+        );
+      if (allMixItemsMarked) {
+        mixPallHighlighted = true;
+      }
+    });
+
+    rows.push({ art: 'Blandpall', dfp: '', isHighlighted: mixPallHighlighted });
   }
 
-  combo.skvettpalls.forEach((item) => {
+  combo.skvettpalls.forEach((item, skvettIndex) => {
     if (item.isMixPall && Array.isArray(item.mixPallItems)) {
       item.mixPallItems.forEach((mixItem) => {
-        rows.push({ art: mixItem.artikelnummer, dfp: mixItem.boxCount });
+        const mixItemHighlighted =
+          checkedMix.has(mixItem.artikelnummer) || plockedMix.has(mixItem.artikelnummer);
+        rows.push({ art: mixItem.artikelnummer, dfp: mixItem.boxCount, isHighlighted: mixItemHighlighted });
       });
       return;
     }
 
-    rows.push({ art: item.artikelnummer, dfp: item.boxCount });
+    const skvettHighlighted = checkedSkvett.has(skvettIndex) || plockedSkvett.has(skvettIndex);
+    rows.push({ art: item.artikelnummer, dfp: item.boxCount, isHighlighted: skvettHighlighted });
   });
 
   return rows;
 };
 
-const writeLeftComboSection = (sheet, startRow, comboPallets, mixPall) => {
+const writeLeftComboSection = (sheet, startRow, comboPallets, mixPall, uiState) => {
   const standAloneCombos = comboPallets.filter((combo) => combo.skvettpalls.length === 1);
 
   const multiCombos = comboPallets.filter((combo) => combo.skvettpalls.length > 1);
@@ -319,13 +413,17 @@ const writeLeftComboSection = (sheet, startRow, comboPallets, mixPall) => {
   let row = startRow;
 
   standAloneCombos.forEach((combo) => {
-    const items = flattenComboItems(combo);
+    const comboIndex = comboPallets.indexOf(combo);
+    const items = flattenComboItems(combo, comboIndex, uiState);
     if (items.length === 0) return;
 
     items.forEach((item, index) => {
       setCellValue(sheet, row, COL.LEFT_ART, item.art);
       setCellValue(sheet, row, COL.LEFT_DFP, item.dfp);
       setCellValue(sheet, row, COL.LEFT_PALL, index === items.length - 1 ? combo.skvettpalls.length : '');
+      if (item.isHighlighted) {
+        applyLightGreyFill(sheet, row, [COL.LEFT_ART, COL.LEFT_DFP, COL.LEFT_PALL]);
+      }
       row += 1;
     });
   });
@@ -335,13 +433,17 @@ const writeLeftComboSection = (sheet, startRow, comboPallets, mixPall) => {
   }
 
   multiCombos.forEach((combo) => {
-    const items = flattenComboItems(combo);
+    const comboIndex = comboPallets.indexOf(combo);
+    const items = flattenComboItems(combo, comboIndex, uiState);
     if (items.length === 0) return;
 
     items.forEach((item, index) => {
       setCellValue(sheet, row, COL.LEFT_ART, item.art);
       setCellValue(sheet, row, COL.LEFT_DFP, item.dfp);
       setCellValue(sheet, row, COL.LEFT_PALL, index === items.length - 1 ? combo.skvettpalls.length : '');
+      if (item.isHighlighted) {
+        applyLightGreyFill(sheet, row, [COL.LEFT_ART, COL.LEFT_DFP, COL.LEFT_PALL]);
+      }
       row += 1;
     });
 
@@ -349,14 +451,26 @@ const writeLeftComboSection = (sheet, startRow, comboPallets, mixPall) => {
   });
 
   if (mixPall.length > 0) {
+    const standaloneCheckedMix = new Set(uiState?.checkedStandaloneMixItems || []);
+    const standalonePlockedMix = new Set(uiState?.plockedStandaloneMixItems || []);
+    const hasStandaloneMarked = mixPall.some((item) =>
+      standaloneCheckedMix.has(item.artikelnummer) || standalonePlockedMix.has(item.artikelnummer)
+    );
+
     row += 2;
     setCellValue(sheet, row, COL.LEFT_ART, 'Blandpall');
     setCellValue(sheet, row, COL.LEFT_PALL, 1);
+    if (hasStandaloneMarked) {
+      applyLightGreyFill(sheet, row, [COL.LEFT_ART, COL.LEFT_DFP, COL.LEFT_PALL]);
+    }
     row += 1;
 
     mixPall.forEach((item) => {
       setCellValue(sheet, row, COL.LEFT_ART, item.artikelnummer);
       setCellValue(sheet, row, COL.LEFT_DFP, item.boxCount);
+      if (standaloneCheckedMix.has(item.artikelnummer) || standalonePlockedMix.has(item.artikelnummer)) {
+        applyLightGreyFill(sheet, row, [COL.LEFT_ART, COL.LEFT_DFP, COL.LEFT_PALL]);
+      }
       row += 1;
     });
   }
@@ -364,10 +478,10 @@ const writeLeftComboSection = (sheet, startRow, comboPallets, mixPall) => {
   return Math.max(startRow, row - 1);
 };
 
-const writeRightFullPallSection = (sheet, startRow, fullPallets) => {
+const writeRightFullPallSection = (sheet, startRow, fullPallets, uiState) => {
   let row = startRow;
 
-  fullPallets.forEach((pallet) => {
+  fullPallets.forEach((pallet, palletIndex) => {
     const boxCounts = Array.isArray(pallet.palletBoxCounts) && pallet.palletBoxCounts.length > 0
       ? pallet.palletBoxCounts
       : Array.from({ length: pallet.fullPallets || 0 }, () => pallet.boxesPerPallet);
@@ -381,6 +495,13 @@ const writeRightFullPallSection = (sheet, startRow, fullPallets) => {
       const localRow = row + Math.floor(index / slotsPerRow);
       const col = COL.RIGHT_START + (index % slotsPerRow);
       setCellValue(sheet, localRow, col, count);
+      const shouldBeItalic = Boolean(pallet.isSingleSkvettpall) || count !== pallet.boxesPerPallet;
+      if (shouldBeItalic) {
+        sheet.cell(localRow, col).style('italic', true);
+      }
+      if (isFullPalletBoxMarked(uiState, palletIndex, index)) {
+        applyLightGreyFill(sheet, localRow, [col]);
+      }
     });
 
     row += Math.ceil(boxCounts.length / slotsPerRow);
@@ -390,7 +511,7 @@ const writeRightFullPallSection = (sheet, startRow, fullPallets) => {
   return Math.max(startRow, row - 1);
 };
 
-const writeLeftComboSectionCustom = (sheet, startRow, comboPallets, mixPall, columns) => {
+const writeLeftComboSectionCustom = (sheet, startRow, comboPallets, mixPall, columns, uiState) => {
   const artCol = columns?.artCol ?? COL.LEFT_ART;
   const dfpCol = columns?.dfpCol ?? COL.LEFT_DFP;
   const pallCol = columns?.pallCol ?? COL.LEFT_PALL;
@@ -401,13 +522,17 @@ const writeLeftComboSectionCustom = (sheet, startRow, comboPallets, mixPall, col
   let row = startRow;
 
   standAloneCombos.forEach((combo) => {
-    const items = flattenComboItems(combo);
+    const comboIndex = comboPallets.indexOf(combo);
+    const items = flattenComboItems(combo, comboIndex, uiState);
     if (items.length === 0) return;
 
     items.forEach((item, index) => {
       setCellValue(sheet, row, artCol, item.art);
       setCellValue(sheet, row, dfpCol, item.dfp);
       setCellValue(sheet, row, pallCol, index === items.length - 1 ? combo.skvettpalls.length : '');
+      if (item.isHighlighted) {
+        applyLightGreyFill(sheet, row, [artCol, dfpCol, pallCol]);
+      }
       row += 1;
     });
   });
@@ -417,13 +542,17 @@ const writeLeftComboSectionCustom = (sheet, startRow, comboPallets, mixPall, col
   }
 
   multiCombos.forEach((combo) => {
-    const items = flattenComboItems(combo);
+    const comboIndex = comboPallets.indexOf(combo);
+    const items = flattenComboItems(combo, comboIndex, uiState);
     if (items.length === 0) return;
 
     items.forEach((item, index) => {
       setCellValue(sheet, row, artCol, item.art);
       setCellValue(sheet, row, dfpCol, item.dfp);
       setCellValue(sheet, row, pallCol, index === items.length - 1 ? combo.skvettpalls.length : '');
+      if (item.isHighlighted) {
+        applyLightGreyFill(sheet, row, [artCol, dfpCol, pallCol]);
+      }
       row += 1;
     });
 
@@ -431,14 +560,26 @@ const writeLeftComboSectionCustom = (sheet, startRow, comboPallets, mixPall, col
   });
 
   if (mixPall.length > 0) {
+    const standaloneCheckedMix = new Set(uiState?.checkedStandaloneMixItems || []);
+    const standalonePlockedMix = new Set(uiState?.plockedStandaloneMixItems || []);
+    const hasStandaloneMarked = mixPall.some((item) =>
+      standaloneCheckedMix.has(item.artikelnummer) || standalonePlockedMix.has(item.artikelnummer)
+    );
+
     row += 2;
     setCellValue(sheet, row, artCol, 'Blandpall');
     setCellValue(sheet, row, pallCol, 1);
+    if (hasStandaloneMarked) {
+      applyLightGreyFill(sheet, row, [artCol, dfpCol, pallCol]);
+    }
     row += 1;
 
     mixPall.forEach((item) => {
       setCellValue(sheet, row, artCol, item.artikelnummer);
       setCellValue(sheet, row, dfpCol, item.boxCount);
+      if (standaloneCheckedMix.has(item.artikelnummer) || standalonePlockedMix.has(item.artikelnummer)) {
+        applyLightGreyFill(sheet, row, [artCol, dfpCol, pallCol]);
+      }
       row += 1;
     });
   }
@@ -446,13 +587,13 @@ const writeLeftComboSectionCustom = (sheet, startRow, comboPallets, mixPall, col
   return Math.max(startRow, row - 1);
 };
 
-const writeRightFullPallSectionCustom = (sheet, startRow, fullPallets, columns) => {
+const writeRightFullPallSectionCustom = (sheet, startRow, fullPallets, columns, uiState) => {
   const artCol = columns?.artCol ?? COL.RIGHT_ART;
   const startCol = columns?.startCol ?? COL.RIGHT_START;
   const endCol = columns?.endCol ?? COL.RIGHT_END;
   let row = startRow;
 
-  fullPallets.forEach((pallet) => {
+  fullPallets.forEach((pallet, palletIndex) => {
     const boxCounts = Array.isArray(pallet.palletBoxCounts) && pallet.palletBoxCounts.length > 0
       ? pallet.palletBoxCounts
       : Array.from({ length: pallet.fullPallets || 0 }, () => pallet.boxesPerPallet);
@@ -466,6 +607,13 @@ const writeRightFullPallSectionCustom = (sheet, startRow, fullPallets, columns) 
       const localRow = row + Math.floor(index / slotsPerRow);
       const col = startCol + (index % slotsPerRow);
       setCellValue(sheet, localRow, col, count);
+      const shouldBeItalic = Boolean(pallet.isSingleSkvettpall) || count !== pallet.boxesPerPallet;
+      if (shouldBeItalic) {
+        sheet.cell(localRow, col).style('italic', true);
+      }
+      if (isFullPalletBoxMarked(uiState, palletIndex, index)) {
+        applyLightGreyFill(sheet, localRow, [col]);
+      }
     });
 
     row += Math.ceil(boxCounts.length / slotsPerRow);
@@ -475,7 +623,7 @@ const writeRightFullPallSectionCustom = (sheet, startRow, fullPallets, columns) 
   return Math.max(startRow, row - 1);
 };
 
-const writeHelsingborgEnkelSection = (sheet, startRow, comboPallets, mixPall, columns) => {
+const writeHelsingborgEnkelSection = (sheet, startRow, comboPallets, mixPall, columns, uiState) => {
   const artCol = columns.artCol;
   const dfpCol = columns.dfpCol;
   const hojdCol = columns.hojdCol;
@@ -483,14 +631,25 @@ const writeHelsingborgEnkelSection = (sheet, startRow, comboPallets, mixPall, co
   let row = startRow;
 
   const enkelRows = [];
-  comboPallets.forEach((combo) => {
-    combo.skvettpalls.forEach((item) => {
+  comboPallets.forEach((combo, comboIndex) => {
+    const checkedSkvett = toSetFromIndexMap(uiState?.checkedComboSkvettpalls, comboIndex);
+    const plockedSkvett = toSetFromIndexMap(uiState?.plockedComboSkvettpalls, comboIndex);
+    const checkedMix = toSetFromIndexMap(uiState?.checkedMixPallItems, comboIndex);
+    const plockedMix = toSetFromIndexMap(uiState?.plockedMixPallItems, comboIndex);
+
+    combo.skvettpalls.forEach((item, skvettIndex) => {
       if (item.isMixPall) {
         const totalBoxes = (item.mixPallItems || []).reduce((sum, mixItem) => sum + (mixItem.boxCount || 0), 0);
+        const allMixItemsMarked =
+          (item.mixPallItems || []).length > 0 &&
+          (item.mixPallItems || []).every((mixItem) =>
+            checkedMix.has(mixItem.artikelnummer) || plockedMix.has(mixItem.artikelnummer)
+          );
         enkelRows.push({
           art: 'Blandpall',
           dfp: totalBoxes,
-          hojd: item.heightInRedUnits ?? item.stackHeight ?? ''
+          hojd: item.heightInRedUnits ?? item.stackHeight ?? '',
+          isHighlighted: allMixItemsMarked
         });
         return;
       }
@@ -498,7 +657,8 @@ const writeHelsingborgEnkelSection = (sheet, startRow, comboPallets, mixPall, co
       enkelRows.push({
         art: item.artikelnummer,
         dfp: item.boxCount,
-        hojd: item.heightInRedUnits ?? item.stackHeight ?? ''
+        hojd: item.heightInRedUnits ?? item.stackHeight ?? '',
+        isHighlighted: checkedSkvett.has(skvettIndex) || plockedSkvett.has(skvettIndex)
       });
     });
   });
@@ -506,7 +666,13 @@ const writeHelsingborgEnkelSection = (sheet, startRow, comboPallets, mixPall, co
   if (mixPall.length > 0) {
     const totalBoxes = mixPall.reduce((sum, item) => sum + (item.boxCount || 0), 0);
     const stackHeight = Math.ceil(totalBoxes / 8);
-    enkelRows.push({ art: 'Blandpall', dfp: totalBoxes, hojd: 1 + stackHeight });
+    const standaloneCheckedMix = new Set(uiState?.checkedStandaloneMixItems || []);
+    const standalonePlockedMix = new Set(uiState?.plockedStandaloneMixItems || []);
+    const hasStandaloneMarked = mixPall.some((item) =>
+      standaloneCheckedMix.has(item.artikelnummer) || standalonePlockedMix.has(item.artikelnummer)
+    );
+
+    enkelRows.push({ art: 'Blandpall', dfp: totalBoxes, hojd: 1 + stackHeight, isHighlighted: hasStandaloneMarked });
   }
 
   const clearEndRow = Math.max(startRow + Math.max(enkelRows.length + 20, 30), 80);
@@ -516,6 +682,9 @@ const writeHelsingborgEnkelSection = (sheet, startRow, comboPallets, mixPall, co
     setCellValue(sheet, row, artCol, item.art);
     setCellValue(sheet, row, dfpCol, item.dfp);
     setCellValue(sheet, row, hojdCol, item.hojd);
+    if (item.isHighlighted) {
+      applyLightGreyFill(sheet, row, [artCol, dfpCol, hojdCol]);
+    }
     row += 1;
   });
 
@@ -721,6 +890,7 @@ const fillTemplatePattern = ({
   fullPallets,
   mixPall,
   palletMode,
+  uiState,
   debugInfo
 }) => {
   const specialLayout = resolveSpecialTableLayout(sheetName, orderData, tableName);
@@ -770,8 +940,8 @@ const fillTemplatePattern = ({
       clearColumnRange(sheet, dataStartRow, maxClearRow, [COL.LEFT_ART, COL.LEFT_DFP, COL.LEFT_PALL]);
       clearBlockRange(sheet, specialLayout.fullStartRow, maxClearRow, COL.RIGHT_ART, COL.RIGHT_END);
 
-      writeLeftComboSection(sheet, dataStartRow, comboPallets, mixPall);
-      writeRightFullPallSection(sheet, specialLayout.fullStartRow, fullPallets);
+      writeLeftComboSection(sheet, dataStartRow, comboPallets, mixPall, uiState);
+      writeRightFullPallSection(sheet, specialLayout.fullStartRow, fullPallets, uiState);
       clearCustomRowHeights(sheet, dataStartRow, maxClearRow);
 
       if (debugInfo) {
@@ -805,8 +975,21 @@ const fillTemplatePattern = ({
         specialLayout.fullColumns.endCol
       );
 
-      writeLeftComboSectionCustom(sheet, specialLayout.comboStartRow, comboPallets, mixPall, specialLayout.comboColumns);
-      writeRightFullPallSectionCustom(sheet, specialLayout.fullStartRow, fullPallets, specialLayout.fullColumns);
+      writeLeftComboSectionCustom(
+        sheet,
+        specialLayout.comboStartRow,
+        comboPallets,
+        mixPall,
+        specialLayout.comboColumns,
+        uiState
+      );
+      writeRightFullPallSectionCustom(
+        sheet,
+        specialLayout.fullStartRow,
+        fullPallets,
+        specialLayout.fullColumns,
+        uiState
+      );
       clearCustomRowHeights(sheet, specialLayout.comboStartRow, maxClearRow);
 
       if (debugInfo) {
@@ -839,14 +1022,16 @@ const fillTemplatePattern = ({
         specialLayout.enkelStartRow,
         comboPallets,
         mixPall,
-        specialLayout.enkelColumns
+        specialLayout.enkelColumns,
+        uiState
       );
 
       const fullEndRow = writeRightFullPallSectionCustom(
         sheet,
         specialLayout.fullStartRow,
         fullPallets,
-        specialLayout.fullColumns
+        specialLayout.fullColumns,
+        uiState
       );
 
       if (debugInfo) {
@@ -892,8 +1077,8 @@ const fillTemplatePattern = ({
   clearColumnRange(sheet, dataStartRow, maxClearRow, [COL.LEFT_ART, COL.LEFT_DFP, COL.LEFT_PALL]);
   clearBlockRange(sheet, dataStartRow, maxClearRow, COL.RIGHT_ART, COL.RIGHT_END);
 
-  writeLeftComboSection(sheet, dataStartRow, comboPallets, mixPall);
-  writeRightFullPallSection(sheet, dataStartRow, fullPallets);
+  writeLeftComboSection(sheet, dataStartRow, comboPallets, mixPall, uiState);
+  writeRightFullPallSection(sheet, dataStartRow, fullPallets, uiState);
   clearCustomRowHeights(sheet, dataStartRow, maxClearRow);
 
   if (debugInfo) {
@@ -937,6 +1122,23 @@ const loadTemplateWorkbook = async ({ templatePath, templateFile }) => {
   return XlsxPopulate.fromDataAsync(buffer);
 };
 
+const applySheetSpecificAdjustments = (sheet, sheetName) => {
+  const normalizedSheetName = normalizeCustomerText(sheetName);
+
+  if (
+    normalizedSheetName === 'dagab jonkoping + hassleholm' ||
+    normalizedSheetName === 'hagad jonkoping + hassleholm'
+  ) {
+    const targetRow = sheet.row(57);
+    if (typeof targetRow?.autoFit === 'function') {
+      targetRow.autoFit();
+      return;
+    }
+
+    targetRow.height(null);
+  }
+};
+
 const triggerBlobDownload = (blob, fileName) => {
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');
@@ -946,6 +1148,39 @@ const triggerBlobDownload = (blob, fileName) => {
   anchor.click();
   document.body.removeChild(anchor);
   URL.revokeObjectURL(url);
+};
+
+const saveBlobWithUserChoice = async (blob, fileName) => {
+  if (typeof window === 'undefined' || typeof window.showSaveFilePicker !== 'function') {
+    triggerBlobDownload(blob, fileName);
+    return { saved: true, method: 'download' };
+  }
+
+  try {
+    const fileHandle = await window.showSaveFilePicker({
+      id: 'plocklista-export',
+      startIn: 'downloads',
+      suggestedName: fileName,
+      types: [
+        {
+          description: 'Excel Workbook',
+          accept: {
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx']
+          }
+        }
+      ]
+    });
+
+    const writable = await fileHandle.createWritable();
+    await writable.write(blob);
+    await writable.close();
+    return { saved: true, method: 'picker' };
+  } catch (error) {
+    if (error?.name === 'AbortError') {
+      return { saved: false, cancelled: true };
+    }
+    throw error;
+  }
 };
 
 export const getTemplateSheetNames = async ({ templatePath, templateFile }) => {
@@ -988,6 +1223,7 @@ export const exportResultsToExcelTemplate = async ({
   fullPallets,
   comboPallets,
   mixPall,
+  uiState,
   templateFile,
   sheetName,
   debug = false,
@@ -1018,18 +1254,27 @@ export const exportResultsToExcelTemplate = async ({
     comboPallets,
     fullPallets,
     mixPall,
+    uiState,
     debugInfo
   });
 
-  const datePart = new Date().toISOString().split('T')[0];
-  const fileName = `Plocklistor för avgång ${datePart}.xlsx`;
+  applySheetSpecificAdjustments(sheet, requestedSheetName);
+
+  const fileName = buildExportFileName(orderData);
 
   const outputBlob = await workbook.outputAsync();
-  triggerBlobDownload(outputBlob, fileName);
+  const saveResult = await saveBlobWithUserChoice(outputBlob, fileName);
+
+  if (!saveResult.saved) {
+    return saveResult;
+  }
 
   if (debug && debugInfo) {
+    const datePart = parseDateForFilename(orderData?.datum);
     const debugBlob = new Blob([JSON.stringify(debugInfo, null, 2)], { type: 'application/json' });
-    triggerBlobDownload(debugBlob, `Plocklistor för avgång ${datePart}.debug.json`);
+    triggerBlobDownload(debugBlob, `${sanitizeFilenamePart(orderData?.kund || 'Kund') || 'Kund'}_${datePart}.debug.json`);
     console.info('Export debug info:', debugInfo);
   }
+
+  return saveResult;
 };
