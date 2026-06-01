@@ -15,6 +15,10 @@ const LIGHT_GREY_FILL = {
   color: 'D9D9D9'
 };
 
+const TEMPLATE_VERSION_MARKER_VALUE = 'PLG_TEMPLATE_V1';
+const TEMPLATE_VERSION_DEFINED_NAME = '_PLG_TEMPLATE_VERSION';
+const LEGACY_TEMPLATE_VERSION_MARKER_CELL = 'XFD1';
+
 const sanitizeFilenamePart = (value) => {
   return String(value || '')
     .trim()
@@ -70,6 +74,10 @@ const buildExportFileName = (orderData) => {
   const customer = sanitizeFilenamePart(orderData?.kund || 'Kund') || 'Kund';
   const datePart = parseDateForFilename(orderData?.datum);
   return `${customer}_${datePart}.xlsx`;
+};
+
+const buildCombinedExportFileName = () => {
+  return `Plocklistor för avgång ${formatLocalDate(new Date())}.xlsx`;
 };
 
 const normalizeCustomerText = (value) => {
@@ -1122,6 +1130,240 @@ const loadTemplateWorkbook = async ({ templatePath, templateFile }) => {
   return XlsxPopulate.fromDataAsync(buffer);
 };
 
+const setWorkbookTemplateVersionMarker = (workbook) => {
+  workbook.definedName(TEMPLATE_VERSION_DEFINED_NAME, `="${TEMPLATE_VERSION_MARKER_VALUE}"`);
+};
+
+const normalizeTemplateVersionMarker = (value) => {
+  const raw = String(value || '').trim();
+  if (!raw) return '';
+
+  if (raw.startsWith('#')) {
+    return '';
+  }
+
+  return raw
+    .replace(/^=/, '')
+    .replace(/^"+|"+$/g, '')
+    .replace(/^'+|'+$/g, '')
+    .trim();
+};
+
+const isTemplateVersionMarkerValid = (marker) => {
+  const normalized = normalizeTemplateVersionMarker(marker);
+  return (
+    normalized === TEMPLATE_VERSION_MARKER_VALUE ||
+    normalized.includes(TEMPLATE_VERSION_MARKER_VALUE)
+  );
+};
+
+const getWorkbookTemplateVersionMarker = (workbook) => {
+  const definedNameValue = workbook.definedName(TEMPLATE_VERSION_DEFINED_NAME);
+  if (typeof definedNameValue === 'string' && definedNameValue.trim()) {
+    return normalizeTemplateVersionMarker(definedNameValue);
+  }
+
+  const firstSheet = workbook.sheets()[0];
+  if (!firstSheet) return '';
+
+  const rawLegacyValue = firstSheet.cell(LEGACY_TEMPLATE_VERSION_MARKER_CELL).value();
+  return normalizeTemplateVersionMarker(rawLegacyValue);
+};
+
+const isLegacyExportWorkbook = (workbook) => {
+  const activeSheet = workbook.activeSheet();
+  if (!activeSheet) return false;
+
+  const hasKundHeader = findKundHeaders(activeSheet).length > 0;
+  const hasTemplateColumns = findTemplateHeaderRow(activeSheet, 1, 300) !== null;
+
+  return hasKundHeader && hasTemplateColumns;
+};
+
+const cellHasData = (value) => {
+  if (value === undefined || value === null) return false;
+  if (typeof value === 'string') return value.trim().length > 0;
+  if (typeof value === 'number') return value !== 0;
+  if (typeof value === 'boolean') return value;
+  return true;
+};
+
+const hasDataInRegionColumns = (sheet, startRow, endRow, columns) => {
+  for (let row = startRow; row <= endRow; row += 1) {
+    for (const col of columns) {
+      if (cellHasData(sheet.cell(row, col).value())) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+};
+
+const buildGenericTableRegions = (sheet) => {
+  const headers = findKundHeaders(sheet).sort((a, b) => a.row - b.row);
+  if (headers.length === 0) return [];
+
+  const regions = [];
+
+  headers.forEach((header, index) => {
+    const nextHeader = headers[index + 1];
+    const tableSearchEnd = nextHeader ? nextHeader.row - 1 : header.row + 500;
+    const headerRow = findTemplateHeaderRow(sheet, header.row + 1, tableSearchEnd);
+
+    if (!headerRow) return;
+
+    const dataStartRow = headerRow + 1;
+    const dataEndRow = findDataEndRow(sheet, dataStartRow, tableSearchEnd);
+    const scanColumns = [
+      COL.LEFT_ART,
+      COL.LEFT_DFP,
+      COL.LEFT_PALL,
+      COL.RIGHT_ART,
+      COL.RIGHT_START,
+      COL.RIGHT_START + 1,
+      COL.RIGHT_START + 2,
+      COL.RIGHT_START + 3,
+      COL.RIGHT_END
+    ];
+
+    const isFilled = hasDataInRegionColumns(sheet, dataStartRow, dataEndRow, scanColumns);
+    if (!isFilled) return;
+
+    regions.push({
+      key: `kund:${normalizeCustomerText(header.kund || header.raw || `row-${header.row}`)}`,
+      startRow: header.row,
+      endRow: dataEndRow,
+      startCol: COL.LEFT_ART,
+      endCol: COL.RIGHT_END
+    });
+  });
+
+  return regions;
+};
+
+const buildSpecialSheetTableRegions = (sheet, sheetName) => {
+  const tableNames = getSpecialTableNamesForSheet(sheetName);
+  if (tableNames.length === 0) return [];
+
+  const regions = [];
+
+  tableNames.forEach((tableName) => {
+    const layout = resolveSpecialTableLayout(sheetName, { kund: '' }, tableName);
+    if (!layout) return;
+
+    if (layout.type === 'defaultColumns') {
+      const dataStartRow = layout.comboStartRow;
+      const maxClearRow = layout.nextComboStartRow
+        ? layout.nextComboStartRow - 1
+        : findDataEndRow(sheet, dataStartRow);
+
+      const isFilled = hasDataInRegionColumns(sheet, dataStartRow, maxClearRow, [
+        COL.LEFT_ART,
+        COL.LEFT_DFP,
+        COL.LEFT_PALL,
+        COL.RIGHT_ART,
+        COL.RIGHT_START,
+        COL.RIGHT_START + 1,
+        COL.RIGHT_START + 2,
+        COL.RIGHT_START + 3,
+        COL.RIGHT_END
+      ]);
+
+      if (!isFilled) return;
+
+      regions.push({
+        key: `table:${normalizeCustomerText(layout.tableName)}`,
+        startRow: Math.min(layout.dateRow || dataStartRow, dataStartRow),
+        endRow: maxClearRow,
+        startCol: COL.LEFT_ART,
+        endCol: COL.RIGHT_END
+      });
+      return;
+    }
+
+    if (layout.type === 'customComboAndFull') {
+      const maxClearRow = layout.clearEndRow || 120;
+      const comboCols = [layout.comboColumns.artCol, layout.comboColumns.dfpCol, layout.comboColumns.pallCol];
+      const fullCols = [
+        layout.fullColumns.artCol,
+        layout.fullColumns.startCol,
+        layout.fullColumns.startCol + 1,
+        layout.fullColumns.startCol + 2,
+        layout.fullColumns.endCol
+      ];
+
+      const isFilled =
+        hasDataInRegionColumns(sheet, layout.comboStartRow, maxClearRow, comboCols) ||
+        hasDataInRegionColumns(sheet, layout.fullStartRow, maxClearRow, fullCols);
+
+      if (!isFilled) return;
+
+      regions.push({
+        key: `table:${normalizeCustomerText(layout.tableName)}`,
+        startRow: Math.min(layout.dateRow || layout.comboStartRow, layout.comboStartRow),
+        endRow: maxClearRow,
+        startCol: Math.min(layout.comboColumns.pallCol, layout.comboColumns.artCol, layout.comboColumns.dfpCol),
+        endCol: Math.max(layout.fullColumns.endCol, layout.fullColumns.artCol)
+      });
+      return;
+    }
+
+    if (layout.type === 'helsingborgEnkel') {
+      const maxClearRow = layout.clearEndRow || 120;
+      const enkelCols = [layout.enkelColumns.artCol, layout.enkelColumns.dfpCol];
+      const fullCols = [
+        layout.fullColumns.artCol,
+        layout.fullColumns.startCol,
+        layout.fullColumns.startCol + 1,
+        layout.fullColumns.startCol + 2,
+        layout.fullColumns.endCol
+      ];
+
+      const isFilled =
+        hasDataInRegionColumns(sheet, layout.enkelStartRow, maxClearRow, enkelCols) ||
+        hasDataInRegionColumns(sheet, layout.fullStartRow, maxClearRow, fullCols);
+
+      if (!isFilled) return;
+
+      regions.push({
+        key: `table:${normalizeCustomerText(layout.tableName)}`,
+        startRow: Math.min(layout.dateRow || layout.enkelStartRow, layout.enkelStartRow),
+        endRow: maxClearRow,
+        startCol: Math.min(layout.enkelColumns.artCol, layout.enkelColumns.dfpCol),
+        endCol: Math.max(layout.fullColumns.endCol, layout.fullColumns.artCol)
+      });
+    }
+  });
+
+  return regions;
+};
+
+const getFilledTableRegionsForSheet = (sheet, sheetName) => {
+  const specialRegions = buildSpecialSheetTableRegions(sheet, sheetName);
+  if (specialRegions.length > 0) {
+    return specialRegions;
+  }
+
+  return buildGenericTableRegions(sheet);
+};
+
+const copySheetRegionFromExportedFile = (sourceSheet, targetSheet, region) => {
+  for (let row = region.startRow; row <= region.endRow; row += 1) {
+    for (let col = region.startCol; col <= region.endCol; col += 1) {
+      const sourceCell = sourceSheet.cell(row, col);
+      const targetCell = targetSheet.cell(row, col);
+
+      const targetFormula = targetCell.formula();
+      if (typeof targetFormula === 'string' && targetFormula.trim().length > 0) {
+        continue;
+      }
+
+      targetCell.value(sourceCell.value());
+    }
+  }
+};
+
 const applySheetSpecificAdjustments = (sheet, sheetName) => {
   const normalizedSheetName = normalizeCustomerText(sheetName);
 
@@ -1238,6 +1480,9 @@ export const exportResultsToExcelTemplate = async ({
     throw new Error(`Blad '${requestedSheetName}' hittades inte i mallen.`);
   }
 
+  workbook.activeSheet(sheet);
+  sheet.tabSelected(true);
+
   const debugInfo = debug ? {
     selectedSheet: requestedSheetName,
     availableSheets: availableSheetNames,
@@ -1259,6 +1504,7 @@ export const exportResultsToExcelTemplate = async ({
   });
 
   applySheetSpecificAdjustments(sheet, requestedSheetName);
+  setWorkbookTemplateVersionMarker(workbook);
 
   const fileName = buildExportFileName(orderData);
 
@@ -1277,4 +1523,113 @@ export const exportResultsToExcelTemplate = async ({
   }
 
   return saveResult;
+};
+
+export const combineExportedFilesIntoTemplate = async ({
+  files,
+  templateFile,
+  templatePath = '/templates/Plocklist-Template.xlsx'
+}) => {
+  const uploadFiles = Array.isArray(files) ? files : [];
+  if (uploadFiles.length === 0) {
+    throw new Error('Välj minst en exporterad fil att kombinera.');
+  }
+
+  const outputWorkbook = await loadTemplateWorkbook({ templatePath, templateFile });
+  const rejectedFiles = [];
+  let processedCount = 0;
+  let lastAppliedSheetName = '';
+
+  for (const file of uploadFiles) {
+    if (!file) continue;
+
+    try {
+      const fileBuffer = await file.arrayBuffer();
+      const sourceWorkbook = await XlsxPopulate.fromDataAsync(fileBuffer);
+      const versionMarker = getWorkbookTemplateVersionMarker(sourceWorkbook);
+
+      if (versionMarker && !isTemplateVersionMarkerValid(versionMarker)) {
+        rejectedFiles.push({
+          fileName: file.name,
+          reason: 'Fel mallversion'
+        });
+        continue;
+      }
+
+      if (!versionMarker && !isLegacyExportWorkbook(sourceWorkbook)) {
+        rejectedFiles.push({
+          fileName: file.name,
+          reason: 'Fel mallversion'
+        });
+        continue;
+      }
+
+      const sourceActiveSheet = sourceWorkbook.activeSheet();
+      const sourceActiveSheetName = sourceActiveSheet?.name?.();
+
+      if (!sourceActiveSheet || !sourceActiveSheetName) {
+        rejectedFiles.push({
+          fileName: file.name,
+          reason: 'Kunde inte läsa aktivt blad'
+        });
+        continue;
+      }
+
+      const targetSheet = outputWorkbook.sheet(sourceActiveSheetName);
+      if (!targetSheet) {
+        rejectedFiles.push({
+          fileName: file.name,
+          reason: `Blad '${sourceActiveSheetName}' saknas i målmall`
+        });
+        continue;
+      }
+
+      const regions = getFilledTableRegionsForSheet(sourceActiveSheet, sourceActiveSheetName);
+      if (regions.length === 0) {
+        rejectedFiles.push({
+          fileName: file.name,
+          reason: 'Kunde inte hitta en ifylld tabell i aktivt blad'
+        });
+        continue;
+      }
+
+      regions.forEach((region) => {
+        copySheetRegionFromExportedFile(sourceActiveSheet, targetSheet, region);
+      });
+
+      applySheetSpecificAdjustments(targetSheet, sourceActiveSheetName);
+
+      processedCount += 1;
+      lastAppliedSheetName = sourceActiveSheetName;
+    } catch (error) {
+      rejectedFiles.push({
+        fileName: file.name,
+        reason: error?.message || 'Kunde inte läsa filen'
+      });
+    }
+  }
+
+  if (processedCount === 0) {
+    const details = rejectedFiles.map((item) => `${item.fileName}: ${item.reason}`).join('\n');
+    throw new Error(`Inga giltiga filer kunde kombineras.\n${details}`);
+  }
+
+  if (lastAppliedSheetName) {
+    const lastSheet = outputWorkbook.sheet(lastAppliedSheetName);
+    if (lastSheet) {
+      outputWorkbook.activeSheet(lastSheet);
+      lastSheet.tabSelected(true);
+    }
+  }
+
+  setWorkbookTemplateVersionMarker(outputWorkbook);
+
+  const outputBlob = await outputWorkbook.outputAsync();
+  const saveResult = await saveBlobWithUserChoice(outputBlob, buildCombinedExportFileName());
+
+  return {
+    ...saveResult,
+    processedCount,
+    rejectedFiles
+  };
 };

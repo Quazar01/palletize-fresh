@@ -4,6 +4,11 @@
 
 Transform your Excel order sheets into optimized, printable pick lists in seconds. Designed for fresh produce distribution and warehouse management.
 
+
+TODO: 
+Lidl, Lidl Örebro. find the table.
+
+
 ---
 
 ## 🚀 Key Features

@@ -5,6 +5,7 @@ import { parseExcelFile, validateExcelFile } from '../utils/excelParser';
 import { processOrder, processOrderHelsingborg } from '../utils/palletCalculations';
 import { optimizeComboPalletsAdvanced, optimizeComboPalletsWithMixPall, calculateTotalParcels } from '../utils/comboOptimizer';
 import { calculateTruckSlots } from '../utils/truckSlotCalculations';
+import { combineExportedFilesIntoTemplate } from '../utils/excelExport';
 import { trackVisitor, getVisitorInfo } from '../utils/visitorTracking';
 import Results from './Results';
 
@@ -22,9 +23,11 @@ function Home() {
   const [kund, setKund] = useState('');
   const [datum, setDatum] = useState('');
   const [ordersnummer, setOrdersnummer] = useState('');
+  const [workflowMode, setWorkflowMode] = useState('generate');
   const [selectedOption, setSelectedOption] = useState('combo');
   const [heightMargin, setHeightMargin] = useState(0); // Margin in percent (default 0%)
   const [selectedFile, setSelectedFile] = useState(null);
+  const [combineFiles, setCombineFiles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showResults, setShowResults] = useState(false);
@@ -75,6 +78,74 @@ function Home() {
         setError('Ogiltig filtyp. Vänligen välj en Excel-fil (.xlsx, .xls)');
         setSelectedFile(null);
       }
+    }
+  };
+
+  const handleCombineFileSelect = (event) => {
+    const files = Array.from(event.target.files || []);
+    if (files.length === 0) return;
+
+    setError(null);
+    const invalidFile = files.find((file) => !validateExcelFile(file) || !String(file.name).toLowerCase().endsWith('.xlsx'));
+    if (invalidFile) {
+      setError(`Ogiltig filtyp (${invalidFile.name}). Välj exporterade .xlsx-filer.`);
+      return;
+    }
+
+    setCombineFiles(files);
+  };
+
+  const handleCombineDrop = (event) => {
+    event.preventDefault();
+    const files = Array.from(event.dataTransfer.files || []);
+    if (files.length === 0) return;
+
+    setError(null);
+    const invalidFile = files.find((file) => !validateExcelFile(file) || !String(file.name).toLowerCase().endsWith('.xlsx'));
+    if (invalidFile) {
+      setError(`Ogiltig filtyp (${invalidFile.name}). Välj exporterade .xlsx-filer.`);
+      return;
+    }
+
+    setCombineFiles(files);
+  };
+
+  const handleCombineFiles = async () => {
+    if (combineFiles.length === 0) {
+      setError('Välj minst en exporterad fil först');
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const result = await combineExportedFilesIntoTemplate({ files: combineFiles });
+
+      if (result?.cancelled) {
+        return;
+      }
+
+      if (result?.rejectedFiles?.length > 0) {
+        const rejectedSummary = result.rejectedFiles
+          .map((item) => `${item.fileName}: ${item.reason}`)
+          .join('\n');
+
+        alert(
+          `Kombinerad fil skapad med ${result.processedCount} giltiga filer.\n\nFöljande filer hoppades över:\n${rejectedSummary}`
+        );
+      }
+
+      await trackVisitor('Home', 'Combine Exported Files', {
+        uploadedFiles: combineFiles.length,
+        validFiles: result?.processedCount || 0,
+        rejectedFiles: result?.rejectedFiles?.length || 0
+      });
+    } catch (err) {
+      setError(err.message || 'Ett fel uppstod vid kombinering av filer');
+      console.error('Error combining files:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -396,99 +467,160 @@ function Home() {
 
   return (
     <div className="home-container">
+      <div className="workflow-options-panel">
+        <div className="workflow-options-title">Mode</div>
+        <select
+          className="workflow-options-select"
+          value={workflowMode}
+          onChange={(e) => {
+            setWorkflowMode(e.target.value);
+            setError(null);
+          }}
+        >
+          <option value="generate">Skapa plocklista</option>
+          <option value="combine">Kombinera filer</option>
+        </select>
+      </div>
+
       <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <h1 className="title">Plocklista Generator</h1>
+
+        {workflowMode === 'generate' && (
+          <>
+            <div className="input-fields">
+              <input
+                type="text"
+                className="text-field"
+                placeholder="Kund"
+                value={kund}
+                onChange={(e) => setKund(e.target.value)}
+              />
+              <input
+                type="text"
+                className="text-field"
+                placeholder="Datum"
+                value={datum}
+                onChange={(e) => setDatum(e.target.value)}
+              />
+              <input
+                type="text"
+                className="text-field"
+                placeholder="Ordersnummer"
+                value={ordersnummer}
+                onChange={(e) => setOrdersnummer(e.target.value)}
+              />
+            </div>
+
+            <div className="radio-group">
+              <label className="radio-option">
+                <input
+                  type="radio"
+                  name="palletType"
+                  value="combo"
+                  checked={selectedOption === 'combo'}
+                  onChange={(e) => setSelectedOption(e.target.value)}
+                />
+                <span>Combo</span>
+              </label>
+              <label className="radio-option">
+                <input
+                  type="radio"
+                  name="palletType"
+                  value="enkel"
+                  checked={selectedOption === 'enkel'}
+                  onChange={(e) => setSelectedOption(e.target.value)}
+                />
+                <span>Enkel</span>
+              </label>
+              <label className="radio-option">
+                <input
+                  type="radio"
+                  name="palletType"
+                  value="helsingborg"
+                  checked={selectedOption === 'helsingborg'}
+                  onChange={(e) => setSelectedOption(e.target.value)}
+                />
+                <span>Helsingborg</span>
+              </label>
+            </div>
+          </>
+        )}
         
-        <div className="input-fields">
-        <input
-          type="text"
-          className="text-field"
-          placeholder="Kund"
-          value={kund}
-          onChange={(e) => setKund(e.target.value)}
-        />
-        <input
-          type="text"
-          className="text-field"
-          placeholder="Datum"
-          value={datum}
-          onChange={(e) => setDatum(e.target.value)}
-        />
-        <input
-          type="text"
-          className="text-field"
-          placeholder="Ordersnummer"
-          value={ordersnummer}
-          onChange={(e) => setOrdersnummer(e.target.value)}
-        />
-      </div>
-
-      <div className="radio-group">
-        <label className="radio-option">
-          <input
-            type="radio"
-            name="palletType"
-            value="combo"
-            checked={selectedOption === 'combo'}
-            onChange={(e) => setSelectedOption(e.target.value)}
-          />
-          <span>Combo</span>
-        </label>
-        <label className="radio-option">
-          <input
-            type="radio"
-            name="palletType"
-            value="enkel"
-            checked={selectedOption === 'enkel'}
-            onChange={(e) => setSelectedOption(e.target.value)}
-          />
-          <span>Enkel</span>
-        </label>
-        <label className="radio-option">
-          <input
-            type="radio"
-            name="palletType"
-            value="helsingborg"
-            checked={selectedOption === 'helsingborg'}
-            onChange={(e) => setSelectedOption(e.target.value)}
-          />
-          <span>Helsingborg</span>
-        </label>
-      </div>
-
       {error && (
         <div className="error-message">
           ⚠️ {error}
         </div>
       )}
 
-      <div 
-        className="upload-area"
-        onDragOver={handleDragOver}
-        onDrop={handleDrop}
-        onClick={() => document.getElementById('fileInput').click()}
-      >
-        <input
-          id="fileInput"
-          type="file"
-          style={{ display: 'none' }}
-          onChange={handleFileSelect}
-          accept=".xlsx,.xls,.csv"
-        />
-        {selectedFile ? (
-          <p className="file-name">{selectedFile.name}</p>
-        ) : (
-          <p>Klicka här eller dra en fil för att ladda upp</p>
-        )}
-      </div>
+        {workflowMode === 'generate' ? (
+          <>
+            <div
+              className="upload-area"
+              onDragOver={handleDragOver}
+              onDrop={handleDrop}
+              onClick={() => document.getElementById('fileInput').click()}
+            >
+              <input
+                id="fileInput"
+                type="file"
+                style={{ display: 'none' }}
+                onChange={handleFileSelect}
+                accept=".xlsx,.xls,.csv"
+              />
+              {selectedFile ? (
+                <p className="file-name">{selectedFile.name}</p>
+              ) : (
+                <p>Klicka här eller dra en fil för att ladda upp</p>
+              )}
+            </div>
 
-      <button 
-        className="upload-button" 
-        onClick={handleUpload}
-        disabled={loading || !selectedFile}
-      >
-        {loading ? 'Bearbetar...' : 'Ladda Upp'}
-      </button>
+            <button
+              className="upload-button"
+              onClick={handleUpload}
+              disabled={loading || !selectedFile}
+            >
+              {loading ? 'Bearbetar...' : 'Ladda Upp'}
+            </button>
+          </>
+        ) : (
+          <>
+            <div
+              className="upload-area"
+              onDragOver={handleDragOver}
+              onDrop={handleCombineDrop}
+              onClick={() => document.getElementById('combineFileInput').click()}
+            >
+              <input
+                id="combineFileInput"
+                type="file"
+                style={{ display: 'none' }}
+                onChange={handleCombineFileSelect}
+                accept=".xlsx"
+                multiple
+              />
+              {combineFiles.length > 0 ? (
+                <>
+                  <p className="file-name">{combineFiles.length} filer valda (uppladdningsordning används)</p>
+                  <div style={{ marginTop: '0.6rem', fontSize: '0.85rem', color: '#444', maxHeight: '150px', overflowY: 'auto' }}>
+                    {combineFiles.map((file, index) => (
+                      <div key={`${file.name}-${index}`}>{index + 1}. {file.name}</div>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <p>Klicka här eller dra exporterade .xlsx-filer för att kombinera</p>
+              )}
+            </div>
+
+            <button
+              className="upload-button"
+              onClick={handleCombineFiles}
+              disabled={loading || combineFiles.length === 0}
+            >
+              {loading ? 'Kombinerar...' : 'Kombinera filer'}
+            </button>
+          </>
+        )}
       </div>
 
       <button
@@ -515,42 +647,44 @@ function Home() {
         📦 Hantera Produkter
       </button>
 
-      <div className="margin-input-container" style={{
-        position: 'absolute',
-        bottom: '2rem',
-        right: '2rem',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '0.5rem',
-        fontSize: '0.85rem'
-      }}>
-        <label htmlFor="heightMargin" style={{
-          color: '#fff',
-          fontWeight: '500'
+      {workflowMode === 'generate' && (
+        <div className="margin-input-container" style={{
+          position: 'absolute',
+          bottom: '2rem',
+          right: '2rem',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.5rem',
+          fontSize: '0.85rem'
         }}>
-          Max Höjd Marginal:
-        </label>
-        <input
-          id="heightMargin"
-          type="number"
-          min="0"
-          max="20"
-          step="0.5"
-          value={heightMargin}
-          onChange={(e) => setHeightMargin(parseFloat(e.target.value) || 0)}
-          style={{
-            width: '60px',
-            padding: '0.4rem',
-            border: '2px solid #5ba0a0',
-            borderRadius: '4px',
-            fontSize: '0.85rem',
-            textAlign: 'center'
-          }}
-        />
-        <span style={{
-          color: '#fff'
-        }}>%</span>
-      </div>
+          <label htmlFor="heightMargin" style={{
+            color: '#fff',
+            fontWeight: '500'
+          }}>
+            Max Höjd Marginal:
+          </label>
+          <input
+            id="heightMargin"
+            type="number"
+            min="0"
+            max="20"
+            step="0.5"
+            value={heightMargin}
+            onChange={(e) => setHeightMargin(parseFloat(e.target.value) || 0)}
+            style={{
+              width: '60px',
+              padding: '0.4rem',
+              border: '2px solid #5ba0a0',
+              borderRadius: '4px',
+              fontSize: '0.85rem',
+              textAlign: 'center'
+            }}
+          />
+          <span style={{
+            color: '#fff'
+          }}>%</span>
+        </div>
+      )}
 
       {/* Password Modal */}
       {showPasswordModal && (
