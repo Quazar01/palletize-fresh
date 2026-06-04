@@ -311,7 +311,21 @@ const findMatchingKundHeader = (sheet, kundValue, tableName = '') => {
   return { match: null, headers, normalizedTarget, normalizedTableName };
 };
 
-const updateKundAndDateHeaderRow = (sheet, orderData, kundHeader) => {
+const resolveDateCellOverride = ({ sheetName, tableName }) => {
+  const normalizedSheetName = normalizeCustomerText(sheetName || '');
+  const normalizedTableName = normalizeCustomerText(tableName || '');
+
+  if (
+    normalizedSheetName === 'lidl' &&
+    (normalizedTableName === 'ldle orebro' || normalizedTableName === 'lidl orebro')
+  ) {
+    return { row: 63, col: 10 };
+  }
+
+  return null;
+};
+
+const updateKundAndDateHeaderRow = (sheet, orderData, kundHeader, { sheetName = '', tableName = '' } = {}) => {
   const kundRow = kundHeader.row;
   const kundCol = kundHeader.col;
   const usedRange = sheet.usedRange();
@@ -335,19 +349,23 @@ const updateKundAndDateHeaderRow = (sheet, orderData, kundHeader) => {
   const providedDate = orderData?.datum;
   if (!providedDate) return;
 
-  let dateCol = null;
+  const dateOverride = resolveDateCellOverride({ sheetName, tableName });
+  let dateCol = dateOverride?.col ?? null;
+  let dateRow = dateOverride?.row ?? kundRow;
 
-  for (let col = Math.max(1, kundCol); col <= searchMaxCol; col += 1) {
-    const formula = getCellFormula(sheet, kundRow, col);
-    if (typeof formula === 'string' && /today\s*\(/i.test(formula)) {
-      dateCol = col;
-      break;
-    }
+  if (dateCol === null) {
+    for (let col = Math.max(1, kundCol); col <= searchMaxCol; col += 1) {
+      const formula = getCellFormula(sheet, kundRow, col);
+      if (typeof formula === 'string' && /today\s*\(/i.test(formula)) {
+        dateCol = col;
+        break;
+      }
 
-    const value = sheet.cell(kundRow, col).value();
-    if (typeof value === 'string' && /today\s*\(/i.test(value)) {
-      dateCol = col;
-      break;
+      const value = sheet.cell(kundRow, col).value();
+      if (typeof value === 'string' && /today\s*\(/i.test(value)) {
+        dateCol = col;
+        break;
+      }
     }
   }
 
@@ -366,7 +384,7 @@ const updateKundAndDateHeaderRow = (sheet, orderData, kundHeader) => {
     dateCol = fallback.col;
   }
 
-  setCellValue(sheet, kundRow, dateCol, providedDate);
+  setCellValue(sheet, dateRow, dateCol, providedDate);
 };
 
 const flattenComboItems = (combo, comboIndex, uiState) => {
@@ -804,7 +822,7 @@ const resolveSpecialTableLayout = (sheetName, orderData, tableName = '') => {
         enkelStartRow: 5,
         fullStartRow: 15,
         dateRow: 2,
-        dateCol: 29,
+        dateCol: 30,
         requiredPalletMode: 'helsingborg',
         enkelColumns: { artCol: 18, dfpCol: 20, hojdCol: 21, clearToCol: 23 },
         fullColumns: { artCol: 28, startCol: 30, endCol: 34 },
@@ -1049,7 +1067,7 @@ const fillTemplatePattern = ({
           matchedTable: specialLayout.tableName,
           enkelStartCell: `R${specialLayout.enkelStartRow}`,
           fullStartCell: `AB${specialLayout.fullStartRow}`,
-          dateCell: `AC${specialLayout.dateRow}`,
+          dateCell: `${columnNumberToName(specialLayout.dateCol)}${specialLayout.dateRow}`,
           dataEndRow,
           fullDataEndRow: fullEndRow
         };
@@ -1072,7 +1090,7 @@ const fillTemplatePattern = ({
   const nextHeaderRow = sortedHeaderRows.find((row) => row > kundHeader.row) || null;
   const tableSearchEnd = nextHeaderRow ? nextHeaderRow - 1 : kundHeader.row + 500;
 
-  updateKundAndDateHeaderRow(sheet, orderData, kundHeader);
+  updateKundAndDateHeaderRow(sheet, orderData, kundHeader, { sheetName, tableName });
 
   const headerRow = findTemplateHeaderRow(sheet, kundHeader.row + 1, tableSearchEnd);
   if (!headerRow) {
@@ -1180,18 +1198,41 @@ const isLegacyExportWorkbook = (workbook) => {
   return hasKundHeader && hasTemplateColumns;
 };
 
-const cellHasData = (value) => {
+const isArticleLikeValue = (value) => {
   if (value === undefined || value === null) return false;
-  if (typeof value === 'string') return value.trim().length > 0;
-  if (typeof value === 'number') return value !== 0;
-  if (typeof value === 'boolean') return value;
-  return true;
+
+  if (typeof value === 'number') {
+    return Number.isFinite(value) && value > 0;
+  }
+
+  const text = String(value).trim();
+  if (!text) return false;
+
+  const normalized = normalizeCustomerText(text);
+  if (!normalized) return false;
+
+  if (normalized === 'blandpall') return true;
+  if (/^\d+$/.test(normalized)) return true;
+
+  if (
+    normalized.includes('art nr') ||
+    normalized.includes('summa') ||
+    normalized.includes('totalt') ||
+    normalized.includes('streckkod') ||
+    normalized.includes('sign') ||
+    normalized.includes('kund') ||
+    normalized.includes('dfp')
+  ) {
+    return false;
+  }
+
+  return false;
 };
 
-const hasDataInRegionColumns = (sheet, startRow, endRow, columns) => {
+const hasArticleDataInRegionColumns = (sheet, startRow, endRow, columns) => {
   for (let row = startRow; row <= endRow; row += 1) {
     for (const col of columns) {
-      if (cellHasData(sheet.cell(row, col).value())) {
+      if (isArticleLikeValue(sheet.cell(row, col).value())) {
         return true;
       }
     }
@@ -1215,19 +1256,10 @@ const buildGenericTableRegions = (sheet) => {
 
     const dataStartRow = headerRow + 1;
     const dataEndRow = findDataEndRow(sheet, dataStartRow, tableSearchEnd);
-    const scanColumns = [
+    const isFilled = hasArticleDataInRegionColumns(sheet, dataStartRow, dataEndRow, [
       COL.LEFT_ART,
-      COL.LEFT_DFP,
-      COL.LEFT_PALL,
-      COL.RIGHT_ART,
-      COL.RIGHT_START,
-      COL.RIGHT_START + 1,
-      COL.RIGHT_START + 2,
-      COL.RIGHT_START + 3,
-      COL.RIGHT_END
-    ];
-
-    const isFilled = hasDataInRegionColumns(sheet, dataStartRow, dataEndRow, scanColumns);
+      COL.RIGHT_ART
+    ]);
     if (!isFilled) return;
 
     regions.push({
@@ -1258,16 +1290,9 @@ const buildSpecialSheetTableRegions = (sheet, sheetName) => {
         ? layout.nextComboStartRow - 1
         : findDataEndRow(sheet, dataStartRow);
 
-      const isFilled = hasDataInRegionColumns(sheet, dataStartRow, maxClearRow, [
+      const isFilled = hasArticleDataInRegionColumns(sheet, dataStartRow, maxClearRow, [
         COL.LEFT_ART,
-        COL.LEFT_DFP,
-        COL.LEFT_PALL,
-        COL.RIGHT_ART,
-        COL.RIGHT_START,
-        COL.RIGHT_START + 1,
-        COL.RIGHT_START + 2,
-        COL.RIGHT_START + 3,
-        COL.RIGHT_END
+        COL.RIGHT_ART
       ]);
 
       if (!isFilled) return;
@@ -1284,18 +1309,12 @@ const buildSpecialSheetTableRegions = (sheet, sheetName) => {
 
     if (layout.type === 'customComboAndFull') {
       const maxClearRow = layout.clearEndRow || 120;
-      const comboCols = [layout.comboColumns.artCol, layout.comboColumns.dfpCol, layout.comboColumns.pallCol];
-      const fullCols = [
-        layout.fullColumns.artCol,
-        layout.fullColumns.startCol,
-        layout.fullColumns.startCol + 1,
-        layout.fullColumns.startCol + 2,
-        layout.fullColumns.endCol
-      ];
+      const comboCols = [layout.comboColumns.artCol];
+      const fullCols = [layout.fullColumns.artCol];
 
       const isFilled =
-        hasDataInRegionColumns(sheet, layout.comboStartRow, maxClearRow, comboCols) ||
-        hasDataInRegionColumns(sheet, layout.fullStartRow, maxClearRow, fullCols);
+        hasArticleDataInRegionColumns(sheet, layout.comboStartRow, maxClearRow, comboCols) ||
+        hasArticleDataInRegionColumns(sheet, layout.fullStartRow, maxClearRow, fullCols);
 
       if (!isFilled) return;
 
@@ -1311,18 +1330,12 @@ const buildSpecialSheetTableRegions = (sheet, sheetName) => {
 
     if (layout.type === 'helsingborgEnkel') {
       const maxClearRow = layout.clearEndRow || 120;
-      const enkelCols = [layout.enkelColumns.artCol, layout.enkelColumns.dfpCol];
-      const fullCols = [
-        layout.fullColumns.artCol,
-        layout.fullColumns.startCol,
-        layout.fullColumns.startCol + 1,
-        layout.fullColumns.startCol + 2,
-        layout.fullColumns.endCol
-      ];
+      const enkelCols = [layout.enkelColumns.artCol];
+      const fullCols = [layout.fullColumns.artCol];
 
       const isFilled =
-        hasDataInRegionColumns(sheet, layout.enkelStartRow, maxClearRow, enkelCols) ||
-        hasDataInRegionColumns(sheet, layout.fullStartRow, maxClearRow, fullCols);
+        hasArticleDataInRegionColumns(sheet, layout.enkelStartRow, maxClearRow, enkelCols) ||
+        hasArticleDataInRegionColumns(sheet, layout.fullStartRow, maxClearRow, fullCols);
 
       if (!isFilled) return;
 
@@ -1360,8 +1373,42 @@ const copySheetRegionFromExportedFile = (sourceSheet, targetSheet, region) => {
       }
 
       targetCell.value(sourceCell.value());
+
+      const sourceFill = sourceCell.style('fill');
+      if (sourceFill !== undefined) {
+        targetCell.style('fill', sourceFill);
+      }
+
+      const sourceBold = sourceCell.style('bold');
+      if (sourceBold !== undefined) {
+        targetCell.style('bold', sourceBold);
+      }
+
+      const sourceItalic = sourceCell.style('italic');
+      if (sourceItalic !== undefined) {
+        targetCell.style('italic', sourceItalic);
+      }
     }
   }
+};
+
+const autoFitRowsForRegions = (sheet, regions) => {
+  if (!Array.isArray(regions) || regions.length === 0) return;
+
+  regions.forEach((region) => {
+    const startRow = Math.max(1, Number(region.startRow) || 1);
+    const endRow = Math.max(startRow, Number(region.endRow) || startRow);
+
+    for (let row = startRow; row <= endRow; row += 1) {
+      const targetRow = sheet.row(row);
+
+      if (typeof targetRow?.autoFit === 'function') {
+        targetRow.autoFit();
+      } else {
+        targetRow.height(null);
+      }
+    }
+  });
 };
 
 const applySheetSpecificAdjustments = (sheet, sheetName) => {
@@ -1596,6 +1643,8 @@ export const combineExportedFilesIntoTemplate = async ({
       regions.forEach((region) => {
         copySheetRegionFromExportedFile(sourceActiveSheet, targetSheet, region);
       });
+
+      autoFitRowsForRegions(targetSheet, regions);
 
       applySheetSpecificAdjustments(targetSheet, sourceActiveSheetName);
 

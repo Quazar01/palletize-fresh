@@ -51,7 +51,17 @@ function Results({ orderData, results, onBack, onEdit }) {
   const [selectedSheetName, setSelectedSheetName] = useState('');
   const [templateTableNames, setTemplateTableNames] = useState([]);
   const [selectedTableName, setSelectedTableName] = useState('');
+  const [editableKund, setEditableKund] = useState(orderData?.kund || '');
+  const [editableDatum, setEditableDatum] = useState(orderData?.datum || '');
   const templateFileInputRef = useRef(null);
+
+  useEffect(() => {
+    setEditableKund(orderData?.kund || '');
+  }, [orderData?.kund]);
+
+  useEffect(() => {
+    setEditableDatum(orderData?.datum || '');
+  }, [orderData?.datum]);
 
   const syncSheetNames = async ({ templatePath, templateFile }) => {
     try {
@@ -1679,6 +1689,12 @@ function Results({ orderData, results, onBack, onEdit }) {
 
   const handlePrint = async () => {
     try {
+      const orderDataForExport = {
+        ...orderData,
+        kund: editableKund,
+        datum: editableDatum
+      };
+
       const activeTemplateFile = selectedTemplateFile || defaultTemplateFile;
 
       if (!activeTemplateFile) {
@@ -1705,7 +1721,7 @@ function Results({ orderData, results, onBack, onEdit }) {
       };
 
       await exportResultsToExcelTemplate({
-        orderData,
+        orderData: orderDataForExport,
         palletMode,
         tableName: selectedTableName || undefined,
         fullPallets,
@@ -1806,11 +1822,23 @@ function Results({ orderData, results, onBack, onEdit }) {
             <div className="order-info">
               <div className="info-item">
                 <span className="info-label">Kund</span>
-                <span className="info-value">{orderData.kund || '-'}</span>
+                <input
+                  type="text"
+                  className="result-order-input"
+                  value={editableKund}
+                  onChange={(e) => setEditableKund(e.target.value)}
+                  placeholder="Kund"
+                />
               </div>
               <div className="info-item">
                 <span className="info-label">Datum</span>
-                <span className="info-value">{orderData.datum || '-'}</span>
+                <input
+                  type="text"
+                  className="result-order-input"
+                  value={editableDatum}
+                  onChange={(e) => setEditableDatum(e.target.value)}
+                  placeholder="Datum"
+                />
               </div>
               {orderData.ordersnummer && (
                 <div className="info-item">

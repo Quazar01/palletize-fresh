@@ -87,6 +87,19 @@
   color: #333;
 }
 
+.kund-edit-input,
+.result-order-input {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: #333;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  padding: 0.15rem 0.3rem;
+  min-width: 120px;
+  text-align: center;
+  background: #fff;
+}
+
 .summary-stats {
   display: flex;
   gap: 0.75rem;
