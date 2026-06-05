@@ -53,6 +53,7 @@ function Results({ orderData, results, onBack, onEdit }) {
   const [selectedTableName, setSelectedTableName] = useState('');
   const [editableKund, setEditableKund] = useState(orderData?.kund || '');
   const [editableDatum, setEditableDatum] = useState(orderData?.datum || '');
+  const [excelDataLink, setExcelDataLink] = useState('');
   const templateFileInputRef = useRef(null);
 
   useEffect(() => {
@@ -1753,6 +1754,191 @@ function Results({ orderData, results, onBack, onEdit }) {
     }
   };
 
+  const buildSnapshotRows = () => {
+    const rows = [];
+
+    comboPallets.forEach((combo, comboIndex) => {
+      const checkedSkvett = checkedComboSkvettpalls?.[comboIndex] || new Set();
+      const plockedSkvett = plockedComboSkvettpalls?.[comboIndex] || new Set();
+      const checkedMix = checkedMixPallItems?.[comboIndex] || new Set();
+      const plockedMix = plockedMixPallItems?.[comboIndex] || new Set();
+
+      combo.skvettpalls.forEach((item, itemIndex) => {
+        const isMix = Boolean(item.isMixPall);
+        const isHighlighted = isMix
+          ? checkedMix.has(item.artikelnummer) || plockedMix.has(item.artikelnummer)
+          : checkedSkvett.has(itemIndex) || plockedSkvett.has(itemIndex);
+
+        rows.push({
+          side: 'left',
+          source: isMix ? 'mix' : 'combo',
+          artNr: isMix ? 'Blandpall' : String(item.artikelnummer),
+          dfp: isMix ? item.totalBoxes : item.boxCount,
+          pall: isMix ? (item.stackHeight || '') : (item.skvettPallNumber || ''),
+          isHighlighted,
+          isItalic: false,
+          isBold: true
+        });
+      });
+    });
+
+    if (mixPall.length > 0) {
+      const totalBoxes = mixPall.reduce((sum, item) => sum + item.boxCount, 0);
+      const hasMarkedStandaloneMix = mixPall.some((item) =>
+        checkedStandaloneMixItems.has(item.artikelnummer) ||
+        plockedStandaloneMixItems.has(item.artikelnummer)
+      );
+
+      rows.push({
+        side: 'left',
+        source: 'mix-standalone',
+        artNr: 'Blandpall',
+        dfp: totalBoxes,
+        pall: '',
+        isHighlighted: hasMarkedStandaloneMix,
+        isItalic: false,
+        isBold: true
+      });
+    }
+
+    fullPallets.forEach((pallet, palletIndex) => {
+      const palletCounts = pallet.palletBoxCounts && pallet.palletBoxCounts.length > 0
+        ? pallet.palletBoxCounts
+        : Array(pallet.fullPallets).fill(pallet.boxesPerPallet);
+
+      const row = {
+        side: 'right',
+        source: 'full',
+        artNr: String(pallet.artikelnummer),
+        total: pallet.totalBoxes,
+        isHighlighted: false,
+        isItalic: false,
+        isBold: true
+      };
+
+      palletCounts.slice(0, 6).forEach((count, index) => {
+        row[`kolli${index + 1}`] = count;
+
+        const isMarked = (checkedPallets?.[palletIndex]?.has?.(index) || false)
+          || (plockedPallets?.[palletIndex]?.has?.(index) || false);
+
+        if (isMarked) {
+          row.isHighlighted = true;
+        }
+
+        if (Boolean(pallet.isSingleSkvettpall) || count !== pallet.boxesPerPallet) {
+          row.isItalic = true;
+        }
+      });
+
+      rows.push(row);
+    });
+
+    return rows;
+  };
+
+  const handleCopyExcelDataUrl = async () => {
+    if (!selectedSheetName) {
+      alert('Välj ett blad (sheet) innan du skapar Excel-länk.');
+      return;
+    }
+
+    if (templateTableNames.length > 0 && !selectedTableName) {
+      alert('Välj en tabell innan du skapar Excel-länk.');
+      return;
+    }
+
+    try {
+      const payload = {
+        orderData: {
+          ...orderData,
+          kund: editableKund,
+          datum: editableDatum
+        },
+        sheet: selectedSheetName,
+        table: selectedTableName || '',
+        rows: buildSnapshotRows(),
+        metadata: {
+          palletMode,
+          generatedBy: 'results-page',
+          totals: {
+            totalBoxes,
+            totalEUPallets,
+            totalParcels,
+            truckSlots: (palletMode === 'enkel' || palletMode === 'helsingborg') ? truckSlots : null
+          }
+        }
+      };
+
+      const endpointCandidates = ['/.netlify/functions/save-result-snapshot'];
+      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        endpointCandidates.push('http://localhost:8888/.netlify/functions/save-result-snapshot');
+      }
+
+      let data = null;
+      let lastError = null;
+
+      for (const endpoint of endpointCandidates) {
+        try {
+          const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+          });
+
+          const raw = await response.text();
+          let parsed = null;
+
+          if (raw) {
+            try {
+              parsed = JSON.parse(raw);
+            } catch {
+              if (raw.trim().startsWith('<')) {
+                throw new Error(
+                  'Funktionsendpoint svarade med HTML istället för JSON. Kör appen med `netlify dev` eller starta Netlify Functions lokalt på port 8888.'
+                );
+              }
+
+              throw new Error('Ogiltigt svar från servern (ej JSON).');
+            }
+          }
+
+          if (!response.ok) {
+            throw new Error(parsed?.error || parsed?.message || 'Kunde inte skapa Excel-länk');
+          }
+
+          data = parsed;
+          break;
+        } catch (endpointError) {
+          lastError = endpointError;
+        }
+      }
+
+      if (!data) {
+        throw lastError || new Error('Kunde inte skapa Excel-länk.');
+      }
+
+      const csvLink = data?.links?.csv;
+      if (!csvLink) {
+        throw new Error('Ingen CSV-länk returnerades från servern.');
+      }
+
+      setExcelDataLink(csvLink);
+
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(csvLink);
+        alert('Excel-länken är kopierad. Klistra in den i Excel -> Från webb.');
+      } else {
+        alert(`Excel-länk skapad:\n${csvLink}`);
+      }
+    } catch (error) {
+      console.error('Failed to create Excel data link:', error);
+      alert(error?.message || 'Kunde inte skapa Excel-länk.');
+    }
+  };
+
   const handleUploadTemplateClick = () => {
     templateFileInputRef.current?.click();
   };
@@ -1930,6 +2116,9 @@ function Results({ orderData, results, onBack, onEdit }) {
           </div>
 
           <div className="header-actions-right">
+            <button className="btn btn-secondary" onClick={handleCopyExcelDataUrl} style={{ marginRight: '0.5rem' }}>
+              🔗 Kopiera Excel-URL
+            </button>
             <button className="btn btn-primary" onClick={handlePrint}>
               🖨️ Skriv ut
             </button>
@@ -1946,6 +2135,11 @@ function Results({ orderData, results, onBack, onEdit }) {
         <div style={{ fontSize: '0.75rem', color: '#555', marginTop: '0.35rem', textAlign: 'right' }}>
           Mall: {templateLabel}
         </div>
+        {excelDataLink && (
+          <div style={{ fontSize: '0.72rem', color: '#2f6f6f', marginTop: '0.2rem', textAlign: 'right' }}>
+            Excel-URL skapad för vald tabell.
+          </div>
+        )}
       </div>
 
       {/* Three Column Layout - Stash (1/3) + Combo Pallar (1/3) + Fulla Pallar (1/3) */}
