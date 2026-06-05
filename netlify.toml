@@ -7,7 +7,7 @@
   node_bundler = "esbuild"
 
 [dev]
-  command = "npm start"
+  command = "cross-env HOST=localhost PORT=3000 BROWSER=none npm start"
   targetPort = 3000
   autoLaunch = false
 
