@@ -7,9 +7,29 @@
   node_bundler = "esbuild"
 
 [dev]
-  command = "npm start"
+  command = "cross-env HOST=localhost PORT=3000 BROWSER=none npm start"
   targetPort = 3000
   autoLaunch = false
+
+[[redirects]]
+  from = "/static/*"
+  to = "/static/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/manifest.json"
+  to = "/manifest.json"
+  status = 200
+
+[[redirects]]
+  from = "/asset-manifest.json"
+  to = "/asset-manifest.json"
+  status = 200
+
+[[redirects]]
+  from = "/favicon.ico"
+  to = "/favicon.ico"
+  status = 200
 
 [[redirects]]
   from = "/*"

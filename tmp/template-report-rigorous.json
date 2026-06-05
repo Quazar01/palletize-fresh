@@ -1,0 +1,3266 @@
+{
+  "file": "public\\templates\\Plocklist-Template.xlsx",
+  "sheetCount": 12,
+  "specialSheets": [
+    "Axfood Pontus",
+    "Axfood Pontus BIGGER",
+    "ICA Helg"
+  ],
+  "sheets": [
+    {
+      "sheet": "Dagab Jönköping + Hässleholm",
+      "layoutType": "standard",
+      "designNote": "Standard layout: Kund/date header, left and right Art nr sections, footer with totals/formulas.",
+      "usedRange": "A2:N102",
+      "nonEmptyCells": 120,
+      "formulaCells": 86,
+      "mergedRangeCount": 58,
+      "tableCount": 2,
+      "tables": [
+        {
+          "tableId": "Dagab Jönköping + Hässleholm::2::1",
+          "type": "standard",
+          "header": {
+            "kundCell": "A2",
+            "kundRaw": "Kund: Axfood Jönköping",
+            "customerName": "Axfood Jönköping",
+            "date": {
+              "label": null,
+              "value": null
+            }
+          },
+          "bounds": {
+            "range": "A2:N56",
+            "minRow": 2,
+            "maxRow": 56,
+            "minCol": 1,
+            "maxCol": 14
+          },
+          "sections": {
+            "left": {
+              "row": 3,
+              "col": 1,
+              "raw": "Art nr:",
+              "cell": "A3"
+            },
+            "right": {
+              "row": 3,
+              "col": 8,
+              "raw": "Art nr:",
+              "cell": "H3"
+            },
+            "additionalArtHeaders": []
+          },
+          "dataWindow": {
+            "startRow": 4,
+            "endRow": 44,
+            "footerStartRow": 45
+          },
+          "footer": {
+            "formulaCount": 7,
+            "formulas": [
+              {
+                "cell": "B54",
+                "formula": "=SUM(B4:B52)"
+              },
+              {
+                "cell": "F54",
+                "formula": "=SUM(F4:F52)"
+              },
+              {
+                "cell": "H53",
+                "formula": "=SUM(B54,N45)"
+              },
+              {
+                "cell": "I45",
+                "formula": "=COUNT(I4:M44)"
+              },
+              {
+                "cell": "I53",
+                "formula": "=COUNT(F4:F52,I4:M44)"
+              },
+              {
+                "cell": "L53",
+                "formula": "=SUM(F4:F52)+COUNT(I4:M44)"
+              },
+              {
+                "cell": "N45",
+                "formula": "=SUM(N4:N44)"
+              }
+            ]
+          },
+          "mergedRanges": [
+            "H53:H54",
+            "I45:J45",
+            "H49:N50",
+            "I52:K52",
+            "L45:M45",
+            "A53:F53",
+            "L52:N52",
+            "L53:N54",
+            "I53:K54",
+            "J2:N2"
+          ]
+        },
+        {
+          "tableId": "Dagab Jönköping + Hässleholm::57::1",
+          "type": "standard",
+          "header": {
+            "kundCell": "A57",
+            "kundRaw": "Kund: Dagab Hässleholm",
+            "customerName": "Dagab Hässleholm",
+            "date": {
+              "label": null,
+              "value": null
+            }
+          },
+          "bounds": {
+            "range": "A57:N102",
+            "minRow": 57,
+            "maxRow": 102,
+            "minCol": 1,
+            "maxCol": 14
+          },
+          "sections": {
+            "left": {
+              "row": 58,
+              "col": 1,
+              "raw": "Art nr:",
+              "cell": "A58"
+            },
+            "right": {
+              "row": 58,
+              "col": 8,
+              "raw": "Art nr:",
+              "cell": "H58"
+            },
+            "additionalArtHeaders": []
+          },
+          "dataWindow": {
+            "startRow": 59,
+            "endRow": 87,
+            "footerStartRow": 88
+          },
+          "footer": {
+            "formulaCount": 7,
+            "formulas": [
+              {
+                "cell": "B102",
+                "formula": "=SUM(B59:B100)"
+              },
+              {
+                "cell": "F102",
+                "formula": "=SUM(F59:F100)"
+              },
+              {
+                "cell": "H101",
+                "formula": "=SUM(B102,N88)"
+              },
+              {
+                "cell": "I101",
+                "formula": "=COUNT(F59:F100,I59:M87)"
+              },
+              {
+                "cell": "I88",
+                "formula": "=COUNT(I59:M87)"
+              },
+              {
+                "cell": "L101",
+                "formula": "=SUM(F59:F100)+COUNT(I59:M87)"
+              },
+              {
+                "cell": "N88",
+                "formula": "=SUM(N59:N87)"
+              }
+            ]
+          },
+          "mergedRanges": [
+            "H57:N57",
+            "A101:F101",
+            "L88:M88",
+            "I88:J88",
+            "H97:N98"
+          ]
+        }
+      ]
+    },
+    {
+      "sheet": "Dagab Bålsta",
+      "layoutType": "standard",
+      "designNote": "Standard layout: Kund/date header, left and right Art nr sections, footer with totals/formulas.",
+      "usedRange": "A3:AK68",
+      "nonEmptyCells": 90,
+      "formulaCells": 67,
+      "mergedRangeCount": 33,
+      "tableCount": 1,
+      "tables": [
+        {
+          "tableId": "Dagab Bålsta::3::1",
+          "type": "standard",
+          "header": {
+            "kundCell": "A3",
+            "kundRaw": "Kund: Dagab Bålsta",
+            "customerName": "Dagab Bålsta",
+            "date": {
+              "label": null,
+              "value": null
+            }
+          },
+          "bounds": {
+            "range": "A3:AK68",
+            "minRow": 3,
+            "maxRow": 68,
+            "minCol": 1,
+            "maxCol": 37
+          },
+          "sections": {
+            "left": {
+              "row": 4,
+              "col": 1,
+              "raw": "Art nr:",
+              "cell": "A4"
+            },
+            "right": {
+              "row": 4,
+              "col": 8,
+              "raw": "Art nr:",
+              "cell": "H4"
+            },
+            "additionalArtHeaders": []
+          },
+          "dataWindow": {
+            "startRow": 5,
+            "endRow": 13,
+            "footerStartRow": 14
+          },
+          "footer": {
+            "formulaCount": 54,
+            "formulas": [
+              {
+                "cell": "AI14",
+                "formula": "=L68+AC48"
+              },
+              {
+                "cell": "B68",
+                "formula": "=SUM(B5:B66)"
+              },
+              {
+                "cell": "F68",
+                "formula": "=SUM(F5:F66)"
+              },
+              {
+                "cell": "H64",
+                "formula": "=SUM(B68,N59)"
+              },
+              {
+                "cell": "I59",
+                "formula": "=COUNT(I5:M58)"
+              },
+              {
+                "cell": "I64",
+                "formula": "=COUNT(F5:F66,I5:M58)"
+              },
+              {
+                "cell": "L64",
+                "formula": "=SUM(F5:F66)+COUNT(I5:M58)"
+              },
+              {
+                "cell": "L68",
+                "formula": "=ROUNDUP(SUM(F5:F66)/3+COUNT(I5:M58)/2,0)"
+              },
+              {
+                "cell": "N14",
+                "formula": "=SUM(I14:M14)"
+              },
+              {
+                "cell": "N15",
+                "formula": "=SUM(I15:M15)"
+              },
+              {
+                "cell": "N16",
+                "formula": "=SUM(I16:M16)"
+              },
+              {
+                "cell": "N17",
+                "formula": "=SUM(I17:M17)"
+              },
+              {
+                "cell": "N18",
+                "formula": "=SUM(I18:M18)"
+              },
+              {
+                "cell": "N19",
+                "formula": "=SUM(I19:M19)"
+              },
+              {
+                "cell": "N20",
+                "formula": "=SUM(I20:M20)"
+              },
+              {
+                "cell": "N21",
+                "formula": "=SUM(I21:M21)"
+              },
+              {
+                "cell": "N22",
+                "formula": "=SUM(I22:M22)"
+              },
+              {
+                "cell": "N23",
+                "formula": "=SUM(I23:M23)"
+              },
+              {
+                "cell": "N24",
+                "formula": "=SUM(I24:M24)"
+              },
+              {
+                "cell": "N25",
+                "formula": "=SUM(I25:M25)"
+              },
+              {
+                "cell": "N26",
+                "formula": "=SUM(I26:M26)"
+              },
+              {
+                "cell": "N27",
+                "formula": "=SUM(I27:M27)"
+              },
+              {
+                "cell": "N28",
+                "formula": "=SUM(I28:M28)"
+              },
+              {
+                "cell": "N29",
+                "formula": "=SUM(I29:M29)"
+              },
+              {
+                "cell": "N30",
+                "formula": "=SUM(I30:M30)"
+              },
+              {
+                "cell": "N31",
+                "formula": "=SUM(I31:M31)"
+              },
+              {
+                "cell": "N32",
+                "formula": "=SUM(I32:M32)"
+              },
+              {
+                "cell": "N33",
+                "formula": "=SUM(I33:M33)"
+              },
+              {
+                "cell": "N34",
+                "formula": "=SUM(I34:M34)"
+              },
+              {
+                "cell": "N35",
+                "formula": "=SUM(I35:M35)"
+              },
+              {
+                "cell": "N36",
+                "formula": "=SUM(I36:M36)"
+              },
+              {
+                "cell": "N37",
+                "formula": "=SUM(I37:M37)"
+              },
+              {
+                "cell": "N38",
+                "formula": "=SUM(I38:M38)"
+              },
+              {
+                "cell": "N39",
+                "formula": "=SUM(I39:M39)"
+              },
+              {
+                "cell": "N40",
+                "formula": "=SUM(I40:M40)"
+              },
+              {
+                "cell": "N41",
+                "formula": "=SUM(I41:M41)"
+              },
+              {
+                "cell": "N42",
+                "formula": "=SUM(I42:M42)"
+              },
+              {
+                "cell": "N43",
+                "formula": "=SUM(I43:M43)"
+              },
+              {
+                "cell": "N44",
+                "formula": "=SUM(I44:M44)"
+              },
+              {
+                "cell": "N45",
+                "formula": "=SUM(I45:M45)"
+              },
+              {
+                "cell": "N46",
+                "formula": "=SUM(I46:M46)"
+              },
+              {
+                "cell": "N47",
+                "formula": "=SUM(I47:M47)"
+              },
+              {
+                "cell": "N48",
+                "formula": "=SUM(I48:M48)"
+              },
+              {
+                "cell": "N49",
+                "formula": "=SUM(I49:M49)"
+              },
+              {
+                "cell": "N50",
+                "formula": "=SUM(I50:M50)"
+              },
+              {
+                "cell": "N51",
+                "formula": "=SUM(I51:M51)"
+              },
+              {
+                "cell": "N52",
+                "formula": "=SUM(I52:M52)"
+              },
+              {
+                "cell": "N53",
+                "formula": "=SUM(I53:M53)"
+              },
+              {
+                "cell": "N54",
+                "formula": "=SUM(I54:M54)"
+              },
+              {
+                "cell": "N55",
+                "formula": "=SUM(I55:M55)"
+              },
+              {
+                "cell": "N56",
+                "formula": "=SUM(I56:M56)"
+              },
+              {
+                "cell": "N57",
+                "formula": "=SUM(I57:M57)"
+              },
+              {
+                "cell": "N58",
+                "formula": "=SUM(I58:M58)"
+              },
+              {
+                "cell": "N59",
+                "formula": "=SUM(N5:N58)"
+              }
+            ]
+          },
+          "mergedRanges": [
+            "AC46:AE47",
+            "Z43:AB43",
+            "AC43:AE43",
+            "Z44:AB45",
+            "AC48:AE49",
+            "H64:H65",
+            "Y39:AE40",
+            "L63:N63",
+            "AI12:AJ13",
+            "AK14:AK15",
+            "H61:N62",
+            "Y44:Y45",
+            "L66:N67",
+            "AI8:AJ9",
+            "R66:W66",
+            "AI14:AJ15",
+            "AK10:AK11",
+            "I63:K63",
+            "L68:N69",
+            "AC34:AD34",
+            "A67:F67",
+            "AI10:AJ11",
+            "L64:N65",
+            "AI5:AK7",
+            "AA3:AE3",
+            "J3:N3",
+            "L59:M59",
+            "Z34:AA34",
+            "AK8:AK9",
+            "AC44:AE45",
+            "I59:J59",
+            "AK12:AK13",
+            "I64:K65"
+          ]
+        }
+      ]
+    },
+    {
+      "sheet": "Coop Eskilstuna",
+      "layoutType": "standard",
+      "designNote": "Standard layout: Kund/date header, left and right Art nr sections, footer with totals/formulas.",
+      "usedRange": "A3:N46",
+      "nonEmptyCells": 59,
+      "formulaCells": 41,
+      "mergedRangeCount": 33,
+      "tableCount": 1,
+      "tables": [
+        {
+          "tableId": "Coop Eskilstuna::3::1",
+          "type": "standard",
+          "header": {
+            "kundCell": "A3",
+            "kundRaw": "Kund: Coop Eskilstuna",
+            "customerName": "Coop Eskilstuna",
+            "date": {
+              "label": null,
+              "value": null
+            }
+          },
+          "bounds": {
+            "range": "A3:N46",
+            "minRow": 3,
+            "maxRow": 46,
+            "minCol": 1,
+            "maxCol": 14
+          },
+          "sections": {
+            "left": {
+              "row": 4,
+              "col": 1,
+              "raw": "Art nr:",
+              "cell": "A4"
+            },
+            "right": {
+              "row": 4,
+              "col": 8,
+              "raw": "Art nr:",
+              "cell": "H4"
+            },
+            "additionalArtHeaders": []
+          },
+          "dataWindow": {
+            "startRow": 5,
+            "endRow": 36,
+            "footerStartRow": 37
+          },
+          "footer": {
+            "formulaCount": 8,
+            "formulas": [
+              {
+                "cell": "B46",
+                "formula": "=SUM(B5:B44)"
+              },
+              {
+                "cell": "F46",
+                "formula": "=SUM(F5:F44)"
+              },
+              {
+                "cell": "H42",
+                "formula": "=SUM(B46,N37)"
+              },
+              {
+                "cell": "I37",
+                "formula": "=COUNT(I5:M36)"
+              },
+              {
+                "cell": "I42",
+                "formula": "=COUNT(F5:F44,I5:M36)"
+              },
+              {
+                "cell": "L42",
+                "formula": "=SUM(F5:F44)+COUNT(I5:M36)"
+              },
+              {
+                "cell": "L46",
+                "formula": "=ROUNDUP(SUM(F5:F65)/3+COUNT(I5:M36)/2,0)"
+              },
+              {
+                "cell": "N37",
+                "formula": "=SUM(N5:N36)"
+              }
+            ]
+          },
+          "mergedRanges": [
+            "I41:K41",
+            "L37:M37",
+            "L46:N47",
+            "H39:N40",
+            "L41:N41",
+            "I37:J37",
+            "L42:N43",
+            "J3:N3",
+            "A45:F45",
+            "H42:H43",
+            "L44:N45",
+            "I42:K43"
+          ]
+        }
+      ]
+    },
+    {
+      "sheet": "ICA Dag",
+      "layoutType": "standard",
+      "designNote": "Standard layout: Kund/date header, left and right Art nr sections, footer with totals/formulas.",
+      "usedRange": "A2:N166",
+      "nonEmptyCells": 161,
+      "formulaCells": 104,
+      "mergedRangeCount": 35,
+      "tableCount": 3,
+      "tables": [
+        {
+          "tableId": "ICA Dag::2::1",
+          "type": "standard",
+          "header": {
+            "kundCell": "A2",
+            "kundRaw": "Kund: Ica Borlänge",
+            "customerName": "Ica Borlänge",
+            "date": {
+              "label": null,
+              "value": null
+            }
+          },
+          "bounds": {
+            "range": "A2:N57",
+            "minRow": 2,
+            "maxRow": 57,
+            "minCol": 1,
+            "maxCol": 14
+          },
+          "sections": {
+            "left": {
+              "row": 3,
+              "col": 1,
+              "raw": "Art nr:",
+              "cell": "A3"
+            },
+            "right": {
+              "row": 3,
+              "col": 8,
+              "raw": "Art nr:",
+              "cell": "H3"
+            },
+            "additionalArtHeaders": []
+          },
+          "dataWindow": {
+            "startRow": 4,
+            "endRow": 44,
+            "footerStartRow": 45
+          },
+          "footer": {
+            "formulaCount": 5,
+            "formulas": [
+              {
+                "cell": "B56",
+                "formula": "=SUM(B4:B54)"
+              },
+              {
+                "cell": "F56",
+                "formula": "=SUM(F4:F54)"
+              },
+              {
+                "cell": "H49",
+                "formula": "=SUM(B56,M34)"
+              },
+              {
+                "cell": "I49",
+                "formula": "=COUNT(F4:F54,I4:M32)"
+              },
+              {
+                "cell": "L49",
+                "formula": "=SUM(F4:F54)+COUNT(I4:M32)"
+              }
+            ]
+          },
+          "mergedRanges": [
+            "M34:N34",
+            "L49:N50",
+            "H49:H50",
+            "A55:F55",
+            "H33:N33",
+            "I49:K50",
+            "I48:K48",
+            "H45:N46",
+            "L48:N48",
+            "H36:N36",
+            "J2:N2"
+          ]
+        },
+        {
+          "tableId": "ICA Dag::58::1",
+          "type": "standard",
+          "header": {
+            "kundCell": "A58",
+            "kundRaw": "Kund: Ica Viby",
+            "customerName": "Ica Viby",
+            "date": {
+              "label": null,
+              "value": null
+            }
+          },
+          "bounds": {
+            "range": "A58:N112",
+            "minRow": 58,
+            "maxRow": 112,
+            "minCol": 1,
+            "maxCol": 14
+          },
+          "sections": {
+            "left": {
+              "row": 59,
+              "col": 1,
+              "raw": "Art nr:",
+              "cell": "A59"
+            },
+            "right": {
+              "row": 59,
+              "col": 8,
+              "raw": "Art nr:",
+              "cell": "H59"
+            },
+            "additionalArtHeaders": []
+          },
+          "dataWindow": {
+            "startRow": 60,
+            "endRow": 99,
+            "footerStartRow": 100
+          },
+          "footer": {
+            "formulaCount": 5,
+            "formulas": [
+              {
+                "cell": "B111",
+                "formula": "=SUM(B59:B109)"
+              },
+              {
+                "cell": "F111",
+                "formula": "=SUM(F59:F109)"
+              },
+              {
+                "cell": "H104",
+                "formula": "=SUM(B111,M90)"
+              },
+              {
+                "cell": "I104",
+                "formula": "=COUNT(F59:F109,I60:M88)"
+              },
+              {
+                "cell": "L104",
+                "formula": "=SUM(F59:F109)+COUNT(I60:M88)"
+              }
+            ]
+          },
+          "mergedRanges": [
+            "I103:K103",
+            "M90:N90",
+            "I104:K105",
+            "H100:N101",
+            "H93:N93",
+            "H89:N89",
+            "L104:N105",
+            "L103:N103",
+            "H104:H105",
+            "A110:F110",
+            "J58:N58"
+          ]
+        },
+        {
+          "tableId": "ICA Dag::113::1",
+          "type": "standard",
+          "header": {
+            "kundCell": "A113",
+            "kundRaw": "Kund: Ica Helsingborg",
+            "customerName": "Ica Helsingborg",
+            "date": {
+              "label": null,
+              "value": null
+            }
+          },
+          "bounds": {
+            "range": "A113:N166",
+            "minRow": 113,
+            "maxRow": 166,
+            "minCol": 1,
+            "maxCol": 14
+          },
+          "sections": {
+            "left": {
+              "row": 114,
+              "col": 1,
+              "raw": "Art nr:",
+              "cell": "A114"
+            },
+            "right": {
+              "row": 114,
+              "col": 8,
+              "raw": "Art nr:",
+              "cell": "H114"
+            },
+            "additionalArtHeaders": []
+          },
+          "dataWindow": {
+            "startRow": 115,
+            "endRow": 154,
+            "footerStartRow": 155
+          },
+          "footer": {
+            "formulaCount": 6,
+            "formulas": [
+              {
+                "cell": "B166",
+                "formula": "=SUM(B115:B164)"
+              },
+              {
+                "cell": "F166",
+                "formula": "=SUM(F115:F164)"
+              },
+              {
+                "cell": "H159",
+                "formula": "=SUM(B166,M145)"
+              },
+              {
+                "cell": "I159",
+                "formula": "=COUNT(F115:F164,I115:M143)"
+              },
+              {
+                "cell": "L159",
+                "formula": "=SUM(F115:F164)+COUNT(I115:M143)"
+              },
+              {
+                "cell": "L162",
+                "formula": "=ROUNDUP(SUM(F115:F164)/3+COUNT(I115:M143)/2,0)"
+              }
+            ]
+          },
+          "mergedRanges": [
+            "L159:N160",
+            "L162:N162",
+            "L161:N161",
+            "H159:H160",
+            "L158:N158",
+            "A165:F165",
+            "I159:K160",
+            "H155:N156",
+            "H148:N148",
+            "I158:K158",
+            "M145:N145",
+            "J113:N113",
+            "H144:N144"
+          ]
+        }
+      ]
+    },
+    {
+      "sheet": "ICA Helg",
+      "layoutType": "special",
+      "designNote": "Custom layout: multiple side-by-side customer blocks with additional Art nr blocks in lower rows for full-pall/SRS sections.",
+      "usedRange": "A2:AW46",
+      "nonEmptyCells": 73,
+      "formulaCells": 24,
+      "mergedRangeCount": 393,
+      "tableCount": 3,
+      "tables": [
+        {
+          "tableId": "ICA Helg::2::1",
+          "type": "special",
+          "header": {
+            "kundCell": "A2",
+            "kundRaw": "Kund:",
+            "customerName": "",
+            "date": {
+              "label": {
+                "cell": "K2",
+                "value": "Datum:"
+              },
+              "value": null
+            }
+          },
+          "bounds": {
+            "range": "A2:Q46",
+            "minRow": 2,
+            "maxRow": 46,
+            "minCol": 1,
+            "maxCol": 17
+          },
+          "sections": {
+            "left": {
+              "row": 4,
+              "col": 2,
+              "raw": "Art nr",
+              "cell": "B4"
+            },
+            "right": {
+              "row": 12,
+              "col": 11,
+              "raw": "Art nr",
+              "cell": "K12"
+            },
+            "additionalArtHeaders": []
+          },
+          "dataWindow": {
+            "startRow": 5,
+            "endRow": 8,
+            "footerStartRow": 9
+          },
+          "footer": {
+            "formulaCount": 4,
+            "formulas": [
+              {
+                "cell": "A46",
+                "formula": "=SUM(A5:A45)"
+              },
+              {
+                "cell": "D46",
+                "formula": "=SUM(D5:D45)"
+              },
+              {
+                "cell": "M10",
+                "formula": "=COUNT(M13:P45)"
+              },
+              {
+                "cell": "O10",
+                "formula": "=SUM(M13:P45)"
+              }
+            ]
+          },
+          "mergedRanges": [
+            "F18:H18",
+            "F45:H45",
+            "K33:L33",
+            "F17:H17",
+            "B12:C12",
+            "K35:L35",
+            "F22:H22",
+            "B14:C14",
+            "B13:C13",
+            "K28:L28",
+            "F12:H12",
+            "K30:L30",
+            "B25:C25",
+            "F41:H41",
+            "F35:H35",
+            "K41:L41",
+            "K43:L43",
+            "F25:H25",
+            "B15:C15",
+            "K25:L25",
+            "F38:H38",
+            "K29:L29",
+            "F13:H13",
+            "K44:L44",
+            "F43:H43",
+            "K31:L31",
+            "B34:C34",
+            "B28:C28",
+            "B30:C30",
+            "B5:C5",
+            "O10:P10",
+            "F28:H28",
+            "B23:C23",
+            "K12:L12",
+            "K6:L7",
+            "K39:L39",
+            "K14:L14",
+            "F19:H19",
+            "B36:C36",
+            "B31:C31",
+            "F9:H9",
+            "F14:H14",
+            "K2:L2",
+            "B24:C24",
+            "B32:C32",
+            "B26:C26",
+            "K13:L13",
+            "K15:L15",
+            "B27:C27",
+            "B37:C37",
+            "F11:H11",
+            "K10:L10",
+            "F40:H40",
+            "F15:H15",
+            "B7:C7",
+            "K5:L5",
+            "M5:N5",
+            "K23:L23",
+            "F34:H34",
+            "B45:C45",
+            "F30:H30",
+            "K18:L18",
+            "K34:L34",
+            "K36:L36",
+            "B8:C8",
+            "B10:C10",
+            "F36:H36",
+            "F33:H33",
+            "K24:L24",
+            "F8:H8",
+            "K26:L26",
+            "B21:C21",
+            "F31:H31",
+            "F39:H39",
+            "K42:L42",
+            "K37:L37",
+            "F21:H21",
+            "B16:C16",
+            "B18:C18",
+            "K21:L21",
+            "B11:C11",
+            "F27:H27",
+            "K32:L32",
+            "B29:C29",
+            "K27:L27",
+            "B6:C6",
+            "K16:L16",
+            "K9:L9",
+            "K45:L45",
+            "F23:H23",
+            "B42:C42",
+            "B17:C17",
+            "K40:L40",
+            "F37:H37",
+            "B44:C44",
+            "B19:C19",
+            "O6:P7",
+            "B20:C20",
+            "F42:H42",
+            "F10:H10",
+            "F5:H5",
+            "B22:C22",
+            "B38:C38",
+            "B40:C40",
+            "B33:C33",
+            "F7:H7",
+            "B41:C41",
+            "B35:C35",
+            "F29:H29",
+            "K17:L17",
+            "K19:L19",
+            "F24:H24",
+            "M6:N7",
+            "F32:H32",
+            "F26:H26",
+            "B43:C43",
+            "O5:P5",
+            "F44:H44",
+            "B9:C9",
+            "F16:H16",
+            "F6:H6",
+            "B4:C4",
+            "F20:H20",
+            "B39:C39",
+            "K20:L20",
+            "B2:I2",
+            "K22:L22",
+            "F4:H4",
+            "M2:P2",
+            "K38:L38",
+            "M4:N4"
+          ]
+        },
+        {
+          "tableId": "ICA Helg::2::18",
+          "type": "special",
+          "header": {
+            "kundCell": "R2",
+            "kundRaw": "Kund:",
+            "customerName": "",
+            "date": {
+              "label": {
+                "cell": "AB2",
+                "value": "Datum:"
+              },
+              "value": null
+            }
+          },
+          "bounds": {
+            "range": "R2:AH46",
+            "minRow": 2,
+            "maxRow": 46,
+            "minCol": 18,
+            "maxCol": 34
+          },
+          "sections": {
+            "left": {
+              "row": 4,
+              "col": 18,
+              "raw": "Art nr",
+              "cell": "R4"
+            },
+            "right": {
+              "row": 14,
+              "col": 28,
+              "raw": "Art nr",
+              "cell": "AB14"
+            },
+            "additionalArtHeaders": []
+          },
+          "dataWindow": {
+            "startRow": 5,
+            "endRow": 8,
+            "footerStartRow": 9
+          },
+          "footer": {
+            "formulaCount": 5,
+            "formulas": [
+              {
+                "cell": "AD12",
+                "formula": "=COUNT(AD15:AG45)"
+              },
+              {
+                "cell": "AD9",
+                "formula": "=AD12/2+U46/16"
+              },
+              {
+                "cell": "AF12",
+                "formula": "=SUM(AD15:AG45)"
+              },
+              {
+                "cell": "U46",
+                "formula": "=SUM(U5:U45)"
+              },
+              {
+                "cell": "V46",
+                "formula": "=COUNT(U5:U45)"
+              }
+            ]
+          },
+          "mergedRanges": [
+            "AB45:AC45",
+            "W7:Y7",
+            "R6:S6",
+            "W8:Y8",
+            "AF12:AG12",
+            "R18:S18",
+            "R19:S19",
+            "AB41:AC41",
+            "AB35:AC35",
+            "W21:Y21",
+            "AB36:AC36",
+            "W10:Y10",
+            "R14:S14",
+            "AB16:AC16",
+            "R27:S27",
+            "AB9:AC9",
+            "W29:Y29",
+            "R20:S20",
+            "W23:Y23",
+            "AB11:AC11",
+            "R22:S22",
+            "W6:Y6",
+            "R9:S9",
+            "AD2:AG2",
+            "R11:S11",
+            "R38:S38",
+            "R13:S13",
+            "R4:S4",
+            "R40:S40",
+            "R15:S15",
+            "W42:Y42",
+            "W17:Y17",
+            "W11:Y11",
+            "W19:Y19",
+            "AB17:AC17",
+            "AB19:AC19",
+            "W32:Y32",
+            "R28:S28",
+            "R30:S30",
+            "R12:S12",
+            "R41:S41",
+            "W44:Y44",
+            "AB38:AC38",
+            "R43:S43",
+            "W20:Y20",
+            "W22:Y22",
+            "R34:S34",
+            "R25:S25",
+            "AB25:AC25",
+            "S2:Z2",
+            "W9:Y9",
+            "R36:S36",
+            "AB22:AC22",
+            "W38:Y38",
+            "W4:Y4",
+            "W40:Y40",
+            "W33:Y33",
+            "AD4:AE4",
+            "W35:Y35",
+            "AB15:AC15",
+            "AF5:AG5",
+            "AB34:AC34",
+            "AB28:AC28",
+            "R39:S39",
+            "AB30:AC30",
+            "W41:Y41",
+            "AB29:AC29",
+            "W43:Y43",
+            "R21:S21",
+            "AB43:AC43",
+            "W25:Y25",
+            "AB42:AC42",
+            "W16:Y16",
+            "AB44:AC44",
+            "W18:Y18",
+            "AB31:AC31",
+            "AB6:AC7",
+            "AB39:AC39",
+            "R33:S33",
+            "R8:S8",
+            "R10:S10",
+            "W12:Y12",
+            "AB12:AC12",
+            "R42:S42",
+            "R23:S23",
+            "AB40:AC40",
+            "R7:S7",
+            "W14:Y14",
+            "AB2:AC2",
+            "W13:Y13",
+            "W15:Y15",
+            "R29:S29",
+            "R31:S31",
+            "R24:S24",
+            "R26:S26",
+            "W28:Y28",
+            "W5:Y5",
+            "R44:S44",
+            "AB5:AC5",
+            "AD5:AE5",
+            "AB21:AC21",
+            "R32:S32",
+            "AB23:AC23",
+            "W34:Y34",
+            "W36:Y36",
+            "W30:Y30",
+            "AB18:AC18",
+            "W31:Y31",
+            "R16:S16",
+            "R45:S45",
+            "W24:Y24",
+            "AD6:AE7",
+            "AF6:AG7",
+            "W26:Y26",
+            "AB24:AC24",
+            "AB32:AC32",
+            "AB26:AC26",
+            "W39:Y39",
+            "R35:S35",
+            "AB27:AC27",
+            "W37:Y37",
+            "R17:S17",
+            "AB37:AC37",
+            "R5:S5",
+            "AD9:AE9",
+            "AB20:AC20",
+            "AB14:AC14",
+            "W27:Y27",
+            "R37:S37",
+            "W45:Y45",
+            "AB33:AC33"
+          ]
+        },
+        {
+          "tableId": "ICA Helg::2::35",
+          "type": "special",
+          "header": {
+            "kundCell": "AI2",
+            "kundRaw": "Kund:",
+            "customerName": "",
+            "date": {
+              "label": {
+                "cell": "AS2",
+                "value": "Datum:"
+              },
+              "value": null
+            }
+          },
+          "bounds": {
+            "range": "AI2:AW46",
+            "minRow": 2,
+            "maxRow": 46,
+            "minCol": 35,
+            "maxCol": 49
+          },
+          "sections": {
+            "left": {
+              "row": 4,
+              "col": 36,
+              "raw": "Art nr",
+              "cell": "AJ4"
+            },
+            "right": {
+              "row": 12,
+              "col": 45,
+              "raw": "Art nr",
+              "cell": "AS12"
+            },
+            "additionalArtHeaders": []
+          },
+          "dataWindow": {
+            "startRow": 5,
+            "endRow": 8,
+            "footerStartRow": 9
+          },
+          "footer": {
+            "formulaCount": 3,
+            "formulas": [
+              {
+                "cell": "AI46",
+                "formula": "=SUM(AI5:AI45)"
+              },
+              {
+                "cell": "AU10",
+                "formula": "=COUNT(AU13:AX45)"
+              },
+              {
+                "cell": "AW10",
+                "formula": "=SUM(AU13:AX45)"
+              }
+            ]
+          },
+          "mergedRanges": [
+            "AN25:AP25",
+            "AS38:AT38",
+            "AJ42:AK42",
+            "AS2:AT2",
+            "AN13:AP13",
+            "AN15:AP15",
+            "AJ32:AK32",
+            "AJ40:AK40",
+            "AJ27:AK27",
+            "AS21:AT21",
+            "AN8:AP8",
+            "AN10:AP10",
+            "AN28:AP28",
+            "AJ45:AK45",
+            "AJ20:AK20",
+            "AN30:AP30",
+            "AN5:AP5",
+            "AJ22:AK22",
+            "AU5:AV5",
+            "AN21:AP21",
+            "AU2:AX2",
+            "AS9:AT9",
+            "AN23:AP23",
+            "AJ33:AK33",
+            "AS23:AT23",
+            "AN34:AP34",
+            "AJ35:AK35",
+            "AN36:AP36",
+            "AS24:AT24",
+            "AS18:AT18",
+            "AN44:AP44",
+            "AS17:AT17",
+            "AS19:AT19",
+            "AN24:AP24",
+            "AS6:AT7",
+            "AJ41:AK41",
+            "AU6:AV7",
+            "AW6:AX7",
+            "AJ16:AK16",
+            "AN26:AP26",
+            "AS14:AT14",
+            "AJ43:AK43",
+            "AN42:AP42",
+            "AS40:AT40",
+            "AN39:AP39",
+            "AN37:AP37",
+            "AJ6:AK6",
+            "AJ4:AK4",
+            "AS45:AT45",
+            "AN32:AP32",
+            "AS20:AT20",
+            "AJ2:AQ2",
+            "AS22:AT22",
+            "AJ17:AK17",
+            "AN27:AP27",
+            "AJ19:AK19",
+            "AW10:AX10",
+            "AN45:AP45",
+            "AS33:AT33",
+            "AJ12:AK12",
+            "AS35:AT35",
+            "AJ14:AK14",
+            "AJ7:AK7",
+            "AW5:AX5",
+            "AJ25:AK25",
+            "AS41:AT41",
+            "AS43:AT43",
+            "AJ38:AK38",
+            "AJ13:AK13",
+            "AS36:AT36",
+            "AJ15:AK15",
+            "AN16:AP16",
+            "AN11:AP11",
+            "AJ28:AK28",
+            "AJ30:AK30",
+            "AN6:AP6",
+            "AU4:AV4",
+            "AS12:AT12",
+            "AN18:AP18",
+            "AN17:AP17",
+            "AJ34:AK34",
+            "AN19:AP19",
+            "AJ36:AK36",
+            "AJ29:AK29",
+            "AJ44:AK44",
+            "AJ31:AK31",
+            "AN7:AP7",
+            "AS13:AT13",
+            "AS15:AT15",
+            "AN20:AP20",
+            "AN22:AP22",
+            "AS10:AT10",
+            "AJ39:AK39",
+            "AS25:AT25",
+            "AN38:AP38",
+            "AN40:AP40",
+            "AS28:AT28",
+            "AN33:AP33",
+            "AS5:AT5",
+            "AN35:AP35",
+            "AS16:AT16",
+            "AS34:AT34",
+            "AS30:AT30",
+            "AS42:AT42",
+            "AN41:AP41",
+            "AS29:AT29",
+            "AS44:AT44",
+            "AN43:AP43",
+            "AJ8:AK8",
+            "AS31:AT31",
+            "AJ10:AK10",
+            "AJ5:AK5",
+            "AN9:AP9",
+            "AN29:AP29",
+            "AN4:AP4",
+            "AS26:AT26",
+            "AJ21:AK21",
+            "AN31:AP31",
+            "AJ23:AK23",
+            "AJ18:AK18",
+            "AS39:AT39",
+            "AS37:AT37",
+            "AS32:AT32",
+            "AJ9:AK9",
+            "AJ11:AK11",
+            "AN12:AP12",
+            "AN14:AP14",
+            "AS27:AT27",
+            "AJ37:AK37",
+            "AJ24:AK24",
+            "AJ26:AK26"
+          ]
+        }
+      ]
+    },
+    {
+      "sheet": "Lidl",
+      "layoutType": "standard",
+      "designNote": "Standard layout: Kund/date header, left and right Art nr sections, footer with totals/formulas.",
+      "usedRange": "A2:AT113",
+      "nonEmptyCells": 277,
+      "formulaCells": 182,
+      "mergedRangeCount": 69,
+      "tableCount": 5,
+      "tables": [
+        {
+          "tableId": "Lidl::2::1",
+          "type": "standard",
+          "header": {
+            "kundCell": "A2",
+            "kundRaw": "Kund: Lidl Rosersberg",
+            "customerName": "Lidl Rosersberg",
+            "date": {
+              "label": null,
+              "value": {
+                "cell": "AA2",
+                "value": "2026-02-20 00:00:00"
+              }
+            }
+          },
+          "bounds": {
+            "range": "A2:Q62",
+            "minRow": 2,
+            "maxRow": 62,
+            "minCol": 1,
+            "maxCol": 17
+          },
+          "sections": {
+            "left": {
+              "row": 3,
+              "col": 1,
+              "raw": "Art nr:",
+              "cell": "A3"
+            },
+            "right": {
+              "row": 3,
+              "col": 8,
+              "raw": "Art nr:",
+              "cell": "H3"
+            },
+            "additionalArtHeaders": []
+          },
+          "dataWindow": {
+            "startRow": 4,
+            "endRow": 44,
+            "footerStartRow": 45
+          },
+          "footer": {
+            "formulaCount": 5,
+            "formulas": [
+              {
+                "cell": "B56",
+                "formula": "=SUM(B4:B54)"
+              },
+              {
+                "cell": "F56",
+                "formula": "=SUM(F4:F54)"
+              },
+              {
+                "cell": "H49",
+                "formula": "=SUM(B56,M34)"
+              },
+              {
+                "cell": "I49",
+                "formula": "=COUNT(F4:F54,I4:M32)"
+              },
+              {
+                "cell": "L49",
+                "formula": "=SUM(F4:F54)+COUNT(I4:M32)"
+              }
+            ]
+          },
+          "mergedRanges": [
+            "L49:N50",
+            "M34:N34",
+            "H49:H50",
+            "A55:F55",
+            "H33:N33",
+            "I49:K50",
+            "I48:K48",
+            "H45:N46",
+            "E2:F2",
+            "L48:N48",
+            "H36:N36",
+            "J2:N2",
+            "A9:B9"
+          ]
+        },
+        {
+          "tableId": "Lidl::2::18",
+          "type": "standard",
+          "header": {
+            "kundCell": "R2",
+            "kundRaw": "Kund: Lidl Halmstad",
+            "customerName": "Lidl Halmstad",
+            "date": {
+              "label": null,
+              "value": {
+                "cell": "AA2",
+                "value": "2026-02-20 00:00:00"
+              }
+            }
+          },
+          "bounds": {
+            "range": "R2:AT62",
+            "minRow": 2,
+            "maxRow": 62,
+            "minCol": 18,
+            "maxCol": 46
+          },
+          "sections": {
+            "left": {
+              "row": 3,
+              "col": 18,
+              "raw": "Art nr:",
+              "cell": "R3"
+            },
+            "right": {
+              "row": 3,
+              "col": 25,
+              "raw": "Art nr:",
+              "cell": "Y3"
+            },
+            "additionalArtHeaders": []
+          },
+          "dataWindow": {
+            "startRow": 4,
+            "endRow": 44,
+            "footerStartRow": 45
+          },
+          "footer": {
+            "formulaCount": 5,
+            "formulas": [
+              {
+                "cell": "AC49",
+                "formula": "=SUM(W4:W50)+COUNT(Z4:AD32)"
+              },
+              {
+                "cell": "S52",
+                "formula": "=SUM(S4:S50)"
+              },
+              {
+                "cell": "W52",
+                "formula": "=SUM(W4:W50)"
+              },
+              {
+                "cell": "Y49",
+                "formula": "=SUM(S52,AD34)"
+              },
+              {
+                "cell": "Z49",
+                "formula": "=COUNT(W4:W50,Z4:AD32)"
+              }
+            ]
+          },
+          "mergedRanges": [
+            "V2:W2",
+            "Y36:AE36",
+            "AC49:AE50",
+            "AI7:AJ8",
+            "AK9:AK10",
+            "Z49:AB50",
+            "Y33:AE33",
+            "AI4:AK6",
+            "R51:W51",
+            "AD34:AE34",
+            "Z48:AB48",
+            "AK11:AK12",
+            "Y49:Y50",
+            "AC48:AE48",
+            "AI9:AJ10",
+            "Y45:AE46",
+            "AA2:AE2",
+            "AI11:AJ12",
+            "AK7:AK8"
+          ]
+        },
+        {
+          "tableId": "Lidl::63::1",
+          "type": "standard",
+          "header": {
+            "kundCell": "A63",
+            "kundRaw": "Kund: Lidl Örebro",
+            "customerName": "Lidl Örebro",
+            "date": {
+              "label": null,
+              "value": {
+                "cell": "J63",
+                "value": "2026-02-20 00:00:00"
+              }
+            }
+          },
+          "bounds": {
+            "range": "A63:Q113",
+            "minRow": 63,
+            "maxRow": 113,
+            "minCol": 1,
+            "maxCol": 17
+          },
+          "sections": {
+            "left": {
+              "row": 64,
+              "col": 1,
+              "raw": "Art nr:",
+              "cell": "A64"
+            },
+            "right": {
+              "row": 64,
+              "col": 8,
+              "raw": "Art nr:",
+              "cell": "H64"
+            },
+            "additionalArtHeaders": []
+          },
+          "dataWindow": {
+            "startRow": 65,
+            "endRow": 104,
+            "footerStartRow": 105
+          },
+          "footer": {
+            "formulaCount": 5,
+            "formulas": [
+              {
+                "cell": "B113",
+                "formula": "=SUM(B65:B111)"
+              },
+              {
+                "cell": "F113",
+                "formula": "=SUM(F65:F111)"
+              },
+              {
+                "cell": "H109",
+                "formula": "=SUM(B113,M95)"
+              },
+              {
+                "cell": "I109",
+                "formula": "=COUNT(F65:F111,I65:M93)"
+              },
+              {
+                "cell": "L109",
+                "formula": "=SUM(F65:F111)+COUNT(I65:M93)"
+              }
+            ]
+          },
+          "mergedRanges": [
+            "L109:N110",
+            "I109:K110",
+            "H97:N97",
+            "E63:F63",
+            "A112:F112",
+            "H109:H110",
+            "M95:N95",
+            "J63:N63",
+            "L108:N108",
+            "H105:N106",
+            "I108:K108",
+            "H94:N94",
+            "Q76:Q77"
+          ]
+        },
+        {
+          "tableId": "Lidl::63::18",
+          "type": "standard",
+          "header": {
+            "kundCell": "R63",
+            "kundRaw": "Kund: Stockfiller",
+            "customerName": "Stockfiller",
+            "date": {
+              "label": null,
+              "value": null
+            }
+          },
+          "bounds": {
+            "range": "R63:AF113",
+            "minRow": 63,
+            "maxRow": 113,
+            "minCol": 18,
+            "maxCol": 32
+          },
+          "sections": {
+            "left": {
+              "row": 64,
+              "col": 18,
+              "raw": "Art nr:",
+              "cell": "R64"
+            },
+            "right": {
+              "row": 64,
+              "col": 25,
+              "raw": "Art nr:",
+              "cell": "Y64"
+            },
+            "additionalArtHeaders": []
+          },
+          "dataWindow": {
+            "startRow": 65,
+            "endRow": 105,
+            "footerStartRow": 106
+          },
+          "footer": {
+            "formulaCount": 5,
+            "formulas": [
+              {
+                "cell": "AC110",
+                "formula": "=SUM(W65:W111)+COUNT(Z65:AD93)"
+              },
+              {
+                "cell": "S113",
+                "formula": "=SUM(S65:S111)"
+              },
+              {
+                "cell": "W113",
+                "formula": "=SUM(W65:W111)"
+              },
+              {
+                "cell": "Y110",
+                "formula": "=SUM(S113,AD95)"
+              },
+              {
+                "cell": "Z110",
+                "formula": "=COUNT(W65:W111,Z65:AD93)"
+              }
+            ]
+          },
+          "mergedRanges": [
+            "Y106:AE107",
+            "Z110:AB111",
+            "Z109:AB109",
+            "AC110:AE111",
+            "AC109:AE109",
+            "Y110:Y111",
+            "Y97:AE97",
+            "R112:W112",
+            "W63:X63",
+            "AD95:AE95",
+            "AA63:AE63",
+            "Y94:AE94"
+          ]
+        },
+        {
+          "tableId": "Lidl::63::33",
+          "type": "standard",
+          "header": {
+            "kundCell": "AG63",
+            "kundRaw": "Kund: ",
+            "customerName": "",
+            "date": {
+              "label": null,
+              "value": null
+            }
+          },
+          "bounds": {
+            "range": "AG63:AT113",
+            "minRow": 63,
+            "maxRow": 113,
+            "minCol": 33,
+            "maxCol": 46
+          },
+          "sections": {
+            "left": {
+              "row": 64,
+              "col": 33,
+              "raw": "Art nr:",
+              "cell": "AG64"
+            },
+            "right": {
+              "row": 64,
+              "col": 40,
+              "raw": "Art nr:",
+              "cell": "AN64"
+            },
+            "additionalArtHeaders": []
+          },
+          "dataWindow": {
+            "startRow": 65,
+            "endRow": 105,
+            "footerStartRow": 106
+          },
+          "footer": {
+            "formulaCount": 5,
+            "formulas": [
+              {
+                "cell": "AH113",
+                "formula": "=SUM(AH65:AH111)"
+              },
+              {
+                "cell": "AL113",
+                "formula": "=SUM(AL65:AL111)"
+              },
+              {
+                "cell": "AN110",
+                "formula": "=SUM(AH113,AS95)"
+              },
+              {
+                "cell": "AO110",
+                "formula": "=COUNT(AL65:AL111,AO65:AS93)"
+              },
+              {
+                "cell": "AR110",
+                "formula": "=SUM(AL65:AL111)+COUNT(AO65:AS93)"
+              }
+            ]
+          },
+          "mergedRanges": [
+            "AR110:AT111",
+            "AN110:AN111",
+            "AO110:AQ111",
+            "AN106:AT107",
+            "AG112:AL112",
+            "AN97:AT97",
+            "AP63:AT63",
+            "AR109:AT109",
+            "AS95:AT95",
+            "AO109:AQ109",
+            "AN94:AT94",
+            "AL63:AM63"
+          ]
+        }
+      ]
+    },
+    {
+      "sheet": "Lidl H Lördag",
+      "layoutType": "standard",
+      "designNote": "Standard layout: Kund/date header, left and right Art nr sections, footer with totals/formulas.",
+      "usedRange": "A1:N51",
+      "nonEmptyCells": 52,
+      "formulaCells": 36,
+      "mergedRangeCount": 10,
+      "tableCount": 1,
+      "tables": [
+        {
+          "tableId": "Lidl H Lördag::1::1",
+          "type": "standard",
+          "header": {
+            "kundCell": "A1",
+            "kundRaw": "Kund: Lidl Halmstad",
+            "customerName": "Lidl Halmstad",
+            "date": {
+              "label": null,
+              "value": null
+            }
+          },
+          "bounds": {
+            "range": "A1:N51",
+            "minRow": 1,
+            "maxRow": 51,
+            "minCol": 1,
+            "maxCol": 14
+          },
+          "sections": {
+            "left": {
+              "row": 2,
+              "col": 1,
+              "raw": "Art nr:",
+              "cell": "A2"
+            },
+            "right": {
+              "row": 2,
+              "col": 8,
+              "raw": "Art nr:",
+              "cell": "H2"
+            },
+            "additionalArtHeaders": []
+          },
+          "dataWindow": {
+            "startRow": 3,
+            "endRow": 43,
+            "footerStartRow": 44
+          },
+          "footer": {
+            "formulaCount": 5,
+            "formulas": [
+              {
+                "cell": "B51",
+                "formula": "=SUM(B3:B49)"
+              },
+              {
+                "cell": "F51",
+                "formula": "=SUM(F3:F49)"
+              },
+              {
+                "cell": "H48",
+                "formula": "=SUM(B51,M33)"
+              },
+              {
+                "cell": "I48",
+                "formula": "=COUNT(F3:F49,I3:M31)"
+              },
+              {
+                "cell": "L48",
+                "formula": "=SUM(F3:F49)+COUNT(I3:M31)"
+              }
+            ]
+          },
+          "mergedRanges": [
+            "I47:K47",
+            "H44:N45",
+            "H48:H49",
+            "L48:N49",
+            "L47:N47",
+            "M33:N33",
+            "J1:N1",
+            "A50:F50",
+            "I48:K49",
+            "H32:N32"
+          ]
+        }
+      ]
+    },
+    {
+      "sheet": "Lidl Söndag",
+      "layoutType": "standard",
+      "designNote": "Standard layout: Kund/date header, left and right Art nr sections, footer with totals/formulas.",
+      "usedRange": "A2:AT112",
+      "nonEmptyCells": 277,
+      "formulaCells": 185,
+      "mergedRangeCount": 68,
+      "tableCount": 5,
+      "tables": [
+        {
+          "tableId": "Lidl Söndag::2::1",
+          "type": "standard",
+          "header": {
+            "kundCell": "A2",
+            "kundRaw": "Kund: Lidl Rosersberg",
+            "customerName": "Lidl Rosersberg",
+            "date": {
+              "label": null,
+              "value": null
+            }
+          },
+          "bounds": {
+            "range": "A2:Q61",
+            "minRow": 2,
+            "maxRow": 61,
+            "minCol": 1,
+            "maxCol": 17
+          },
+          "sections": {
+            "left": {
+              "row": 3,
+              "col": 1,
+              "raw": "Art nr:",
+              "cell": "A3"
+            },
+            "right": {
+              "row": 3,
+              "col": 8,
+              "raw": "Art nr:",
+              "cell": "H3"
+            },
+            "additionalArtHeaders": []
+          },
+          "dataWindow": {
+            "startRow": 4,
+            "endRow": 44,
+            "footerStartRow": 45
+          },
+          "footer": {
+            "formulaCount": 5,
+            "formulas": [
+              {
+                "cell": "B55",
+                "formula": "=SUM(B4:B53)"
+              },
+              {
+                "cell": "F55",
+                "formula": "=SUM(F4:F53)"
+              },
+              {
+                "cell": "H49",
+                "formula": "=SUM(B55,M34)"
+              },
+              {
+                "cell": "I49",
+                "formula": "=COUNT(F4:F53,I4:M32)"
+              },
+              {
+                "cell": "L49",
+                "formula": "=SUM(F4:F53)+COUNT(I4:M32)"
+              }
+            ]
+          },
+          "mergedRanges": [
+            "A54:F54",
+            "M34:N34",
+            "L49:N50",
+            "H49:H50",
+            "H33:N33",
+            "I49:K50",
+            "I48:K48",
+            "H45:N46",
+            "E2:F2",
+            "L48:N48",
+            "H36:N36",
+            "J2:N2"
+          ]
+        },
+        {
+          "tableId": "Lidl Söndag::2::18",
+          "type": "standard",
+          "header": {
+            "kundCell": "R2",
+            "kundRaw": "Kund: Lidl Halmstad",
+            "customerName": "Lidl Halmstad",
+            "date": {
+              "label": null,
+              "value": null
+            }
+          },
+          "bounds": {
+            "range": "R2:AT61",
+            "minRow": 2,
+            "maxRow": 61,
+            "minCol": 18,
+            "maxCol": 46
+          },
+          "sections": {
+            "left": {
+              "row": 3,
+              "col": 18,
+              "raw": "Art nr:",
+              "cell": "R3"
+            },
+            "right": {
+              "row": 3,
+              "col": 25,
+              "raw": "Art nr:",
+              "cell": "Y3"
+            },
+            "additionalArtHeaders": []
+          },
+          "dataWindow": {
+            "startRow": 4,
+            "endRow": 44,
+            "footerStartRow": 45
+          },
+          "footer": {
+            "formulaCount": 5,
+            "formulas": [
+              {
+                "cell": "AC49",
+                "formula": "=SUM(W4:W50)+COUNT(Z4:AD32)"
+              },
+              {
+                "cell": "S52",
+                "formula": "=SUM(S4:S50)"
+              },
+              {
+                "cell": "W52",
+                "formula": "=SUM(W4:W50)"
+              },
+              {
+                "cell": "Y49",
+                "formula": "=SUM(S52,AD34)"
+              },
+              {
+                "cell": "Z49",
+                "formula": "=COUNT(W4:W50,Z4:AD32)"
+              }
+            ]
+          },
+          "mergedRanges": [
+            "AC49:AE50",
+            "Y36:AE36",
+            "AI7:AJ8",
+            "AK9:AK10",
+            "Z49:AB50",
+            "AI4:AK6",
+            "Y33:AE33",
+            "R51:W51",
+            "AD34:AE34",
+            "Z48:AB48",
+            "AK11:AK12",
+            "Y49:Y50",
+            "AC48:AE48",
+            "AI9:AJ10",
+            "Y45:AE46",
+            "W2:X2",
+            "AA2:AE2",
+            "AI11:AJ12",
+            "AK7:AK8"
+          ]
+        },
+        {
+          "tableId": "Lidl Söndag::62::1",
+          "type": "standard",
+          "header": {
+            "kundCell": "A62",
+            "kundRaw": "Kund: Lidl Örebro",
+            "customerName": "Lidl Örebro",
+            "date": {
+              "label": null,
+              "value": null
+            }
+          },
+          "bounds": {
+            "range": "A62:Q112",
+            "minRow": 62,
+            "maxRow": 112,
+            "minCol": 1,
+            "maxCol": 17
+          },
+          "sections": {
+            "left": {
+              "row": 63,
+              "col": 1,
+              "raw": "Art nr:",
+              "cell": "A63"
+            },
+            "right": {
+              "row": 63,
+              "col": 8,
+              "raw": "Art nr:",
+              "cell": "H63"
+            },
+            "additionalArtHeaders": []
+          },
+          "dataWindow": {
+            "startRow": 64,
+            "endRow": 104,
+            "footerStartRow": 105
+          },
+          "footer": {
+            "formulaCount": 5,
+            "formulas": [
+              {
+                "cell": "B112",
+                "formula": "=SUM(B64:B110)"
+              },
+              {
+                "cell": "F112",
+                "formula": "=SUM(F64:F110)"
+              },
+              {
+                "cell": "H109",
+                "formula": "=SUM(B112,M94)"
+              },
+              {
+                "cell": "I109",
+                "formula": "=COUNT(F64:F110,I64:M92)"
+              },
+              {
+                "cell": "L109",
+                "formula": "=SUM(F64:F110)+COUNT(I64:M92)"
+              }
+            ]
+          },
+          "mergedRanges": [
+            "E62:F62",
+            "H96:N96",
+            "I109:K110",
+            "M94:N94",
+            "H93:N93",
+            "H109:H110",
+            "A111:F111",
+            "L108:N108",
+            "H105:N106",
+            "I108:K108",
+            "Q75:Q76",
+            "J62:N62",
+            "L109:N110"
+          ]
+        },
+        {
+          "tableId": "Lidl Söndag::62::18",
+          "type": "standard",
+          "header": {
+            "kundCell": "R62",
+            "kundRaw": "Kund: Stockfiller",
+            "customerName": "Stockfiller",
+            "date": {
+              "label": null,
+              "value": null
+            }
+          },
+          "bounds": {
+            "range": "R62:AF112",
+            "minRow": 62,
+            "maxRow": 112,
+            "minCol": 18,
+            "maxCol": 32
+          },
+          "sections": {
+            "left": {
+              "row": 63,
+              "col": 18,
+              "raw": "Art nr:",
+              "cell": "R63"
+            },
+            "right": {
+              "row": 63,
+              "col": 25,
+              "raw": "Art nr:",
+              "cell": "Y63"
+            },
+            "additionalArtHeaders": []
+          },
+          "dataWindow": {
+            "startRow": 64,
+            "endRow": 104,
+            "footerStartRow": 105
+          },
+          "footer": {
+            "formulaCount": 5,
+            "formulas": [
+              {
+                "cell": "AC109",
+                "formula": "=SUM(W64:W110)+COUNT(Z64:AD92)"
+              },
+              {
+                "cell": "S112",
+                "formula": "=SUM(S64:S110)"
+              },
+              {
+                "cell": "W112",
+                "formula": "=SUM(W64:W110)"
+              },
+              {
+                "cell": "Y109",
+                "formula": "=SUM(S112,AD94)"
+              },
+              {
+                "cell": "Z109",
+                "formula": "=COUNT(W64:W110,Z64:AD92)"
+              }
+            ]
+          },
+          "mergedRanges": [
+            "Y96:AE96",
+            "AD94:AE94",
+            "AC109:AE110",
+            "Y109:Y110",
+            "AC108:AE108",
+            "W62:X62",
+            "Y93:AE93",
+            "Z109:AB110",
+            "Y105:AE106",
+            "Z108:AB108",
+            "R111:W111",
+            "AA62:AE62"
+          ]
+        },
+        {
+          "tableId": "Lidl Söndag::62::33",
+          "type": "standard",
+          "header": {
+            "kundCell": "AG62",
+            "kundRaw": "Kund: ",
+            "customerName": "",
+            "date": {
+              "label": null,
+              "value": null
+            }
+          },
+          "bounds": {
+            "range": "AG62:AT112",
+            "minRow": 62,
+            "maxRow": 112,
+            "minCol": 33,
+            "maxCol": 46
+          },
+          "sections": {
+            "left": {
+              "row": 63,
+              "col": 33,
+              "raw": "Art nr:",
+              "cell": "AG63"
+            },
+            "right": {
+              "row": 63,
+              "col": 40,
+              "raw": "Art nr:",
+              "cell": "AN63"
+            },
+            "additionalArtHeaders": []
+          },
+          "dataWindow": {
+            "startRow": 64,
+            "endRow": 104,
+            "footerStartRow": 105
+          },
+          "footer": {
+            "formulaCount": 5,
+            "formulas": [
+              {
+                "cell": "AH112",
+                "formula": "=SUM(AH64:AH110)"
+              },
+              {
+                "cell": "AL112",
+                "formula": "=SUM(AL64:AL110)"
+              },
+              {
+                "cell": "AN109",
+                "formula": "=SUM(AH112,AS94)"
+              },
+              {
+                "cell": "AO109",
+                "formula": "=COUNT(AL64:AL110,AO64:AS92)"
+              },
+              {
+                "cell": "AR109",
+                "formula": "=SUM(AL64:AL110)+COUNT(AO64:AS92)"
+              }
+            ]
+          },
+          "mergedRanges": [
+            "AO109:AQ110",
+            "AN93:AT93",
+            "AG111:AL111",
+            "AP62:AT62",
+            "AS94:AT94",
+            "AR109:AT110",
+            "AO108:AQ108",
+            "AR108:AT108",
+            "AN109:AN110",
+            "AN105:AT106",
+            "AL62:AM62",
+            "AN96:AT96"
+          ]
+        }
+      ]
+    },
+    {
+      "sheet": "Ica Kampanj",
+      "layoutType": "standard",
+      "designNote": "Standard layout: Kund/date header, left and right Art nr sections, footer with totals/formulas.",
+      "usedRange": "A2:N166",
+      "nonEmptyCells": 160,
+      "formulaCells": 105,
+      "mergedRangeCount": 33,
+      "tableCount": 3,
+      "tables": [
+        {
+          "tableId": "Ica Kampanj::2::1",
+          "type": "standard",
+          "header": {
+            "kundCell": "A2",
+            "kundRaw": "Kund: Ica Borlänge",
+            "customerName": "Ica Borlänge",
+            "date": {
+              "label": null,
+              "value": null
+            }
+          },
+          "bounds": {
+            "range": "A2:N56",
+            "minRow": 2,
+            "maxRow": 56,
+            "minCol": 1,
+            "maxCol": 14
+          },
+          "sections": {
+            "left": {
+              "row": 3,
+              "col": 1,
+              "raw": "Art nr:",
+              "cell": "A3"
+            },
+            "right": {
+              "row": 3,
+              "col": 8,
+              "raw": "Art nr:",
+              "cell": "H3"
+            },
+            "additionalArtHeaders": []
+          },
+          "dataWindow": {
+            "startRow": 4,
+            "endRow": 44,
+            "footerStartRow": 45
+          },
+          "footer": {
+            "formulaCount": 5,
+            "formulas": [
+              {
+                "cell": "B55",
+                "formula": "=SUM(B4:B53)"
+              },
+              {
+                "cell": "F55",
+                "formula": "=SUM(F4:F53)"
+              },
+              {
+                "cell": "H49",
+                "formula": "=SUM(B55,M34)"
+              },
+              {
+                "cell": "I49",
+                "formula": "=COUNT(F4:F53,I4:M32)"
+              },
+              {
+                "cell": "L49",
+                "formula": "=SUM(F4:F53)+COUNT(I4:M32)"
+              }
+            ]
+          },
+          "mergedRanges": [
+            "A54:F54",
+            "M34:N34",
+            "L49:N50",
+            "H49:H50",
+            "H33:N33",
+            "I49:K50",
+            "I48:K48",
+            "H45:N46",
+            "L48:N48",
+            "H36:N36",
+            "J2:N2"
+          ]
+        },
+        {
+          "tableId": "Ica Kampanj::57::1",
+          "type": "standard",
+          "header": {
+            "kundCell": "A57",
+            "kundRaw": "Kund: Ica Viby",
+            "customerName": "Ica Viby",
+            "date": {
+              "label": null,
+              "value": null
+            }
+          },
+          "bounds": {
+            "range": "A57:N111",
+            "minRow": 57,
+            "maxRow": 111,
+            "minCol": 1,
+            "maxCol": 14
+          },
+          "sections": {
+            "left": {
+              "row": 58,
+              "col": 1,
+              "raw": "Art nr:",
+              "cell": "A58"
+            },
+            "right": {
+              "row": 58,
+              "col": 8,
+              "raw": "Art nr:",
+              "cell": "H58"
+            },
+            "additionalArtHeaders": []
+          },
+          "dataWindow": {
+            "startRow": 59,
+            "endRow": 99,
+            "footerStartRow": 100
+          },
+          "footer": {
+            "formulaCount": 5,
+            "formulas": [
+              {
+                "cell": "B110",
+                "formula": "=SUM(B59:B108)"
+              },
+              {
+                "cell": "F110",
+                "formula": "=SUM(F59:F108)"
+              },
+              {
+                "cell": "H104",
+                "formula": "=SUM(B110,M89)"
+              },
+              {
+                "cell": "I104",
+                "formula": "=COUNT(F59:F108,I59:M87)"
+              },
+              {
+                "cell": "L104",
+                "formula": "=SUM(F59:F108)+COUNT(I59:M87)"
+              }
+            ]
+          },
+          "mergedRanges": [
+            "I103:K103",
+            "J57:N57",
+            "H91:N91",
+            "I104:K105",
+            "A109:F109",
+            "H100:N101",
+            "M89:N89",
+            "L104:N105",
+            "L103:N103",
+            "H88:N88",
+            "H104:H105"
+          ]
+        },
+        {
+          "tableId": "Ica Kampanj::112::1",
+          "type": "standard",
+          "header": {
+            "kundCell": "A112",
+            "kundRaw": "Kund: Ica Helsingborg",
+            "customerName": "Ica Helsingborg",
+            "date": {
+              "label": null,
+              "value": null
+            }
+          },
+          "bounds": {
+            "range": "A112:N166",
+            "minRow": 112,
+            "maxRow": 166,
+            "minCol": 1,
+            "maxCol": 14
+          },
+          "sections": {
+            "left": {
+              "row": 113,
+              "col": 1,
+              "raw": "Art nr:",
+              "cell": "A113"
+            },
+            "right": {
+              "row": 113,
+              "col": 8,
+              "raw": "Art nr:",
+              "cell": "H113"
+            },
+            "additionalArtHeaders": []
+          },
+          "dataWindow": {
+            "startRow": 114,
+            "endRow": 154,
+            "footerStartRow": 155
+          },
+          "footer": {
+            "formulaCount": 5,
+            "formulas": [
+              {
+                "cell": "B165",
+                "formula": "=SUM(B114:B163)"
+              },
+              {
+                "cell": "F165",
+                "formula": "=SUM(F114:F163)"
+              },
+              {
+                "cell": "H159",
+                "formula": "=SUM(B165,M144)"
+              },
+              {
+                "cell": "I159",
+                "formula": "=COUNT(F114:F163,I114:M142)"
+              },
+              {
+                "cell": "L159",
+                "formula": "=SUM(F114:F163)+COUNT(I114:M142)"
+              }
+            ]
+          },
+          "mergedRanges": [
+            "L159:N160",
+            "A164:F164",
+            "J112:N112",
+            "M144:N144",
+            "H159:H160",
+            "L158:N158",
+            "H146:N146",
+            "I159:K160",
+            "H155:N156",
+            "H143:N143",
+            "I158:K158"
+          ]
+        }
+      ]
+    },
+    {
+      "sheet": "Coop",
+      "layoutType": "standard",
+      "designNote": "Standard layout: Kund/date header, left and right Art nr sections, footer with totals/formulas.",
+      "usedRange": "A3:N56",
+      "nonEmptyCells": 55,
+      "formulaCells": 37,
+      "mergedRangeCount": 35,
+      "tableCount": 1,
+      "tables": [
+        {
+          "tableId": "Coop::3::1",
+          "type": "standard",
+          "header": {
+            "kundCell": "A3",
+            "kundRaw": "Kund: Coop FT Eskilstuna",
+            "customerName": "Coop FT Eskilstuna",
+            "date": {
+              "label": null,
+              "value": null
+            }
+          },
+          "bounds": {
+            "range": "A3:N56",
+            "minRow": 3,
+            "maxRow": 56,
+            "minCol": 1,
+            "maxCol": 14
+          },
+          "sections": {
+            "left": {
+              "row": 4,
+              "col": 1,
+              "raw": "Art nr:",
+              "cell": "A4"
+            },
+            "right": {
+              "row": 4,
+              "col": 8,
+              "raw": "Art nr:",
+              "cell": "H4"
+            },
+            "additionalArtHeaders": []
+          },
+          "dataWindow": {
+            "startRow": 5,
+            "endRow": 45,
+            "footerStartRow": 46
+          },
+          "footer": {
+            "formulaCount": 6,
+            "formulas": [
+              {
+                "cell": "B56",
+                "formula": "=SUM(B5:B54)"
+              },
+              {
+                "cell": "F56",
+                "formula": "=SUM(F5:F54)"
+              },
+              {
+                "cell": "H50",
+                "formula": "=SUM(B56,M35)"
+              },
+              {
+                "cell": "I50",
+                "formula": "=COUNT(F5:F54,I5:M33)"
+              },
+              {
+                "cell": "L50",
+                "formula": "=SUM(F5:F54)+COUNT(I5:M33)"
+              },
+              {
+                "cell": "L53",
+                "formula": "=ROUNDUP(SUM(F5:F54)/3+COUNT(I5:M33)/2,0)"
+              }
+            ]
+          },
+          "mergedRanges": [
+            "H37:N37",
+            "I50:K51",
+            "H50:H51",
+            "A55:F55",
+            "M35:N35",
+            "H46:N47",
+            "L52:N52",
+            "L49:N49",
+            "H34:N34",
+            "I49:K49",
+            "J3:N3",
+            "L53:N53",
+            "L50:N51"
+          ]
+        }
+      ]
+    },
+    {
+      "sheet": "Axfood Pontus",
+      "layoutType": "special",
+      "designNote": "Custom layout: single customer block where left and right sections start on different rows (main left near row 4, right/full-pall near row 11).",
+      "usedRange": "A2:S63",
+      "nonEmptyCells": 24,
+      "formulaCells": 7,
+      "mergedRangeCount": 185,
+      "tableCount": 1,
+      "tables": [
+        {
+          "tableId": "Axfood Pontus::2::1",
+          "type": "special",
+          "header": {
+            "kundCell": "A2",
+            "kundRaw": "Kund:",
+            "customerName": "",
+            "date": {
+              "label": {
+                "cell": "O2",
+                "value": "Datum:"
+              },
+              "value": null
+            }
+          },
+          "bounds": {
+            "range": "A2:S63",
+            "minRow": 2,
+            "maxRow": 63,
+            "minCol": 1,
+            "maxCol": 19
+          },
+          "sections": {
+            "left": {
+              "row": 4,
+              "col": 2,
+              "raw": "Art nr",
+              "cell": "B4"
+            },
+            "right": {
+              "row": 11,
+              "col": 11,
+              "raw": "Art nr",
+              "cell": "K11"
+            },
+            "additionalArtHeaders": []
+          },
+          "dataWindow": {
+            "startRow": 5,
+            "endRow": 8,
+            "footerStartRow": 9
+          },
+          "footer": {
+            "formulaCount": 4,
+            "formulas": [
+              {
+                "cell": "A63",
+                "formula": "=SUM(A5:A62)"
+              },
+              {
+                "cell": "D63",
+                "formula": "=SUM(D5:D62)"
+              },
+              {
+                "cell": "P10",
+                "formula": "=COUNT(M12:T62)"
+              },
+              {
+                "cell": "S10",
+                "formula": "=SUM(M12:T62)"
+              }
+            ]
+          },
+          "mergedRanges": [
+            "K49:L49",
+            "F5:H5",
+            "F36:H36",
+            "F18:H18",
+            "F33:H33",
+            "K24:L24",
+            "F45:H45",
+            "K33:L33",
+            "F8:H8",
+            "B22:C22",
+            "F17:H17",
+            "B31:C31",
+            "F47:H47",
+            "K26:L26",
+            "B12:C12",
+            "K35:L35",
+            "B21:C21",
+            "F22:H22",
+            "F31:H31",
+            "K50:L50",
+            "B61:C61",
+            "B14:C14",
+            "F9:H9",
+            "F61:H61",
+            "F39:H39",
+            "K58:L58",
+            "B13:C13",
+            "K52:L52",
+            "B38:C38",
+            "F14:H14",
+            "S10:T10",
+            "K42:L42",
+            "K5:L6",
+            "B40:C40",
+            "M5:N6",
+            "B49:C49",
+            "B55:C55",
+            "O2:P2",
+            "B24:C24",
+            "K53:L53",
+            "B33:C33",
+            "K9:M9",
+            "B51:C51",
+            "K28:L28",
+            "K37:L37",
+            "B32:C32",
+            "F12:H12",
+            "F7:H7",
+            "B41:C41",
+            "B26:C26",
+            "K13:L13",
+            "F21:H21",
+            "B35:C35",
+            "F51:H51",
+            "K30:L30",
+            "B16:C16",
+            "B25:C25",
+            "F41:H41",
+            "K15:L15",
+            "P10:Q10",
+            "F35:H35",
+            "F50:H50",
+            "B18:C18",
+            "B27:C27",
+            "K55:L55",
+            "K21:L21",
+            "K51:L51",
+            "B11:C11",
+            "F27:H27",
+            "K32:L32",
+            "K41:L41",
+            "B53:C53",
+            "K56:L56",
+            "K43:L43",
+            "B29:C29",
+            "K62:L62",
+            "F49:H49",
+            "B37:C37",
+            "K27:L27",
+            "F29:H29",
+            "F11:H11",
+            "K17:L17",
+            "F25:H25",
+            "B6:C6",
+            "B15:C15",
+            "J2:N2",
+            "K19:L19",
+            "F40:H40",
+            "F15:H15",
+            "F59:H59",
+            "F55:H55",
+            "F24:H24",
+            "K16:L16",
+            "B54:C54",
+            "K25:L25",
+            "B7:C7",
+            "F32:H32",
+            "F26:H26",
+            "K45:L45",
+            "Q2:T2",
+            "B56:C56",
+            "K54:L54",
+            "B43:C43",
+            "B58:C58",
+            "F23:H23",
+            "K60:L60",
+            "B52:C52",
+            "K29:L29",
+            "K11:L11",
+            "F38:H38",
+            "F13:H13",
+            "K47:L47",
+            "B42:C42",
+            "K44:L44",
+            "F43:H43",
+            "F58:H58",
+            "B60:C60",
+            "F52:H52",
+            "B17:C17",
+            "K31:L31",
+            "B57:C57",
+            "K40:L40",
+            "K46:L46",
+            "O4:P4",
+            "F37:H37",
+            "B44:C44",
+            "F60:H60",
+            "B19:C19",
+            "B34:C34",
+            "F57:H57",
+            "B28:C28",
+            "N10:O10",
+            "F53:H53",
+            "K23:L23",
+            "B9:C9",
+            "F44:H44",
+            "F34:H34",
+            "F16:H16",
+            "B30:C30",
+            "F6:H6",
+            "B5:C5",
+            "B20:C20",
+            "B45:C45",
+            "K57:L57",
+            "F30:H30",
+            "K18:L18",
+            "B4:C4",
+            "F20:H20",
+            "B47:C47",
+            "B62:C62",
+            "K34:L34",
+            "F42:H42",
+            "B59:C59",
+            "B46:C46",
+            "F62:H62",
+            "K36:L36",
+            "B39:C39",
+            "F46:H46",
+            "K20:L20",
+            "F28:H28",
+            "B48:C48",
+            "B2:I2",
+            "B23:C23",
+            "F56:H56",
+            "F48:H48",
+            "K22:L22",
+            "B8:C8",
+            "K59:L59",
+            "K12:L12",
+            "B10:C10",
+            "F4:H4",
+            "M3:N3",
+            "K61:L61",
+            "K39:L39",
+            "K14:L14",
+            "O5:P6",
+            "K48:L48",
+            "F54:H54",
+            "F10:H10",
+            "F19:H19",
+            "K38:L38",
+            "B36:C36",
+            "B50:C50",
+            "K4:L4",
+            "M4:N4"
+          ]
+        }
+      ]
+    },
+    {
+      "sheet": "Axfood Pontus BIGGER",
+      "layoutType": "special",
+      "designNote": "Custom layout: larger variant of Axfood Pontus with customer/date on row 1 and lower second section.",
+      "usedRange": "A1:S67",
+      "nonEmptyCells": 23,
+      "formulaCells": 7,
+      "mergedRangeCount": 200,
+      "tableCount": 1,
+      "tables": [
+        {
+          "tableId": "Axfood Pontus BIGGER::1::1",
+          "type": "special",
+          "header": {
+            "kundCell": "A1",
+            "kundRaw": "Kund:",
+            "customerName": "",
+            "date": {
+              "label": {
+                "cell": "O1",
+                "value": "Datum:"
+              },
+              "value": null
+            }
+          },
+          "bounds": {
+            "range": "A1:S67",
+            "minRow": 1,
+            "maxRow": 67,
+            "minCol": 1,
+            "maxCol": 19
+          },
+          "sections": {
+            "left": {
+              "row": 3,
+              "col": 2,
+              "raw": "Art nr",
+              "cell": "B3"
+            },
+            "right": {
+              "row": 10,
+              "col": 11,
+              "raw": "Art nr",
+              "cell": "K10"
+            },
+            "additionalArtHeaders": []
+          },
+          "dataWindow": {
+            "startRow": 4,
+            "endRow": 7,
+            "footerStartRow": 8
+          },
+          "footer": {
+            "formulaCount": 4,
+            "formulas": [
+              {
+                "cell": "A67",
+                "formula": "=SUM(A4:A66)"
+              },
+              {
+                "cell": "D67",
+                "formula": "=SUM(D4:D66)"
+              },
+              {
+                "cell": "P9",
+                "formula": "=COUNT(M11:V66)"
+              },
+              {
+                "cell": "S9",
+                "formula": "=SUM(M11:V66)"
+              }
+            ]
+          },
+          "mergedRanges": [
+            "K49:L49",
+            "F5:H5",
+            "F36:H36",
+            "F18:H18",
+            "F33:H33",
+            "K24:L24",
+            "F45:H45",
+            "K33:L33",
+            "F8:H8",
+            "B22:C22",
+            "F17:H17",
+            "B31:C31",
+            "F66:H66",
+            "J1:N1",
+            "F47:H47",
+            "K26:L26",
+            "B12:C12",
+            "K35:L35",
+            "B21:C21",
+            "F22:H22",
+            "F31:H31",
+            "K50:L50",
+            "B61:C61",
+            "O1:P1",
+            "B14:C14",
+            "F9:H9",
+            "F61:H61",
+            "F39:H39",
+            "K58:L58",
+            "B13:C13",
+            "K52:L52",
+            "B38:C38",
+            "F14:H14",
+            "K42:L42",
+            "F64:H64",
+            "B40:C40",
+            "B49:C49",
+            "F65:H65",
+            "B55:C55",
+            "B24:C24",
+            "K53:L53",
+            "B64:C64",
+            "B33:C33",
+            "B51:C51",
+            "K28:L28",
+            "K37:L37",
+            "B32:C32",
+            "B63:C63",
+            "F7:H7",
+            "B41:C41",
+            "B26:C26",
+            "F12:H12",
+            "K13:L13",
+            "F21:H21",
+            "B35:C35",
+            "F51:H51",
+            "K30:L30",
+            "B16:C16",
+            "O3:P3",
+            "S9:V9",
+            "B25:C25",
+            "B3:C3",
+            "F41:H41",
+            "K15:L15",
+            "F35:H35",
+            "F50:H50",
+            "B66:C66",
+            "B27:C27",
+            "B18:C18",
+            "K55:L55",
+            "K64:L64",
+            "K21:L21",
+            "P9:Q9",
+            "K8:M8",
+            "K51:L51",
+            "B11:C11",
+            "K4:L5",
+            "F27:H27",
+            "K32:L32",
+            "K63:L63",
+            "K41:L41",
+            "B1:I1",
+            "B53:C53",
+            "K56:L56",
+            "K43:L43",
+            "B29:C29",
+            "F49:H49",
+            "B37:C37",
+            "K27:L27",
+            "F29:H29",
+            "F11:H11",
+            "K17:L17",
+            "F25:H25",
+            "B6:C6",
+            "B15:C15",
+            "K10:L10",
+            "K66:L66",
+            "K19:L19",
+            "F40:H40",
+            "F3:H3",
+            "F15:H15",
+            "F59:H59",
+            "F55:H55",
+            "F24:H24",
+            "K3:L3",
+            "K16:L16",
+            "B54:C54",
+            "K25:L25",
+            "B7:C7",
+            "F32:H32",
+            "F26:H26",
+            "K45:L45",
+            "B56:C56",
+            "K54:L54",
+            "Q1:V1",
+            "B43:C43",
+            "B58:C58",
+            "F23:H23",
+            "K60:L60",
+            "B52:C52",
+            "K29:L29",
+            "M2:N2",
+            "K11:L11",
+            "F38:H38",
+            "F13:H13",
+            "K47:L47",
+            "B42:C42",
+            "K44:L44",
+            "F43:H43",
+            "F58:H58",
+            "B60:C60",
+            "F52:H52",
+            "B17:C17",
+            "K31:L31",
+            "B57:C57",
+            "K40:L40",
+            "K46:L46",
+            "F37:H37",
+            "M4:N5",
+            "B44:C44",
+            "F60:H60",
+            "B19:C19",
+            "B34:C34",
+            "F57:H57",
+            "B28:C28",
+            "F53:H53",
+            "K23:L23",
+            "B9:C9",
+            "F44:H44",
+            "F63:H63",
+            "F34:H34",
+            "N9:O9",
+            "F16:H16",
+            "B30:C30",
+            "O4:P5",
+            "F6:H6",
+            "K65:L65",
+            "B20:C20",
+            "B5:C5",
+            "B45:C45",
+            "K57:L57",
+            "F30:H30",
+            "K18:L18",
+            "B4:C4",
+            "F20:H20",
+            "B47:C47",
+            "B62:C62",
+            "K34:L34",
+            "F42:H42",
+            "B59:C59",
+            "B46:C46",
+            "F62:H62",
+            "K36:L36",
+            "B39:C39",
+            "F46:H46",
+            "K20:L20",
+            "F28:H28",
+            "B48:C48",
+            "B23:C23",
+            "F56:H56",
+            "F48:H48",
+            "K22:L22",
+            "B8:C8",
+            "K59:L59",
+            "K12:L12",
+            "B10:C10",
+            "F4:H4",
+            "M3:N3",
+            "K61:L61",
+            "K39:L39",
+            "K14:L14",
+            "B65:C65",
+            "K48:L48",
+            "F10:H10",
+            "F54:H54",
+            "F19:H19",
+            "K38:L38",
+            "B36:C36",
+            "B50:C50",
+            "K62:L62"
+          ]
+        }
+      ]
+    }
+  ]
+}
