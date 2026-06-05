@@ -1,4 +1,6 @@
 const { getStore } = require('@netlify/blobs');
+const fs = require('fs/promises');
+const path = require('path');
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -7,6 +9,40 @@ const CORS_HEADERS = {
 };
 
 const normalizeText = (value) => String(value || '').trim().toLowerCase();
+
+const SNAPSHOT_STORE_NAME = 'result-snapshots';
+const LOCAL_SNAPSHOT_DIR = path.join(process.cwd(), '.netlify', 'local-snapshots');
+
+const isMissingBlobsEnvironment = (error) => {
+  const message = String(error?.message || '');
+  return error?.name === 'MissingBlobsEnvironmentError' || message.includes('configured to use Netlify Blobs');
+};
+
+const getLocalSnapshotPath = (key) => {
+  const safeName = String(key || '').replace(/[^a-zA-Z0-9._-]/g, '_');
+  return path.join(LOCAL_SNAPSHOT_DIR, `${safeName}.json`);
+};
+
+const loadSnapshotRecord = async (key) => {
+  try {
+    const store = getStore(SNAPSHOT_STORE_NAME);
+    return await store.get(key, { type: 'json' });
+  } catch (error) {
+    if (!isMissingBlobsEnvironment(error)) {
+      throw error;
+    }
+
+    try {
+      const localContent = await fs.readFile(getLocalSnapshotPath(key), 'utf8');
+      return JSON.parse(localContent);
+    } catch (localError) {
+      if (localError?.code === 'ENOENT') {
+        return null;
+      }
+      throw localError;
+    }
+  }
+};
 
 const jsonResponse = (statusCode, body) => ({
   statusCode,
@@ -53,18 +89,11 @@ const rowsToCsv = (rows, explicitHeaders = null) => {
 };
 
 const getTemplateCsvSchema = (sheetName, tableName) => {
-  const normalizedSheet = normalizeText(sheetName);
-  const normalizedTable = normalizeText(tableName);
-
   const baseMeta = ['sheet', 'table', 'kund', 'datum', 'ordersnummer', 'rowType'];
   const rightCols = ['rightArtNr', 'kolli1', 'kolli2', 'kolli3', 'kolli4', 'kolli5', 'kolli6', 'rightTotal'];
   const styleCols = ['isHighlighted', 'isBold', 'isItalic'];
 
-  if (normalizedSheet === 'ica helg' && normalizedTable.includes('helsingborg')) {
-    return [...baseMeta, 'leftArtNr', 'leftDFP', 'leftHojd', ...rightCols, ...styleCols];
-  }
-
-  return [...baseMeta, 'leftArtNr', 'leftDFP', 'leftPall', ...rightCols, ...styleCols];
+  return [...baseMeta, 'leftArtNr', 'leftDFP', 'leftPall', 'leftHojd', ...rightCols, ...styleCols];
 };
 
 const mapRowsToTemplateCsv = ({ rows, sheet, table, orderData }) => {
@@ -190,8 +219,7 @@ exports.handler = async (event) => {
       return jsonResponse(400, { error: 'Invalid schema. Use schema=template or schema=raw' });
     }
 
-    const store = getStore('result-snapshots');
-    const snapshot = await store.get(`snapshot:${resultId}`, { type: 'json' });
+    const snapshot = await loadSnapshotRecord(`snapshot:${resultId}`);
 
     if (!snapshot) {
       return jsonResponse(404, { error: 'Snapshot not found' });
@@ -233,6 +261,7 @@ exports.handler = async (event) => {
       resultId: snapshot.resultId,
       createdAt: snapshot.createdAt,
       orderData: snapshot.orderData || {},
+      metadata: snapshot.metadata || {},
       sheet: selected.sheet,
       table: selected.table,
       rowCount: selected.rows.length,

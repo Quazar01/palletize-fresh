@@ -1,4 +1,6 @@
 const { getStore } = require('@netlify/blobs');
+const fs = require('fs/promises');
+const path = require('path');
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -19,9 +21,37 @@ const createResultId = () => {
   return `r_${ts}_${rand}`;
 };
 
+const SNAPSHOT_STORE_NAME = 'result-snapshots';
+const LOCAL_SNAPSHOT_DIR = path.join(process.cwd(), '.netlify', 'local-snapshots');
+
+const isMissingBlobsEnvironment = (error) => {
+  const message = String(error?.message || '');
+  return error?.name === 'MissingBlobsEnvironmentError' || message.includes('configured to use Netlify Blobs');
+};
+
+const getLocalSnapshotPath = (key) => {
+  const safeName = String(key || '').replace(/[^a-zA-Z0-9._-]/g, '_');
+  return path.join(LOCAL_SNAPSHOT_DIR, `${safeName}.json`);
+};
+
+const saveSnapshotRecord = async (key, snapshot) => {
+  try {
+    const store = getStore(SNAPSHOT_STORE_NAME);
+    await store.setJSON(key, snapshot);
+  } catch (error) {
+    if (!isMissingBlobsEnvironment(error)) {
+      throw error;
+    }
+
+    await fs.mkdir(LOCAL_SNAPSHOT_DIR, { recursive: true });
+    await fs.writeFile(getLocalSnapshotPath(key), JSON.stringify(snapshot), 'utf8');
+  }
+};
+
 const getBaseUrlFromEvent = (event) => {
-  const proto = event.headers['x-forwarded-proto'] || 'https';
   const host = event.headers.host;
+  const isLocalHost = typeof host === 'string' && (host.includes('localhost') || host.includes('127.0.0.1'));
+  const proto = isLocalHost ? 'http' : (event.headers['x-forwarded-proto'] || 'https');
   return `${proto}://${host}`;
 };
 
@@ -86,8 +116,7 @@ exports.handler = async (event) => {
       metadata: payload.metadata || {}
     };
 
-    const store = getStore('result-snapshots');
-    await store.setJSON(`snapshot:${resultId}`, snapshot);
+    await saveSnapshotRecord(`snapshot:${resultId}`, snapshot);
 
     const baseUrl = getBaseUrlFromEvent(event);
     const query = new URLSearchParams({ resultId });

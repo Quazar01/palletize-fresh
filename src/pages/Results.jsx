@@ -1757,48 +1757,217 @@ function Results({ orderData, results, onBack, onEdit }) {
   const buildSnapshotRows = () => {
     const rows = [];
 
-    comboPallets.forEach((combo, comboIndex) => {
+    const flattenComboForSnapshot = (combo, comboIndex) => {
+      const comboRows = [];
       const checkedSkvett = checkedComboSkvettpalls?.[comboIndex] || new Set();
       const plockedSkvett = plockedComboSkvettpalls?.[comboIndex] || new Set();
       const checkedMix = checkedMixPallItems?.[comboIndex] || new Set();
       const plockedMix = plockedMixPallItems?.[comboIndex] || new Set();
 
-      combo.skvettpalls.forEach((item, itemIndex) => {
-        const isMix = Boolean(item.isMixPall);
-        const isHighlighted = isMix
-          ? checkedMix.has(item.artikelnummer) || plockedMix.has(item.artikelnummer)
-          : checkedSkvett.has(itemIndex) || plockedSkvett.has(itemIndex);
+      const hasMixPall = combo.skvettpalls.some((item) => item.isMixPall);
 
-        rows.push({
+      if (hasMixPall) {
+        let mixPallHighlighted = false;
+        combo.skvettpalls.forEach((item) => {
+          if (!item.isMixPall || !Array.isArray(item.mixPallItems)) return;
+          const allMixMarked =
+            item.mixPallItems.length > 0 &&
+            item.mixPallItems.every((mixItem) =>
+              checkedMix.has(mixItem.artikelnummer) || plockedMix.has(mixItem.artikelnummer)
+            );
+          if (allMixMarked) {
+            mixPallHighlighted = true;
+          }
+        });
+
+        comboRows.push({
           side: 'left',
-          source: isMix ? 'mix' : 'combo',
-          artNr: isMix ? 'Blandpall' : String(item.artikelnummer),
-          dfp: isMix ? item.totalBoxes : item.boxCount,
-          pall: isMix ? (item.stackHeight || '') : (item.skvettPallNumber || ''),
-          isHighlighted,
+          source: 'combo-mix-header',
+          comboGroup: comboIndex,
+          artNr: 'Blandpall',
+          dfp: '',
+          pall: '',
+          isHighlighted: mixPallHighlighted,
+          isItalic: false,
+          isBold: true
+        });
+      }
+
+      combo.skvettpalls.forEach((item, itemIndex) => {
+        if (item.isMixPall && Array.isArray(item.mixPallItems)) {
+          item.mixPallItems.forEach((mixItem) => {
+            const mixItemHighlighted =
+              checkedMix.has(mixItem.artikelnummer) || plockedMix.has(mixItem.artikelnummer);
+            comboRows.push({
+              side: 'left',
+              source: 'combo-mix-item',
+              comboGroup: comboIndex,
+              artNr: String(mixItem.artikelnummer),
+              dfp: mixItem.boxCount,
+              pall: '',
+              isHighlighted: mixItemHighlighted,
+              isItalic: false,
+              isBold: true
+            });
+          });
+          return;
+        }
+
+        const skvettHighlighted = checkedSkvett.has(itemIndex) || plockedSkvett.has(itemIndex);
+        comboRows.push({
+          side: 'left',
+          source: 'combo-item',
+          comboGroup: comboIndex,
+          artNr: String(item.artikelnummer),
+          dfp: item.boxCount,
+          pall: '',
+          isHighlighted: skvettHighlighted,
           isItalic: false,
           isBold: true
         });
       });
-    });
 
-    if (mixPall.length > 0) {
-      const totalBoxes = mixPall.reduce((sum, item) => sum + item.boxCount, 0);
-      const hasMarkedStandaloneMix = mixPall.some((item) =>
-        checkedStandaloneMixItems.has(item.artikelnummer) ||
-        plockedStandaloneMixItems.has(item.artikelnummer)
-      );
+      return comboRows;
+    };
 
-      rows.push({
-        side: 'left',
-        source: 'mix-standalone',
-        artNr: 'Blandpall',
-        dfp: totalBoxes,
-        pall: '',
-        isHighlighted: hasMarkedStandaloneMix,
-        isItalic: false,
-        isBold: true
+    if (palletMode === 'combo') {
+      const standAloneCombos = comboPallets.filter((combo) => combo.skvettpalls.length === 1);
+      const multiCombos = comboPallets.filter((combo) => combo.skvettpalls.length > 1);
+
+      const appendComboGroup = (combo) => {
+        const comboIndex = comboPallets.indexOf(combo);
+        const comboRows = flattenComboForSnapshot(combo, comboIndex);
+        if (comboRows.length === 0) return;
+
+        const lastIndex = comboRows.length - 1;
+        comboRows.forEach((row, index) => {
+          rows.push({
+            ...row,
+            pall: index === lastIndex ? combo.skvettpalls.length : ''
+          });
+        });
+      };
+
+      standAloneCombos.forEach(appendComboGroup);
+
+      if (standAloneCombos.length > 0 && multiCombos.length > 0) {
+        rows.push({ side: 'left', source: 'spacer', artNr: '', dfp: '', pall: '' });
+      }
+
+      multiCombos.forEach((combo) => {
+        appendComboGroup(combo);
+        rows.push({ side: 'left', source: 'spacer', artNr: '', dfp: '', pall: '' });
       });
+
+      if (mixPall.length > 0) {
+        const hasMarkedStandaloneMix = mixPall.some((item) =>
+          checkedStandaloneMixItems.has(item.artikelnummer) ||
+          plockedStandaloneMixItems.has(item.artikelnummer)
+        );
+
+        rows.push({ side: 'left', source: 'spacer', artNr: '', dfp: '', pall: '' });
+        rows.push({ side: 'left', source: 'spacer', artNr: '', dfp: '', pall: '' });
+        rows.push({
+          side: 'left',
+          source: 'mix-standalone-header',
+          artNr: 'Blandpall',
+          dfp: '',
+          pall: 1,
+          isHighlighted: hasMarkedStandaloneMix,
+          isItalic: false,
+          isBold: true
+        });
+
+        [...mixPall].forEach((item) => {
+          rows.push({
+            side: 'left',
+            source: 'mix-standalone-item',
+            artNr: String(item.artikelnummer),
+            dfp: item.boxCount,
+            pall: '',
+            isHighlighted:
+              checkedStandaloneMixItems.has(item.artikelnummer) ||
+              plockedStandaloneMixItems.has(item.artikelnummer),
+            isItalic: false,
+            isBold: true
+          });
+        });
+      }
+    } else {
+      comboPallets.forEach((combo, comboIndex) => {
+        const checkedSkvett = checkedComboSkvettpalls?.[comboIndex] || new Set();
+        const plockedSkvett = plockedComboSkvettpalls?.[comboIndex] || new Set();
+        const checkedMix = checkedMixPallItems?.[comboIndex] || new Set();
+        const plockedMix = plockedMixPallItems?.[comboIndex] || new Set();
+
+        combo.skvettpalls.forEach((item, itemIndex) => {
+          if (item.isMixPall && Array.isArray(item.mixPallItems)) {
+            const totalBoxes = item.mixPallItems.reduce((sum, mixItem) => sum + (mixItem.boxCount || 0), 0);
+            const allMixMarked =
+              item.mixPallItems.length > 0 &&
+              item.mixPallItems.every((mixItem) =>
+                checkedMix.has(mixItem.artikelnummer) || plockedMix.has(mixItem.artikelnummer)
+              );
+
+            rows.push({
+              side: 'left',
+              source: 'mix-inline',
+              artNr: 'Blandpall',
+              dfp: totalBoxes,
+              pall: 1,
+              isHighlighted: allMixMarked,
+              isItalic: false,
+              isBold: true
+            });
+            return;
+          }
+
+          rows.push({
+            side: 'left',
+            source: 'enkel-item',
+            artNr: String(item.artikelnummer),
+            dfp: item.boxCount,
+            pall: 1,
+            isHighlighted: checkedSkvett.has(itemIndex) || plockedSkvett.has(itemIndex),
+            isItalic: false,
+            isBold: true
+          });
+        });
+      });
+
+      if (mixPall.length > 0) {
+        const hasMarkedStandaloneMix = mixPall.some((item) =>
+          checkedStandaloneMixItems.has(item.artikelnummer) ||
+          plockedStandaloneMixItems.has(item.artikelnummer)
+        );
+
+        rows.push({ side: 'left', source: 'spacer', artNr: '', dfp: '', pall: '' });
+        rows.push({
+          side: 'left',
+          source: 'mix-standalone-header',
+          artNr: 'Blandpall',
+          dfp: '',
+          pall: 1,
+          isHighlighted: hasMarkedStandaloneMix,
+          isItalic: false,
+          isBold: true
+        });
+
+        [...mixPall].forEach((item) => {
+          rows.push({
+            side: 'left',
+            source: 'mix-standalone-item',
+            artNr: String(item.artikelnummer),
+            dfp: item.boxCount,
+            pall: '',
+            isHighlighted:
+              checkedStandaloneMixItems.has(item.artikelnummer) ||
+              plockedStandaloneMixItems.has(item.artikelnummer),
+            isItalic: false,
+            isBold: true
+          });
+        });
+      }
     }
 
     fullPallets.forEach((pallet, palletIndex) => {
@@ -1838,15 +2007,8 @@ function Results({ orderData, results, onBack, onEdit }) {
   };
 
   const handleCopyExcelDataUrl = async () => {
-    if (!selectedSheetName) {
-      alert('Välj ett blad (sheet) innan du skapar Excel-länk.');
-      return;
-    }
-
-    if (templateTableNames.length > 0 && !selectedTableName) {
-      alert('Välj en tabell innan du skapar Excel-länk.');
-      return;
-    }
+    const snapshotSheetName = selectedSheetName || orderData?.kund || 'Okänt blad';
+    const snapshotTableName = selectedTableName || editableKund || 'Okänd tabell';
 
     try {
       const payload = {
@@ -1855,8 +2017,8 @@ function Results({ orderData, results, onBack, onEdit }) {
           kund: editableKund,
           datum: editableDatum
         },
-        sheet: selectedSheetName,
-        table: selectedTableName || '',
+        table: snapshotTableName,
+        sheet: snapshotSheetName,
         rows: buildSnapshotRows(),
         metadata: {
           palletMode,
