@@ -158,6 +158,44 @@ const isFullPalletBoxMarked = (uiState, palletIndex, boxIndex) => {
   return checked.has(boxIndex) || plocked.has(boxIndex);
 };
 
+const resolveRedHeightUnits = (item) => {
+  if (!item || typeof item !== 'object') return '';
+
+  const candidateValues = [
+    item.hojdenIRodaBackarEnhet,
+    item.hojdIRodaBackarEnhet,
+    item.redHeightUnits,
+    item.height_red_units,
+    item.leftHojd
+  ];
+
+  for (const value of candidateValues) {
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      return value;
+    }
+  }
+
+  const boxCount = Number(item.boxCount);
+  const boxesPerRow = Number(item.boxConfig?.boxesPerRow);
+  const redUnitFactor = Number(item.boxConfig?.heightInRedBoxUnits);
+  if (
+    Number.isFinite(boxCount) &&
+    Number.isFinite(boxesPerRow) &&
+    boxesPerRow > 0 &&
+    Number.isFinite(redUnitFactor)
+  ) {
+    const stackHeight = Math.ceil(boxCount / boxesPerRow);
+    return stackHeight * redUnitFactor;
+  }
+
+  const heightInRedUnits = Number(item.heightInRedUnits);
+  if (Number.isFinite(heightInRedUnits)) {
+    return Math.max(0, heightInRedUnits - 1);
+  }
+
+  return '';
+};
+
 const clearColumnRange = (sheet, startRow, endRow, columns) => {
   for (let row = startRow; row <= endRow; row += 1) {
     columns.forEach((col) => {
@@ -690,7 +728,7 @@ const writeHelsingborgEnkelSection = (sheet, startRow, comboPallets, mixPall, co
         enkelRows.push({
           art: 'Blandpall',
           dfp: totalBoxes,
-          hojd: item.heightInRedUnits ?? item.stackHeight ?? '',
+          hojd: resolveRedHeightUnits(item),
           isHighlighted: allMixItemsMarked
         });
         return;
@@ -699,7 +737,7 @@ const writeHelsingborgEnkelSection = (sheet, startRow, comboPallets, mixPall, co
       enkelRows.push({
         art: item.artikelnummer,
         dfp: item.boxCount,
-        hojd: item.heightInRedUnits ?? item.stackHeight ?? '',
+        hojd: resolveRedHeightUnits(item),
         isHighlighted: checkedSkvett.has(skvettIndex) || plockedSkvett.has(skvettIndex)
       });
     });
@@ -724,6 +762,9 @@ const writeHelsingborgEnkelSection = (sheet, startRow, comboPallets, mixPall, co
     setCellValue(sheet, row, artCol, item.art);
     setCellValue(sheet, row, dfpCol, item.dfp);
     setCellValue(sheet, row, hojdCol, item.hojd);
+    if (typeof item.hojd === 'number' && Number.isFinite(item.hojd)) {
+      sheet.cell(row, hojdCol).style('numberFormat', '0.00');
+    }
     if (item.isHighlighted) {
       applyLightGreyFill(sheet, row, [artCol, dfpCol, hojdCol]);
     }
@@ -827,7 +868,7 @@ const resolveSpecialTableLayout = (sheetName, orderData, tableName = '') => {
         dateRow: 2,
         dateCol: 13,
         comboColumns: { pallCol: 1, artCol: 2, dfpCol: 4 },
-        fullColumns: { artCol: 11, startCol: 13, endCol: 17 },
+        fullColumns: { artCol: 11, startCol: 13, endCol: 16, clearEndCol: 17 },
         clearEndRow: 120
       },
       {
@@ -841,7 +882,7 @@ const resolveSpecialTableLayout = (sheetName, orderData, tableName = '') => {
         dateCol: 30,
         requiredPalletMode: 'helsingborg',
         enkelColumns: { artCol: 18, dfpCol: 20, hojdCol: 21, clearToCol: 23 },
-        fullColumns: { artCol: 28, startCol: 30, endCol: 34 },
+        fullColumns: { artCol: 28, startCol: 30, endCol: 33, clearEndCol: 34 },
         clearEndRow: 120
       },
       {
@@ -854,7 +895,7 @@ const resolveSpecialTableLayout = (sheetName, orderData, tableName = '') => {
         dateRow: 2,
         dateCol: 47,
         comboColumns: { pallCol: 35, artCol: 36, dfpCol: 38 },
-        fullColumns: { artCol: 45, startCol: 47, endCol: 51 },
+        fullColumns: { artCol: 45, startCol: 47, endCol: 50, clearEndCol: 51 },
         clearEndRow: 120
       }
     ];
@@ -1003,6 +1044,7 @@ const fillTemplatePattern = ({
 
     if (specialLayout.type === 'customComboAndFull') {
       const layoutEndRow = specialLayout.clearEndRow || 120;
+      const fullClearEndCol = specialLayout.fullColumns.clearEndCol || specialLayout.fullColumns.endCol;
       const maxClearRow = findDataEndRowByRightArtColumn(
         sheet,
         specialLayout.fullStartRow,
@@ -1020,7 +1062,7 @@ const fillTemplatePattern = ({
         specialLayout.fullStartRow,
         maxClearRow,
         specialLayout.fullColumns.artCol,
-        specialLayout.fullColumns.endCol
+        fullClearEndCol
       );
 
       writeLeftComboSectionCustom(
@@ -1057,6 +1099,7 @@ const fillTemplatePattern = ({
 
     if (specialLayout.type === 'helsingborgEnkel') {
       const layoutEndRow = specialLayout.clearEndRow || 120;
+      const fullClearEndCol = specialLayout.fullColumns.clearEndCol || specialLayout.fullColumns.endCol;
       const maxClearRow = findDataEndRowByRightArtColumn(
         sheet,
         specialLayout.fullStartRow,
@@ -1068,7 +1111,7 @@ const fillTemplatePattern = ({
         specialLayout.fullStartRow,
         maxClearRow,
         specialLayout.fullColumns.artCol,
-        specialLayout.fullColumns.endCol
+        fullClearEndCol
       );
 
       const dataEndRow = writeHelsingborgEnkelSection(
