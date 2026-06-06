@@ -1756,6 +1756,7 @@ function Results({ orderData, results, onBack, onEdit }) {
 
   const buildSnapshotRows = () => {
     const rows = [];
+    const isHelsingborgMode = palletMode === 'helsingborg';
 
     const flattenComboForSnapshot = (combo, comboIndex) => {
       const comboRows = [];
@@ -1915,6 +1916,7 @@ function Results({ orderData, results, onBack, onEdit }) {
               artNr: 'Blandpall',
               dfp: totalBoxes,
               pall: 1,
+              leftHojd: isHelsingborgMode ? (item.heightInRedUnits ?? item.stackHeight ?? 1) : undefined,
               isHighlighted: allMixMarked,
               isItalic: false,
               isBold: true
@@ -1928,6 +1930,7 @@ function Results({ orderData, results, onBack, onEdit }) {
             artNr: String(item.artikelnummer),
             dfp: item.boxCount,
             pall: 1,
+            leftHojd: isHelsingborgMode ? (item.heightInRedUnits ?? item.stackHeight ?? '') : undefined,
             isHighlighted: checkedSkvett.has(itemIndex) || plockedSkvett.has(itemIndex),
             isItalic: false,
             isBold: true
@@ -1948,6 +1951,7 @@ function Results({ orderData, results, onBack, onEdit }) {
           artNr: 'Blandpall',
           dfp: '',
           pall: 1,
+          leftHojd: isHelsingborgMode ? (1 + Math.ceil(mixPall.reduce((sum, item) => sum + (item.boxCount || 0), 0) / 8)) : undefined,
           isHighlighted: hasMarkedStandaloneMix,
           isItalic: false,
           isBold: true
@@ -1991,11 +1995,16 @@ function Results({ orderData, results, onBack, onEdit }) {
         const isMarked = (checkedPallets?.[palletIndex]?.has?.(index) || false)
           || (plockedPallets?.[palletIndex]?.has?.(index) || false);
 
+        row[`kolli${index + 1}Highlighted`] = isMarked;
+
         if (isMarked) {
           row.isHighlighted = true;
         }
 
-        if (Boolean(pallet.isSingleSkvettpall) || count !== pallet.boxesPerPallet) {
+        const shouldBeItalic = Boolean(pallet.isSingleSkvettpall) || count !== pallet.boxesPerPallet;
+        row[`kolli${index + 1}Italic`] = shouldBeItalic;
+
+        if (shouldBeItalic) {
           row.isItalic = true;
         }
       });

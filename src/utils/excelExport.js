@@ -227,6 +227,22 @@ const findDataEndRow = (sheet, startRow, endLimitRow = null) => {
   return endLimitRow ? Math.max(startRow, endLimitRow) : Math.max(startRow + 220, 260);
 };
 
+const findDataEndRowByRightArtColumn = (sheet, startRow, rightArtCol, endLimitRow = null) => {
+  const usedRange = sheet.usedRange();
+  const lastUsedRow = usedRange ? usedRange.endCell().rowNumber() : startRow + 220;
+  const rawSearchEnd = Math.min(lastUsedRow, startRow + 500);
+  const searchEnd = endLimitRow ? Math.min(rawSearchEnd, endLimitRow) : rawSearchEnd;
+
+  for (let row = startRow; row <= searchEnd; row += 1) {
+    const marker = getCellString(sheet, row, rightArtCol);
+    if (marker.includes('full pall')) {
+      return Math.max(startRow, row - 1);
+    }
+  }
+
+  return endLimitRow ? Math.max(startRow, endLimitRow) : Math.max(startRow + 220, 260);
+};
+
 const clearCustomRowHeights = (sheet, startRow, endRow) => {
   if (endRow < startRow) return;
 
@@ -986,7 +1002,13 @@ const fillTemplatePattern = ({
     }
 
     if (specialLayout.type === 'customComboAndFull') {
-      const maxClearRow = specialLayout.clearEndRow || 120;
+      const layoutEndRow = specialLayout.clearEndRow || 120;
+      const maxClearRow = findDataEndRowByRightArtColumn(
+        sheet,
+        specialLayout.fullStartRow,
+        specialLayout.fullColumns.artCol,
+        layoutEndRow
+      );
       clearColumnRange(
         sheet,
         specialLayout.comboStartRow,
@@ -1034,7 +1056,13 @@ const fillTemplatePattern = ({
     }
 
     if (specialLayout.type === 'helsingborgEnkel') {
-      const maxClearRow = specialLayout.clearEndRow || 120;
+      const layoutEndRow = specialLayout.clearEndRow || 120;
+      const maxClearRow = findDataEndRowByRightArtColumn(
+        sheet,
+        specialLayout.fullStartRow,
+        specialLayout.fullColumns.artCol,
+        layoutEndRow
+      );
       clearBlockRange(
         sheet,
         specialLayout.fullStartRow,
@@ -1149,7 +1177,10 @@ const loadTemplateWorkbook = async ({ templatePath, templateFile }) => {
 };
 
 const setWorkbookTemplateVersionMarker = (workbook) => {
-  workbook.definedName(TEMPLATE_VERSION_DEFINED_NAME, `="${TEMPLATE_VERSION_MARKER_VALUE}"`);
+  const firstSheet = workbook.sheets()[0];
+  if (!firstSheet) return;
+
+  firstSheet.cell(LEGACY_TEMPLATE_VERSION_MARKER_CELL).value(TEMPLATE_VERSION_MARKER_VALUE);
 };
 
 const normalizeTemplateVersionMarker = (value) => {
@@ -1176,7 +1207,13 @@ const isTemplateVersionMarkerValid = (marker) => {
 };
 
 const getWorkbookTemplateVersionMarker = (workbook) => {
-  const definedNameValue = workbook.definedName(TEMPLATE_VERSION_DEFINED_NAME);
+  let definedNameValue;
+  try {
+    definedNameValue = workbook.definedName(TEMPLATE_VERSION_DEFINED_NAME);
+  } catch {
+    definedNameValue = '';
+  }
+
   if (typeof definedNameValue === 'string' && definedNameValue.trim()) {
     return normalizeTemplateVersionMarker(definedNameValue);
   }

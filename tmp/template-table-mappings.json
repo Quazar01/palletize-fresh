@@ -147,11 +147,11 @@
             "dateValue": null
           },
           "bounds": {
-            "range": "A3:AK68",
+            "range": "A3:N68",
             "minRow": 3,
             "maxRow": 68,
             "minCol": 1,
-            "maxCol": 37
+            "maxCol": 14
           },
           "anchors": {
             "leftArtHeaderCell": "A4",
@@ -160,11 +160,11 @@
           },
           "ranges": {
             "dataStartRow": 5,
-            "dataEndRow": 13,
-            "footerStartRow": 14,
-            "leftDataRange": "A5:F13",
-            "rightDataRange": "H5:AI13",
-            "footerRange": "A14:AK68"
+            "dataEndRow": 58,
+            "footerStartRow": 59,
+            "leftDataRange": "A5:F58",
+            "rightDataRange": "H5:N58",
+            "footerRange": "A59:N68"
           },
           "footer": {
             "formulaCount": 54,
@@ -2609,11 +2609,11 @@
         "dateValue": null
       },
       "bounds": {
-        "range": "A3:AK68",
+        "range": "A3:N68",
         "minRow": 3,
         "maxRow": 68,
         "minCol": 1,
-        "maxCol": 37
+        "maxCol": 14
       },
       "anchors": {
         "leftArtHeaderCell": "A4",
@@ -2622,11 +2622,11 @@
       },
       "ranges": {
         "dataStartRow": 5,
-        "dataEndRow": 13,
-        "footerStartRow": 14,
-        "leftDataRange": "A5:F13",
-        "rightDataRange": "H5:AI13",
-        "footerRange": "A14:AK68"
+        "dataEndRow": 58,
+        "footerStartRow": 59,
+        "leftDataRange": "A5:F58",
+        "rightDataRange": "H5:N58",
+        "footerRange": "A59:N68"
       },
       "footer": {
         "formulaCount": 54,
